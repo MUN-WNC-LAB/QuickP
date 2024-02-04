@@ -35,7 +35,7 @@ def checkImageNet():
     return False
 
 
-class Test:
+class SingleTest:
     def __init__(self, name):
         self.name = name
         self.imageNetReady = checkImageNet()
@@ -44,10 +44,17 @@ class Test:
             load_img('tiny-imagenet-200/test/images/test_0.JPEG', target_size=(224, 224)))
 
     # only use image size of (224, 224, 3). However, there will be a lot of mess
-    def test_single_of(self, model, pre_p_fun, decode_fun):
+    def test_single_of(self, model, pre_p_fun, decode_fun, top):
         image = pre_p_fun(self.singleTestImage.reshape(
             (1, self.singleTestImage.shape[0], self.singleTestImage.shape[1], self.singleTestImage.shape[2])))
         pred = model.predict(image)
         # decode_predictions expects a prediction of 1000 classes (i.e. a 2D array of shape (samples, 1000))
-        label = decode_fun(pred, top=3)
+        label = decode_fun(pred, top=top)
         print(label)
+
+    def setImage(self, path):
+        if not os.path.exists(path):
+            print("wrong path")
+            return
+        self.singleTestImage = img_to_array(
+            load_img(path, target_size=(224, 224)))
