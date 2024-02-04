@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from keras.src.applications.resnet import ResNet50
 from keras.src.applications.vgg16 import preprocess_input, decode_predictions
 import os, sys, wget
@@ -8,6 +9,12 @@ from keras.src.utils import load_img, img_to_array
 from matplotlib import pyplot as plt
 from keras.datasets import mnist, cifar10
 from keras.applications import VGG16
+
+
+def getValFile():
+    val_annotation = pd.read_csv('tiny-imagenet-200/val/val_annotations.txt', sep='\t',
+                                 usecols=[0, 1], names=['imagePath', 'label'])
+    return val_annotation
 
 
 def getImageNet():
@@ -42,6 +49,7 @@ class SingleTest:
         # default shape=(224, 224, 3)
         self.singleTestImage = img_to_array(
             load_img('tiny-imagenet-200/test/images/test_0.JPEG', target_size=(224, 224)))
+        self.valueFileData = getValFile()
 
     # only use image size of (224, 224, 3). However, there will be a lot of mess
     def test_single_of(self, model, pre_p_fun, decode_fun, top):
@@ -58,3 +66,12 @@ class SingleTest:
             return
         self.singleTestImage = img_to_array(
             load_img(path, target_size=(224, 224)))
+
+    def calValFileAccuracy(self, iterationNum, model, pre_p_fun, decode_fun, top):
+        # for i in range(valFile.shape[0])
+        for i in range(iterationNum):
+            filePath = "tiny-imagenet-200/val/images/" + self.valueFileData['imagePath'][i]
+            self.setImage(filePath)
+            self.test_single_of(model=model, pre_p_fun=pre_p_fun,
+                                decode_fun=decode_fun, top=top)
+            print("The real class is " + self.valueFileData['label'][i])
