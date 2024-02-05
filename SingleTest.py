@@ -1,14 +1,10 @@
-import numpy as np
 import pandas as pd
-from keras.src.applications.resnet import ResNet50
-from keras.src.applications.vgg16 import preprocess_input, decode_predictions
-import os, sys, wget
+import os
+import wget
 from zipfile import ZipFile
 
+import pandas as pd
 from keras.src.utils import load_img, img_to_array
-from matplotlib import pyplot as plt
-from keras.datasets import mnist, cifar10
-from keras.applications import VGG16
 
 
 def getValFile():
@@ -18,6 +14,7 @@ def getValFile():
 
 
 def getImageNet():
+    # dog-cat https://download.microsoft.com/download/3/E/1/3E1C3F21-ECDB-4869-8368-6DEBA77B919F/kagglecatsanddogs_5340.zip
     url = 'http://cs231n.stanford.edu/tiny-imagenet-200.zip'
     wget.download(url, out=os.getcwd())
 
