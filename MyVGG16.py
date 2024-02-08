@@ -7,8 +7,10 @@ from keras.layers import Dense, Conv2D, MaxPool2D, Flatten
 import numpy as np
 from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint, EarlyStopping
+from keras.src.datasets import cifar10
 from keras.src.legacy.preprocessing.image import ImageDataGenerator
 from matplotlib import pyplot as plt
+from tensorflow.python.keras.utils import np_utils
 
 
 def checkCatDog():
@@ -83,8 +85,41 @@ def getCatDogDF():
     return train_ds, val_ds
 
 
+def initModelForCifar10():
+    model = Sequential()
+    # ignore the input layer
+    model.add(Conv2D(input_shape=(32, 32, 3), filters=64, kernel_size=(3, 3), padding="same", activation="relu"))
+    model.add(Conv2D(filters=64, kernel_size=(3, 3), padding="same", activation="relu"))
+    model.add(MaxPool2D(pool_size=(2, 2), strides=(2, 2)))
+    model.add(Conv2D(filters=128, kernel_size=(3, 3), padding="same", activation="relu"))
+    model.add(Conv2D(filters=128, kernel_size=(3, 3), padding="same", activation="relu"))
+    model.add(MaxPool2D(pool_size=(2, 2), strides=(2, 2)))
+    model.add(Conv2D(filters=256, kernel_size=(3, 3), padding="same", activation="relu"))
+    model.add(Conv2D(filters=256, kernel_size=(3, 3), padding="same", activation="relu"))
+    model.add(Conv2D(filters=256, kernel_size=(3, 3), padding="same", activation="relu"))
+    model.add(MaxPool2D(pool_size=(2, 2), strides=(2, 2)))
+    model.add(Conv2D(filters=512, kernel_size=(3, 3), padding="same", activation="relu"))
+    model.add(Conv2D(filters=512, kernel_size=(3, 3), padding="same", activation="relu"))
+    model.add(Conv2D(filters=512, kernel_size=(3, 3), padding="same", activation="relu"))
+    model.add(MaxPool2D(pool_size=(2, 2), strides=(2, 2)))
+    model.add(Conv2D(filters=512, kernel_size=(3, 3), padding="same", activation="relu"))
+    model.add(Conv2D(filters=512, kernel_size=(3, 3), padding="same", activation="relu"))
+    model.add(Conv2D(filters=512, kernel_size=(3, 3), padding="same", activation="relu"))
+    model.add(MaxPool2D(pool_size=(2, 2), strides=(2, 2)))
+    model.add(Flatten())
+    # fully connected layer
+    model.add(Dense(units=4096, activation="relu"))
+    model.add(Dense(units=4096, activation="relu"))
+    # imageNet has a class of 200
+    model.add(Dense(units=10, activation="softmax"))
+    opt = Adam(learning_rate=0.001)
+    model.compile(optimizer=opt, loss=keras.losses.categorical_crossentropy, metrics=['accuracy'])
+    return model
+
+
 def initModel():
     model = Sequential()
+    # ignore the input layer
     model.add(Conv2D(input_shape=(224, 224, 3), filters=64, kernel_size=(3, 3), padding="same", activation="relu"))
     model.add(Conv2D(filters=64, kernel_size=(3, 3), padding="same", activation="relu"))
     model.add(MaxPool2D(pool_size=(2, 2), strides=(2, 2)))
@@ -124,20 +159,25 @@ def data_augmentation(images):
     return images
 
 
+def getCifar():
+    (x_train, y_train), (x_test, y_test) = cifar10.load_data()
+    x_train = x_train.astype('float32')
+    x_test = x_test.astype('float32')
+    x_train /= 255
+    x_test /= 255
+    y_train = np_utils.to_categorical(y_train, 10)
+    y_test = np_utils.to_categorical(y_test, 10)
+    return (x_train, y_train), (x_test, y_test)
+
+
 class MyVGG16:
     def __init__(self, name):
         self.name = name
-        self.model = initModel()
+        self.model = initModelForCifar10()
         self.model.summary()
 
-    def getCatDogData(self):
-        trdata = ImageDataGenerator()
-        traindata = trdata.flow_from_directory(directory="data", target_size=(224, 224))
-        tsdata = ImageDataGenerator()
-        testdata = tsdata.flow_from_directory(directory="test", target_size=(224, 224))
-
     def train(self):
-        train_ds, val_ds = getCatDogDF()
+        # train_ds, val_ds = getCatDogDF()
         # plt.figure(figsize=(10, 10))
         # for images, labels in train_ds.take(1):
         #     for i in range(9):
@@ -147,11 +187,13 @@ class MyVGG16:
         #         plt.axis("off")
         # plt.show()
         # print(train_ds.shape, val_ds.shape)
-        checkpoint = ModelCheckpoint("vgg16_1.keras", monitor='val_acc', verbose=1, save_best_only=True,
-                                     save_weights_only=False, mode='auto')
-        early = EarlyStopping(monitor='val_acc', min_delta=0, patience=20, verbose=1, mode='auto')
-        hist = self.model.fit(train_ds, validation_data=val_ds,
-                              epochs=25, callbacks=[checkpoint, early])
+
+        (x_train, y_train), (x_test, y_test) = getCifar()
+        print(self.model.summary())
+        checkpoint = ModelCheckpoint("vgg16_1.keras")
+        # early = EarlyStopping(monitor='val_acc', min_delta=0, patience=20, verbose=1, mode='auto')
+        hist = self.model.fit(x=x_train, y=y_train, validation_data=(x_test,y_test),
+                              epochs=25, callbacks=[checkpoint])
 
 
 myVGG16 = MyVGG16("")
