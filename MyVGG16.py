@@ -1,5 +1,6 @@
 from zipfile import ZipFile
 
+import tensorflow as tf
 import keras, os
 from keras.models import Sequential
 from keras.layers import Dense, Conv2D, MaxPool2D, Flatten
@@ -53,24 +54,34 @@ def getCatDogDF():
     image_size = (180, 180)
     batch_size = 128
 
-    # generating training and test set
-    train_ds, val_ds = keras.utils.image_dataset_from_directory(
-        "kagglecatsanddogs_5340/PetImages",
-        validation_split=0.2,
-        subset="both",
-        seed=1337,
-        image_size=image_size,
-        batch_size=batch_size,
-    )
+    # generating training and test set tiny-imagenet-200/train kagglecatsanddogs_5340/PetImages
+    # train_ds, val_ds = keras.utils.image_dataset_from_directory(
+    #    "tiny-imagenet-200/train",
+    #    validation_split=0.2,
+    #    subset="both",
+    #    seed=1337,
+    #    image_size=(224, 224),
+    #    batch_size=batch_size,
+    # )
 
-    plt.figure(figsize=(10, 10))
-    for images, labels in train_ds.take(1):
-        for i in range(9):
-            ax = plt.subplot(3, 3, i + 1)
-            plt.imshow(np.array(images[i]).astype("uint8"))
-            plt.title(int(labels[i]))
-            plt.axis("off")
-    plt.show()
+    # method 1 but the test file in imageNet is not labelled
+    trdata = ImageDataGenerator()
+    train_ds = trdata.flow_from_directory(directory="tiny-imagenet-200/train", target_size=(224, 224))
+    tsdata = ImageDataGenerator()
+    val_ds = tsdata.flow_from_directory(directory="tiny-imagenet-200/test/images", target_size=(224, 224))
+
+    # train_ds = train_ds.map(
+    #     lambda x, y: (data_augmentation(x), y))
+    # Apply `data_augmentation` to the training images.
+    # train_ds = train_ds.map(
+    #     lambda img, label: (data_augmentation(img), label),
+    #     num_parallel_calls=tf.data.AUTOTUNE,
+    # )
+    # Prefetching samples in GPU memory helps maximize GPU utilization.
+    # train_ds = train_ds.prefetch(tf.data.AUTOTUNE)
+    # val_ds = val_ds.prefetch(tf.data.AUTOTUNE)
+    return train_ds, val_ds
+
 
 def initModel():
     model = Sequential()
@@ -96,10 +107,21 @@ def initModel():
     # fully connected layer
     model.add(Dense(units=4096, activation="relu"))
     model.add(Dense(units=4096, activation="relu"))
-    model.add(Dense(units=2, activation="softmax"))
+    # imageNet has a class of 200
+    model.add(Dense(units=200, activation="softmax"))
     opt = Adam(learning_rate=0.001)
     model.compile(optimizer=opt, loss=keras.losses.categorical_crossentropy, metrics=['accuracy'])
     return model
+
+
+def data_augmentation(images):
+    data_augmentation_layers = [
+        keras.layers.RandomFlip("horizontal"),
+        keras.layers.RandomRotation(0.1),
+    ]
+    for layer in data_augmentation_layers:
+        images = layer(images)
+    return images
 
 
 class MyVGG16:
@@ -115,11 +137,22 @@ class MyVGG16:
         testdata = tsdata.flow_from_directory(directory="test", target_size=(224, 224))
 
     def train(self):
-        checkpoint = ModelCheckpoint("vgg16_1.h5", monitor='val_acc', verbose=1, save_best_only=True,
-                                     save_weights_only=False, mode='auto', period=1)
+        train_ds, val_ds = getCatDogDF()
+        # plt.figure(figsize=(10, 10))
+        # for images, labels in train_ds.take(1):
+        #     for i in range(9):
+        #         ax = plt.subplot(3, 3, i + 1)
+        #         plt.imshow(np.array(images[i]).astype("uint8"))
+        #         plt.title(int(labels[i]))
+        #         plt.axis("off")
+        # plt.show()
+        # print(train_ds.shape, val_ds.shape)
+        checkpoint = ModelCheckpoint("vgg16_1.keras", monitor='val_acc', verbose=1, save_best_only=True,
+                                     save_weights_only=False, mode='auto')
         early = EarlyStopping(monitor='val_acc', min_delta=0, patience=20, verbose=1, mode='auto')
-        # hist = self.model.fit(steps_per_epoch=100, generator=traindata, validation_data=testdata,
-        #                      validation_steps=10, epochs=100, callbacks=[checkpoint, early])
+        hist = self.model.fit(train_ds, validation_data=val_ds,
+                              epochs=25, callbacks=[checkpoint, early])
 
-getCatDogDF()
-#myVGG16 = MyVGG16("")
+
+myVGG16 = MyVGG16("")
+myVGG16.train()
