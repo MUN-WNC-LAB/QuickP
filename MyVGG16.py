@@ -108,12 +108,12 @@ def initModelForCifar10():
     model.add(MaxPool2D(pool_size=(2, 2), strides=(2, 2)))
     model.add(Flatten())
     # fully connected layer
-    model.add(Dense(units=4096, activation="relu"))
-    model.add(Dense(units=4096, activation="relu"))
+    model.add(Dense(units=512, activation="relu"))
     # imageNet has a class of 200
     model.add(Dense(units=10, activation="softmax"))
     opt = Adam(learning_rate=0.001)
-    model.compile(optimizer=opt, loss=keras.losses.categorical_crossentropy, metrics=['accuracy'])
+    model.compile(optimizer=opt, loss=keras.losses.BinaryCrossentropy(from_logits=True),
+                  metrics=[keras.metrics.BinaryAccuracy(name="acc")])
     return model
 
 
