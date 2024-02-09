@@ -7,6 +7,7 @@ from keras.layers import Dense, Conv2D, MaxPool2D, Flatten
 from keras.models import Sequential
 from keras.optimizers import Adam
 from keras.src.datasets import cifar10
+from keras.src.layers import Dropout
 from keras.src.legacy.preprocessing.image import ImageDataGenerator
 from keras.utils import to_categorical
 
@@ -104,11 +105,13 @@ def initModelForCifar10():
     model.add(Conv2D(filters=512, kernel_size=(3, 3), padding="same", activation="relu"))
     model.add(MaxPool2D(pool_size=(2, 2), strides=(2, 2)))
     model.add(Flatten())
+    model.add(Dropout(0.2))
     # fully connected layer
     model.add(Dense(units=512, activation="relu"))
+    model.add(Dropout(0.2))
     # imageNet has a class of 200
     model.add(Dense(units=10, activation="softmax"))
-    opt = Adam(learning_rate=0.001)
+    opt = Adam(learning_rate=0.00001)
     model.compile(optimizer=opt, loss=keras.losses.BinaryCrossentropy(from_logits=True),
                   metrics=[keras.metrics.BinaryAccuracy(name="acc")])
     return model
@@ -189,9 +192,9 @@ class MyVGG16:
         print(self.model.summary())
         checkpoint = ModelCheckpoint("vgg16_1.keras")
         # early = EarlyStopping(monitor='val_acc', min_delta=0, patience=20, verbose=1, mode='auto')
-        hist = self.model.fit(x=x_train, y=y_train, validation_data=(x_test, y_test),
-                              epochs=1, callbacks=[checkpoint])
+        hist = self.model.fit(x=x_train, y=y_train, validation_data=(x_test, y_test), validation_split=0.4,
+                              epochs=25, callbacks=[checkpoint], batch_size=16)
 
 
-#myVGG16 = MyVGG16("")
-#myVGG16.train()
+myVGG16 = MyVGG16("")
+myVGG16.train()

@@ -5,8 +5,6 @@ from keras.models import load_model
 from keras.src.applications import vgg16, resnet
 from keras.src.applications.resnet import ResNet50
 from keras.src.applications.vgg16 import VGG16
-from keras.src.datasets import cifar10
-from keras.src.legacy.preprocessing.image import ImageDataGenerator
 
 from MyVGG16 import getCifar
 from SingleTest import checkImageNet, SingleTest
