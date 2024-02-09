@@ -1,17 +1,14 @@
 from zipfile import ZipFile
 
-import tensorflow as tf
-import keras, os
-from keras.models import Sequential
+import keras
+import os
+from keras.callbacks import ModelCheckpoint
 from keras.layers import Dense, Conv2D, MaxPool2D, Flatten
-import numpy as np
+from keras.models import Sequential
 from keras.optimizers import Adam
-from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras.src.datasets import cifar10
 from keras.src.legacy.preprocessing.image import ImageDataGenerator
-from matplotlib import pyplot as plt
-from tensorflow.python.keras.utils import np_utils
-
+from keras.utils import to_categorical
 
 def checkCatDog():
     path_cat_dog = 'kagglecatsanddogs_5340'
@@ -33,28 +30,28 @@ def checkCatDog():
 
 
 def getCatDogDF():
-    if not checkCatDog():
-        return
-    num_skipped = 0
-    for folder_name in ("Cat", "Dog"):
-        folder_path = "kagglecatsanddogs_5340/PetImages/" + folder_name
-        for fname in os.listdir(folder_path):
-            fpath = os.path.join(folder_path, fname)
-            try:
-                fobj = open(fpath, "rb")
-                is_jfif = b"JFIF" in fobj.peek(10)
-            finally:
-                fobj.close()
+    # if not checkCatDog():
+    #     return
+    # num_skipped = 0
+    # for folder_name in ("Cat", "Dog"):
+    #     folder_path = "kagglecatsanddogs_5340/PetImages/" + folder_name
+    #     for fname in os.listdir(folder_path):
+    #         fpath = os.path.join(folder_path, fname)
+    #         try:
+    #             fobj = open(fpath, "rb")
+    #             is_jfif = b"JFIF" in fobj.peek(10)
+    #         finally:
+    #             fobj.close()
 
-            if not is_jfif:
-                num_skipped += 1
-                # Delete corrupted image
-                os.remove(fpath)
+    #         if not is_jfif:
+    #             num_skipped += 1
+    #             # Delete corrupted image
+    #             os.remove(fpath)
 
-    print(f"Deleted {num_skipped} images.")
+    # print(f"Deleted {num_skipped} images.")
 
-    image_size = (180, 180)
-    batch_size = 128
+    # image_size = (180, 180)
+    # batch_size = 128
 
     # generating training and test set tiny-imagenet-200/train kagglecatsanddogs_5340/PetImages
     # train_ds, val_ds = keras.utils.image_dataset_from_directory(
@@ -165,8 +162,8 @@ def getCifar():
     x_test = x_test.astype('float32')
     x_train /= 255
     x_test /= 255
-    y_train = np_utils.to_categorical(y_train, 10)
-    y_test = np_utils.to_categorical(y_test, 10)
+    y_train = to_categorical(y_train, 10)
+    y_test = to_categorical(y_test, 10)
     return (x_train, y_train), (x_test, y_test)
 
 
@@ -192,9 +189,9 @@ class MyVGG16:
         print(self.model.summary())
         checkpoint = ModelCheckpoint("vgg16_1.keras")
         # early = EarlyStopping(monitor='val_acc', min_delta=0, patience=20, verbose=1, mode='auto')
-        hist = self.model.fit(x=x_train, y=y_train, validation_data=(x_test,y_test),
-                              epochs=25, callbacks=[checkpoint])
+        hist = self.model.fit(x=x_train, y=y_train, validation_data=(x_test, y_test),
+                              epochs=1, callbacks=[checkpoint])
 
 
-myVGG16 = MyVGG16("")
-myVGG16.train()
+#myVGG16 = MyVGG16("")
+#myVGG16.train()

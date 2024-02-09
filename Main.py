@@ -1,14 +1,18 @@
+import numpy as np
 import pandas as pd
 from keras import datasets
+from keras.models import load_model
 from keras.src.applications import vgg16, resnet
 from keras.src.applications.resnet import ResNet50
 from keras.src.applications.vgg16 import VGG16
+from keras.src.datasets import cifar10
 from keras.src.legacy.preprocessing.image import ImageDataGenerator
 
+from MyVGG16 import getCifar
 from SingleTest import checkImageNet, SingleTest
 
 
-def main():
+def testSingleImageNet():
     singleTest = SingleTest('test 1')
     if singleTest.imageNetReady is False:
         return
@@ -24,16 +28,20 @@ def main():
                                   pre_p_fun=resnet.preprocess_input,
                                   decode_fun=resnet.decode_predictions, top=3)
 
-# Just a sample
-def randomTest():
-    model = VGG16(weights='imagenet', include_top=False, input_shape=(32, 32, 3))
-    print(model.summary())
-    (x_train, y_train), (x_test, y_test) = datasets.cifar10.load_data()
-    image = vgg16.preprocess_input(x_train[0].reshape(
-        (1, x_train[0].shape[0], x_train[0].shape[1], x_train[0].shape[2])))
-    pred = model.predict(image)
 
-    # decode_predictions expects a prediction of 1000 classes (i.e. a 2D array of shape (samples, 1000))
-    label = vgg16.decode_predictions(pred, top=1)
+def testExistModel(path):
+    myModel = load_model(path)
+    (x_train, y_train), (x_test, y_test) = getCifar()
+    for i in range(30):
+        image = np.expand_dims(x_test[i], axis=0)
+        prediction = myModel.predict(image)[0]
+        real = y_test[i]
+        index_max_pre = np.argmax(prediction)
+        index_max_real = np.argmax(real)
+        if index_max_pre == index_max_real:
+            print("match")
+        else:
+            print("not match")
 
-randomTest()
+
+testExistModel("vgg16_1.keras")
