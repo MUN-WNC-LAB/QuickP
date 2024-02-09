@@ -11,6 +11,7 @@ from keras.src.layers import Dropout
 from keras.src.legacy.preprocessing.image import ImageDataGenerator
 from keras.utils import to_categorical
 
+
 def checkCatDog():
     path_cat_dog = 'kagglecatsanddogs_5340'
     path_cat_dog_zip = 'kagglecatsanddogs_5340.zip'
@@ -177,24 +178,12 @@ class MyVGG16:
         self.model.summary()
 
     def train(self):
-        # train_ds, val_ds = getCatDogDF()
-        # plt.figure(figsize=(10, 10))
-        # for images, labels in train_ds.take(1):
-        #     for i in range(9):
-        #         ax = plt.subplot(3, 3, i + 1)
-        #         plt.imshow(np.array(images[i]).astype("uint8"))
-        #         plt.title(int(labels[i]))
-        #         plt.axis("off")
-        # plt.show()
-        # print(train_ds.shape, val_ds.shape)
-
         (x_train, y_train), (x_test, y_test) = getCifar()
         print(self.model.summary())
-        checkpoint = ModelCheckpoint("vgg16_1.keras")
-        # early = EarlyStopping(monitor='val_acc', min_delta=0, patience=20, verbose=1, mode='auto')
-        hist = self.model.fit(x=x_train, y=y_train, validation_data=(x_test, y_test), validation_split=0.4,
-                              epochs=25, callbacks=[checkpoint], batch_size=16)
+        checkpoint = ModelCheckpoint("vgg16.keras")
+        self.model.fit(x=x_train, y=y_train, validation_data=(x_test, y_test), validation_split=0.4,
+                       epochs=2, callbacks=[checkpoint], shuffle=True)
 
 
-myVGG16 = MyVGG16("")
-myVGG16.train()
+#myVGG16 = MyVGG16("")
+#myVGG16.train()
