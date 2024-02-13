@@ -45,10 +45,9 @@ def run_training(epochs=1):
             epochs=epochs,
             callbacks=callbacks,
             validation_data=(x_test, y_test),
-            validation_split=0.4,
-            verbose=2,
+            validation_split=0.4
         )
 
 
 # Running the first time creates the model
-run_training(epochs=1)
+run_training(2)

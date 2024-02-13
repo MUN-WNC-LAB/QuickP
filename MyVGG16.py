@@ -113,7 +113,7 @@ def initModelForCifar10():
     # imageNet has a class of 200
     model.add(Dense(units=10, activation="softmax"))
     opt = Adam(learning_rate=0.00001)
-    model.compile(optimizer=opt, loss=keras.losses.BinaryCrossentropy(from_logits=True),
+    model.compile(optimizer=opt, loss=keras.losses.BinaryCrossentropy(),
                   metrics=[keras.metrics.BinaryAccuracy(name="acc")])
     return model
 
