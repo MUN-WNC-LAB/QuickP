@@ -50,4 +50,6 @@ def run_training(epochs=1):
 
 
 # Running the first time creates the model
+print(tf.config.list_physical_devices('CPU'))
+print(tf.config.list_physical_devices('GPU'))
 run_training(2)
