@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --nodes 1
+#SBATCH --nodes 2
 #SBATCH --gres=gpu:2          # Request 2 GPU "generic resources”.
 #SBATCH --tasks-per-node=2   # Request 1 process per GPU. You will get 1 CPU per process by default. Request more CPUs with the "cpus-per-task" parameter to enable multiple data-loader workers to load data in parallel.
 #SBATCH --mem=8G      
@@ -7,7 +7,7 @@
 #SBATCH --output=%N-%j.out
 
 #module load python # Using Default Python version - Make sure to choose a version that suits your application
-srun --tasks-per-node=1 bash << EOF
+srun --tasks-per-node=2 bash << EOF
 virtualenv --no-download $SLURM_TMPDIR/env
 source $SLURM_TMPDIR/env/bin/activate
 pip install torchvision --no-index
@@ -21,4 +21,4 @@ echo "r$SLURM_NODEID Launching python script"
 
 # The $((SLURM_NTASKS_PER_NODE * SLURM_JOB_NUM_NODES)) variable tells the script how many processes are available for this execution. “srun” executes the script <tasks-per-node * nodes> times
 
-srun python pytorch-ddp-test.py --init_method tcp://$MASTER_ADDR:3456 --world_size $((SLURM_NTASKS_PER_NODE * SLURM_JOB_NUM_NODES))  --batch_size 256
+srun PyTorchDP.py --init_method tcp://$MASTER_ADDR:3456 --world_size $((SLURM_NTASKS_PER_NODE * SLURM_JOB_NUM_NODES))  --batch_size 256
