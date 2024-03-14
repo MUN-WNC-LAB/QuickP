@@ -7,7 +7,7 @@
 #SBATCH --output=%N-%j.out
 
 #module load python # Using Default Python version - Make sure to choose a version that suits your application
-module load python
+module load python/3.10
 srun --tasks-per-node=2 bash << EOF
 virtualenv --no-download $SLURM_TMPDIR/env
 source $SLURM_TMPDIR/env/bin/activate
