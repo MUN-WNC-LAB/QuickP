@@ -52,6 +52,7 @@ class Net(nn.Module):
         x = self.fc3(x)
         return x
 
+
 def train(epoch, net, criterion, optimizer, train_loader, train_rank):
     train_loss = 0
     correct = 0
