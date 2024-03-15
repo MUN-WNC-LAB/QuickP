@@ -7,7 +7,7 @@
 #SBATCH --output=%N-%j.out
 
 #module load python # Using Default Python version - Make sure to choose a version that suits your application
-# the environment file is etc/environment-modules/modulespath
+# the environment file is etc/environment-modules/modulespath; /usr/share/Modules/modulefiles
 source /etc/profile.d/modules.sh
 module load python/3.10
 srun --tasks-per-node=2 bash << EOF
@@ -24,4 +24,4 @@ echo "r$SLURM_NODEID Launching python script"
 
 # The $((SLURM_NTASKS_PER_NODE * SLURM_JOB_NUM_NODES)) variable tells the script how many processes are available for this execution. “srun” executes the script <tasks-per-node * nodes> times
 
-srun python PyTorchDP.py --init_method tcp://$MASTER_ADDR:3456 --world_size $((SLURM_NTASKS_PER_NODE * SLURM_JOB_NUM_NODES))  --batch_size 256
+srun python3.10 PyTorchDP.py --init_method tcp://$MASTER_ADDR:3456 --world_size $((SLURM_NTASKS_PER_NODE * SLURM_JOB_NUM_NODES))  --batch_size 256
