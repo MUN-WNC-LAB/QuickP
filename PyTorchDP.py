@@ -91,14 +91,15 @@ def main():
     args = parser.parse_args()
 
     ngpus_per_node = torch.cuda.device_count()
-
+    print("ngpus_per_node: ", ngpus_per_node)
     """ This next line is the key to getting DistributedDataParallel working on SLURM:
 		SLURM_NODEID is 0 or 1 in this example, SLURM_LOCALID is the id of the 
  		current process inside a node and is also 0 or 1 in this example."""
 
     local_rank = int(os.environ.get("SLURM_LOCALID"))
     rank = int(os.environ.get("SLURM_NODEID")) * ngpus_per_node + local_rank
-
+    print("loal_rank===SLURM_LOCALID===current_device: ", local_rank)
+    print("rank: ", rank)
     current_device = local_rank
 
     torch.cuda.set_device(current_device)
