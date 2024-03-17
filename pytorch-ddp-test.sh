@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --nodes 2
-#SBATCH --gres=gpu:2          # Request 2 GPU "generic resources”.
+#SBATCH --gres=gpu:1          # Generic resources required per node. We only have one GPU per node
 #SBATCH --ntasks-per-node=1   # Request 1 process per GPU. You will get 1 CPU per process by default. Request more CPUs with the "cpus-per-task" parameter to enable multiple data-loader workers to load data in parallel.
 #SBATCH --mem=8G
 #SBATCH --time=0-03:00
