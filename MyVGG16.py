@@ -32,61 +32,19 @@ def checkCatDog():
 
 
 def getCatDogDF():
-    # if not checkCatDog():
-    #     return
-    # num_skipped = 0
-    # for folder_name in ("Cat", "Dog"):
-    #     folder_path = "kagglecatsanddogs_5340/PetImages/" + folder_name
-    #     for fname in os.listdir(folder_path):
-    #         fpath = os.path.join(folder_path, fname)
-    #         try:
-    #             fobj = open(fpath, "rb")
-    #             is_jfif = b"JFIF" in fobj.peek(10)
-    #         finally:
-    #             fobj.close()
-
-    #         if not is_jfif:
-    #             num_skipped += 1
-    #             # Delete corrupted image
-    #             os.remove(fpath)
-
-    # print(f"Deleted {num_skipped} images.")
-
-    # image_size = (180, 180)
-    # batch_size = 128
-
-    # generating training and test set tiny-imagenet-200/train kagglecatsanddogs_5340/PetImages
-    # train_ds, val_ds = keras.utils.image_dataset_from_directory(
-    #    "tiny-imagenet-200/train",
-    #    validation_split=0.2,
-    #    subset="both",
-    #    seed=1337,
-    #    image_size=(224, 224),
-    #    batch_size=batch_size,
-    # )
 
     # method 1 but the test file in imageNet is not labelled
     trdata = ImageDataGenerator()
     train_ds = trdata.flow_from_directory(directory="tiny-imagenet-200/train", target_size=(224, 224))
     tsdata = ImageDataGenerator()
     val_ds = tsdata.flow_from_directory(directory="tiny-imagenet-200/test/images", target_size=(224, 224))
-
-    # train_ds = train_ds.map(
-    #     lambda x, y: (data_augmentation(x), y))
-    # Apply `data_augmentation` to the training images.
-    # train_ds = train_ds.map(
-    #     lambda img, label: (data_augmentation(img), label),
-    #     num_parallel_calls=tf.data.AUTOTUNE,
-    # )
-    # Prefetching samples in GPU memory helps maximize GPU utilization.
-    # train_ds = train_ds.prefetch(tf.data.AUTOTUNE)
-    # val_ds = val_ds.prefetch(tf.data.AUTOTUNE)
     return train_ds, val_ds
 
 
 def initModelForCifar10():
     model = Sequential()
     # ignore the input layer
+    # For imageNet model.add(Conv2D(input_shape=(224, 224, 3), filters=64, kernel_size=(3, 3), padding="same", activation="relu"))
     model.add(Conv2D(input_shape=(32, 32, 3), filters=64, kernel_size=(3, 3), padding="same", activation="relu"))
     model.add(Conv2D(filters=64, kernel_size=(3, 3), padding="same", activation="relu"))
     model.add(MaxPool2D(pool_size=(2, 2), strides=(2, 2)))
@@ -110,43 +68,11 @@ def initModelForCifar10():
     # fully connected layer
     model.add(Dense(units=512, activation="relu"))
     model.add(Dropout(0.2))
-    # imageNet has a class of 200
+    # imageNet has a class of 200, so model.add(Dense(units=200, activation="softmax"))
     model.add(Dense(units=10, activation="softmax"))
     opt = Adam(learning_rate=0.00001)
     model.compile(optimizer=opt, loss=keras.losses.BinaryCrossentropy(),
                   metrics=[keras.metrics.BinaryAccuracy(name="acc")])
-    return model
-
-
-def initModel():
-    model = Sequential()
-    # ignore the input layer
-    model.add(Conv2D(input_shape=(224, 224, 3), filters=64, kernel_size=(3, 3), padding="same", activation="relu"))
-    model.add(Conv2D(filters=64, kernel_size=(3, 3), padding="same", activation="relu"))
-    model.add(MaxPool2D(pool_size=(2, 2), strides=(2, 2)))
-    model.add(Conv2D(filters=128, kernel_size=(3, 3), padding="same", activation="relu"))
-    model.add(Conv2D(filters=128, kernel_size=(3, 3), padding="same", activation="relu"))
-    model.add(MaxPool2D(pool_size=(2, 2), strides=(2, 2)))
-    model.add(Conv2D(filters=256, kernel_size=(3, 3), padding="same", activation="relu"))
-    model.add(Conv2D(filters=256, kernel_size=(3, 3), padding="same", activation="relu"))
-    model.add(Conv2D(filters=256, kernel_size=(3, 3), padding="same", activation="relu"))
-    model.add(MaxPool2D(pool_size=(2, 2), strides=(2, 2)))
-    model.add(Conv2D(filters=512, kernel_size=(3, 3), padding="same", activation="relu"))
-    model.add(Conv2D(filters=512, kernel_size=(3, 3), padding="same", activation="relu"))
-    model.add(Conv2D(filters=512, kernel_size=(3, 3), padding="same", activation="relu"))
-    model.add(MaxPool2D(pool_size=(2, 2), strides=(2, 2)))
-    model.add(Conv2D(filters=512, kernel_size=(3, 3), padding="same", activation="relu"))
-    model.add(Conv2D(filters=512, kernel_size=(3, 3), padding="same", activation="relu"))
-    model.add(Conv2D(filters=512, kernel_size=(3, 3), padding="same", activation="relu"))
-    model.add(MaxPool2D(pool_size=(2, 2), strides=(2, 2)))
-    model.add(Flatten())
-    # fully connected layer
-    model.add(Dense(units=4096, activation="relu"))
-    model.add(Dense(units=4096, activation="relu"))
-    # imageNet has a class of 200
-    model.add(Dense(units=200, activation="softmax"))
-    opt = Adam(learning_rate=0.001)
-    model.compile(optimizer=opt, loss=keras.losses.categorical_crossentropy, metrics=['accuracy'])
     return model
 
 

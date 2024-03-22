@@ -31,6 +31,7 @@ parser.add_argument('--world_size', default=1, type=int, help='')
 parser.add_argument('--distributed', action='store_true', help='')
 
 
+# a standard way to define a Model Class is to make it a subclass of nn.Module
 class Net(nn.Module):
 
     def __init__(self):
@@ -43,6 +44,7 @@ class Net(nn.Module):
         self.fc2 = nn.Linear(120, 84)
         self.fc3 = nn.Linear(84, 10)
 
+    # a forward() method where the computation gets done.
     def forward(self, x):
         x = self.pool(F.relu(self.conv1(x)))
         x = self.pool(F.relu(self.conv2(x)))
