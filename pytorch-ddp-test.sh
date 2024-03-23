@@ -15,7 +15,9 @@ export MASTER_ADDR=192.168.0.66 #Store the master node’s IP address in the MAS
 
 echo "r$SLURM_NODEID master: $SLURM_SUBMIT_DIR"
 echo "r$SLURM_NODEID Launching python script"
-# world is a group containing all the processes for your distributed training.
+# Suppose we run our training in 2 servers and each server/node has 4 GPUs. The world size is 4*2=8.
+# The ranks for the processes will be [0, 1, 2, 3, 4, 5, 6, 7]. In each node, the local rank will be [0, 1, 2, 3]
+
 # The $((SLURM_NTASKS_PER_NODE * SLURM_JOB_NUM_NODES)) variable tells the script how many processes are available for this execution. “srun” executes the script <tasks-per-node * nodes> times
 # SLURM_NTASKS_PER_NODE correspond to --ntasks-per-node;
 # SLURM_JOB_NUM_NODES is the total number of nodes in the job's resource allocation.
