@@ -29,7 +29,7 @@ parser.add_argument('--max_epochs', type=int, default=2, help='')
 '''
 Change the following accordingly
 '''
-parser.add_argument('--num_workers', type=int, default=1, help='')
+parser.add_argument('--num_workers', type=int, default=2, help='')
 parser.add_argument('--init_method', default='tcp://192.168.0.66:3456', type=str, help='')
 parser.add_argument('--dist-backend', default='nccl', type=str, help='')
 parser.add_argument('--world_size', default=1, type=int, help='')
@@ -83,4 +83,6 @@ for epoch in range(epochs):
         optimizer.step()
 
         elapse_time = datetime.timedelta(seconds=time.time() - epoch_start)
-        print('From Node ID {}'.format(int(os.environ.get("SLURM_NODEID"))), f"Seen so far: {(step + 1) * batch_size} samples", "Training time {}".format(elapse_time))
+        print('From Node ID {}'.format(int(os.environ.get("SLURM_NODEID"))),
+              f"Seen so far: {(step + 1) * batch_size} samples", "Training time {}".format(elapse_time))
+torch.save(model, './model')

@@ -30,7 +30,7 @@ def getStdModelForCifar10():
 
 
 # Data loading code for CiFar10
-def getStdCifar10DataLoader(batch_size, num_workers=1):
+def getStdCifar10DataLoader(batch_size, num_workers=1, train=False):
     """
     If Use keras dataset instead of torchvision
     https://keras.io/guides/writing_a_custom_training_loop_in_torch/
@@ -38,7 +38,11 @@ def getStdCifar10DataLoader(batch_size, num_workers=1):
     # Data loading code for CiFar10
     transform_train = transforms.Compose(
         [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-    train_dataset = torchvision.datasets.CIFAR10(root='./data', train=True, transform=transform_train, download=True)
+    train_dataset = torchvision.datasets.CIFAR10(root='./data', train=train, transform=transform_train, download=True)
     # sampler=train_sampler; if sampler is defined, set the shuffle to false
     return torch.utils.data.DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True,
                                        pin_memory=True, num_workers=num_workers)
+
+
+def testPYModel(model, test_loader):
+    return model.eval()
