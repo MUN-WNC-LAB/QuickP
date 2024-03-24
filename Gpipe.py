@@ -21,10 +21,13 @@ import torch.nn.functional as F
 
 # Store argument values
 parser = argparse.ArgumentParser(description='cifar10 classification models, distributed data parallel test')
-
-parser.add_argument('--max_epochs', type=int, default=2, help='')
-parser.add_argument('--num_workers', type=int, default=1, help='')
+# always 1 in our platform
 parser.add_argument('-g', '--gpus', default=1, type=int, help='number of gpus per node')
+parser.add_argument('--max_epochs', type=int, default=2, help='')
+'''
+Change the following accordingly
+'''
+parser.add_argument('--num_workers', type=int, default=1, help='')
 parser.add_argument('--init_method', default='tcp://192.168.0.66:3456', type=str, help='')
 parser.add_argument('--dist-backend', default='nccl', type=str, help='')
 parser.add_argument('--world_size', default=1, type=int, help='')
@@ -96,8 +99,5 @@ for epoch in range(epochs):
         # Optimizer variable updates
         optimizer.step()
 
-        # Log every 100 batches.
-        if step % 100 == 0:
-            elapse_time = datetime.timedelta(seconds=time.time() - epoch_start)
-            print("Training time {}".format(elapse_time))
-            print(f"Seen so far: {(step + 1) * batch_size} samples")
+        elapse_time = datetime.timedelta(seconds=time.time() - epoch_start)
+        print('From Node ID {}'.format(int(os.environ.get("SLURM_NODEID"))), f"Seen so far: {(step + 1) * batch_size} samples", "Training time {}".format(elapse_time))
