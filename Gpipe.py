@@ -83,4 +83,6 @@ for epoch in range(epochs):
         optimizer.step()
 
         elapse_time = datetime.timedelta(seconds=time.time() - epoch_start)
-        print('From Node ID {}'.format(int(os.environ.get("SLURM_NODEID"))), f"Seen so far: {(step + 1) * batch_size} samples", "Training time {}".format(elapse_time))
+        print('From Node ID {}'.format(int(os.environ.get("SLURM_NODEID"))),
+              f"Seen so far: {(step + 1) * batch_size} samples", "Training time {}".format(elapse_time))
+torch.save(model, './model')
