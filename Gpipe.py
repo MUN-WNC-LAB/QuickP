@@ -29,7 +29,7 @@ parser.add_argument('--max_epochs', type=int, default=2, help='')
 '''
 Change the following accordingly
 '''
-parser.add_argument('--num_workers', type=int, default=1, help='')
+parser.add_argument('--num_workers', type=int, default=2, help='')
 parser.add_argument('--init_method', default='tcp://192.168.0.66:3456', type=str, help='')
 parser.add_argument('--dist-backend', default='nccl', type=str, help='')
 parser.add_argument('--world_size', default=1, type=int, help='')
