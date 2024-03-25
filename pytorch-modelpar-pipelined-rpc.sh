@@ -6,15 +6,9 @@
 #SBATCH --mem=8G      
 #SBATCH --time=0:10:00
 #SBATCH --output=%N-%j.out
-#SBATCH --account=<your account>
-
-module load python # Using Default Python version - Make sure to choose a version that suits your application
-virtualenv --no-download $SLURM_TMPDIR/env
-source $SLURM_TMPDIR/env/bin/activate
-pip install torch torchvision --no-index
 
 # This is needed to initialize pytorch's RPC module, required for the Pipe class which we'll use for Pipeline Parallelism
-export MASTER_ADDR=$(hostname)
+export MASTER_ADDR=192.168.0.66 #Store the master node’s IP address in the MASTER_ADDR environment variable.
 export MASTER_PORT=34567
  
 echo "starting training..."
