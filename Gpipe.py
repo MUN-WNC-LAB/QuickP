@@ -45,11 +45,12 @@ model.cuda()
 # balance determines the number of layers in each partition
 # devices specify the GPU number on each device
 # chunks means the number of micro-batches
-model = GPipe(model, balance=[4, 4], devices=[1, 1], chunks=8)
+model = GPipe(model, balance=[4, 4], chunks=8)
 # a Loss function and optimizer
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 loss_fn = torch.nn.CrossEntropyLoss().cuda()
 batch_size = 64
+print(model.devices)
 in_device = model.devices[0]
 out_device = model.devices[-1]
 
