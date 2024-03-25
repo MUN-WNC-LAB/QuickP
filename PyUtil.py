@@ -1,5 +1,6 @@
 import os
 
+import keras
 import torchvision
 from torchvision import transforms
 
@@ -30,7 +31,7 @@ def getStdModelForCifar10():
 
 
 # Data loading code for CiFar10
-def getStdCifar10DataLoader(batch_size, num_workers=1, train=False):
+def getStdCifar10DataLoader(batch_size, num_workers=1, train=True):
     """
     If Use keras dataset instead of torchvision
     https://keras.io/guides/writing_a_custom_training_loop_in_torch/
@@ -44,5 +45,38 @@ def getStdCifar10DataLoader(batch_size, num_workers=1, train=False):
                                        pin_memory=True, num_workers=num_workers)
 
 
+def saveModelState(model, modelName):
+    # Prepare a directory to store all the checkpoints.
+    checkpoint_dir = "./model"
+    if not os.path.exists(checkpoint_dir):
+        os.makedirs(checkpoint_dir)
+    filepath = "./model/{}".format(modelName)
+    torch.save(model.state_dict(), filepath)
+
+
 def testPYModel(model, test_loader):
-    return model.eval()
+    correct = 0
+    total = 0
+    # since we're not training, we don't need to calculate the gradients for our outputs
+    with torch.no_grad():
+        for (inputs, targets) in test_loader:
+            inputs, targets = inputs.cuda(), targets.cuda()
+            # calculate outputs by running images through the network
+            outputs = model(inputs)
+            # the class with the highest energy is what we choose as prediction
+            _, predicted = torch.max(outputs.data, 1)
+            total += targets.size(0)
+            correct += (predicted == targets).sum().item()
+
+    print(f'Accuracy of the network on the 10000 test images: {100 * correct // total} %')
+
+
+def retrieve_existing_model(obj, modelName):
+    # Prepare a directory to store all the checkpoints.
+    checkpoint_dir = "./model"
+    if not os.path.exists(checkpoint_dir):
+        os.makedirs(checkpoint_dir)
+    filepath = "./model/{}".format(modelName)
+    obj.load_state_dict(torch.load(filepath))
+    obj.eval()
+    return obj

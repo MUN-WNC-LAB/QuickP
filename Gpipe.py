@@ -6,7 +6,7 @@ import time
 import torchvision
 from torchvision import transforms
 
-from PyUtil import getStdModelForCifar10, getStdCifar10DataLoader
+from PyUtil import getStdModelForCifar10, getStdCifar10DataLoader, saveModelState, retrieve_existing_model, testPYModel
 
 # This guide can only be run with the torch backend. must write when using both keras and pytorch
 # sudo apt install python3-packaging
@@ -83,6 +83,9 @@ for epoch in range(epochs):
         optimizer.step()
 
         elapse_time = datetime.timedelta(seconds=time.time() - epoch_start)
-        print('From Node ID {}'.format(int(os.environ.get("SLURM_NODEID"))),
-              f"Seen so far: {(step + 1) * batch_size} samples", "Training time {}".format(elapse_time))
-torch.save(model, './model')
+        # 'From Node ID {}'.format(int(os.environ.get("SLURM_NODEID")))
+        print(f"Seen so far: {(step + 1) * batch_size} samples", "Training time {}".format(elapse_time))
+saveModelState(model, modelName="cao")
+model = retrieve_existing_model(GPipe(getStdModelForCifar10(), balance=[8], chunks=8), "cao")
+test_dataloader = getStdCifar10DataLoader(batch_size, 1, train=False)
+testPYModel(model, test_dataloader)
