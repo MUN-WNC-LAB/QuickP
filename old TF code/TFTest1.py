@@ -10,7 +10,7 @@ import keras
 
 def make_or_restore_model():
     # Prepare a directory to store all the checkpoints.
-    checkpoint_dir = "./ckpt"
+    checkpoint_dir = "../ckpt"
     if not os.path.exists(checkpoint_dir):
         os.makedirs(checkpoint_dir)
     # Either restore the latest model, or create a fresh one

@@ -1,13 +1,11 @@
 import numpy as np
-import pandas as pd
-from keras import datasets
 from keras.models import load_model
 from keras.src.applications import vgg16, resnet
 from keras.src.applications.resnet import ResNet50
 from keras.src.applications.vgg16 import VGG16
 
 from MyVGG16 import getCifar
-from SingleTest import checkImageNet, SingleTest
+from SingleTest import SingleTest
 
 
 def testSingleImageNet():
