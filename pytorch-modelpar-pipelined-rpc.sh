@@ -18,4 +18,4 @@ export MASTER_ADDR=$(hostname)
 export MASTER_PORT=34567
  
 echo "starting training..."
-time python pytorch-modelpar-pipelined-rpc.py --batch_size=512 --num_workers=0
+time python3.10 pytorch-modelpar-pipelined-rpc.py --batch_size=512 --num_workers=0
