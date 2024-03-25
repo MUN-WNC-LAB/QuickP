@@ -110,7 +110,7 @@ def main():
     """ this block initializes a process group and initiate communications
 		between all processes running on all nodes """
 
-    print('From Rank: {}, ==> Initializing Process Group...'.format(rank))
+    print('The World Size is {}, From Rank: {}, ==> Initializing Process Group...'.format(args.world_size, rank))
     # init the process group
     # Creation of DistributedDataParallel obj requires that torch.distributed (dist) to be initialized, by calling
     # Backend includes mpi, gloo(CPU), nccl(GPU), and ucc. https://pytorch.org/docs/stable/distributed.html
