@@ -42,9 +42,9 @@ model.cuda()
 
 # balance's length is equal to the number of computing nodes
 # model layers and sum of balance have the same length
-# balance determines the number of layers in each node
+# balance determines the number of layers in each partition
 # chunks means the number of micro-batches
-model = GPipe(model, balance=[4, 4], chunks=8)
+model = GPipe(model, balance=[8], chunks=8)
 # a Loss function and optimizer
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 loss_fn = torch.nn.CrossEntropyLoss().cuda()
