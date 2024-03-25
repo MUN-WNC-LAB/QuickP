@@ -29,6 +29,7 @@ parser.add_argument('--init_method', default='tcp://192.168.0.66:3456', type=str
 parser.add_argument('--dist-backend', default='nccl', type=str, help='')
 parser.add_argument('--world_size', default=1, type=int, help='')
 parser.add_argument('--distributed', action='store_true', help='')
+args = parser.parse_args()
 
 
 # a standard way to define a Model Class is to make it a subclass of nn.Module
@@ -89,8 +90,6 @@ def train(epoch, net, criterion, optimizer, train_loader, train_rank):
 
 def main():
     print("Starting...")
-
-    args = parser.parse_args()
 
     ngpus_per_node = torch.cuda.device_count()
     print("num of gpus per node: ", ngpus_per_node)
