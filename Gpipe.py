@@ -44,7 +44,7 @@ model.cuda()
 # model layers and sum of balance have the same length
 # balance determines the number of layers in each node
 # chunks means the number of micro-batches
-model = GPipe(model, balance=[8], chunks=8)
+model = GPipe(model, balance=[4, 4], chunks=8)
 # a Loss function and optimizer
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 loss_fn = torch.nn.CrossEntropyLoss().cuda()
@@ -84,7 +84,8 @@ for epoch in range(epochs):
 
         elapse_time = datetime.timedelta(seconds=time.time() - epoch_start)
         # 'From Node ID {}'.format(int(os.environ.get("SLURM_NODEID")))
-        print(f"Seen so far: {(step + 1) * batch_size} samples", "Training time {}".format(elapse_time))
+        print('From Node ID {}'.format(int(os.environ.get("SLURM_NODEID"))),
+              f"Seen so far: {(step + 1) * batch_size} samples", "Training time {}".format(elapse_time))
 saveModelState(model, modelName="cao")
 model = retrieve_existing_model(GPipe(getStdModelForCifar10(), balance=[8], chunks=8), "cao")
 test_dataloader = getStdCifar10DataLoader(batch_size, 1, train=False)
