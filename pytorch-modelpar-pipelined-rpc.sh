@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --nodes 1
-#SBATCH --gres=gpu:2 # request 2 GPUs
+#SBATCH --gres=gpu:1 # request 2 GPUs
 #SBATCH --tasks-per-node=1 
 #SBATCH --cpus-per-task=1 # change this parameter to 2,4,6,... and increase "--num_workers" accordingly to see the effect on performance
 #SBATCH --mem=8G      
