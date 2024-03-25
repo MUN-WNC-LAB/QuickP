@@ -43,12 +43,15 @@ model.cuda()
 # balance's length is equal to the number of computing nodes
 # model layers and sum of balance have the same length
 # balance determines the number of layers in each partition
+# devices specify the GPU number on each device
 # chunks means the number of micro-batches
-model = GPipe(model, balance=[8], chunks=8)
+model = GPipe(model, balance=[4, 4], devices=[1, 1], chunks=8)
 # a Loss function and optimizer
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 loss_fn = torch.nn.CrossEntropyLoss().cuda()
 batch_size = 64
+in_device = model.devices[0]
+out_device = model.devices[-1]
 
 # Creation of Distributed Data Parallel obj requires that torch.distributed (dist.init_process_group) to be initialized
 # Backend includes mpi, gloo(CPU), nccl(GPU), and ucc. https://pytorch.org/docs/stable/distributed.html
@@ -67,9 +70,9 @@ epochs = 3
 epoch_start = time.time()
 for epoch in range(epochs):
     for step, (inputs, targets) in enumerate(train_dataloader):
-        # cuda means Cross-GPU operations
-        inputs = inputs.cuda()
-        targets = targets.cuda()
+        # Gpipe is also model para. Input and output layers are not on the same devices
+        inputs = inputs.to(in_device, non_blocking=True)
+        targets = targets.to(out_device, non_blocking=True)
 
         # Forward pass
         output = model(inputs)
