@@ -13,10 +13,19 @@ from pippy.PipelineStage import PipelineStage
 
 sys.path.append("../")
 from PyUtil import getArgs, setup
+# Initialize distributed environment
+import torch.distributed as dist
 
 in_dim = 512
 layer_dims = [512, 1024, 256]
 out_dim = 10
+
+
+def add_split_points(mbart, nranks):
+    layers_per_rank = mbart.config.num_hidden_layers // nranks
+    for i in range(1, nranks):
+        annotate_split_points(
+            mbart, {f"model.decoder.layers.{i * layers_per_rank}": SplitPoint.BEGINNING})
 
 
 # Single layer definition
@@ -80,13 +89,8 @@ else:
 # Create the model
 mn = MyNetwork().to(device)
 
-annotate_split_points(
-    mn,
-    {
-        "layer0": SplitPoint.END,
-        "layer1": SplitPoint.END,
-    },
-)
+# Add the model split point
+add_split_points(mn, args.world_size)
 
 batch_size = 32
 example_input = torch.randn(batch_size, in_dim, device=device)
@@ -94,6 +98,11 @@ chunks = 4
 
 pipe = pipeline(mn, chunks, example_args=(example_input,))
 
+# make sure the stage number is equal to that of total devices
+nstages = len(list(pipe.split_gm.children()))
+assert nstages == args.world_size, f"nstages = {nstages} nranks = {args.world_size}"
+
+# If there are two nodes, there can only be at most two stages
 if rank == 0:
     print(" pipe ".center(80, "*"))
     print(pipe)
@@ -101,11 +110,6 @@ if rank == 0:
     print(pipe.split_gm.submod_0)
     print(" stage 1 ".center(80, "*"))
     print(pipe.split_gm.submod_1)
-    print(" stage 2 ".center(80, "*"))
-    print(pipe.split_gm.submod_2)
-
-# Initialize distributed environment
-import torch.distributed as dist
 
 dist.init_process_group(backend=args.dist_backend, init_method=args.init_method, rank=rank, world_size=world_size)
 
