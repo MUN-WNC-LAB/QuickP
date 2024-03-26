@@ -12,7 +12,7 @@ from pippy.PipelineSchedule import PipelineScheduleGPipe
 from pippy.PipelineStage import PipelineStage
 
 sys.path.append("../")
-from PyUtil import getArgs
+from PyUtil import getArgs, setup
 
 in_dim = 512
 layer_dims = [512, 1024, 256]
@@ -62,8 +62,13 @@ class MyNetwork(torch.nn.Module):
 #
 # To learn more about `torchrun`, see
 # https://pytorch.org/docs/stable/elastic/run.html
-
+local_rank = int(os.environ.get("SLURM_LOCALID"))
+ngpus_per_node = torch.cuda.device_count()
+rank = int(os.environ.get("SLURM_NODEID")) * ngpus_per_node + local_rank
 args = getArgs()
+setup(rank, args.world_size)
+torch.cuda.set_device(local_rank)
+
 torch.manual_seed(0)
 rank = int(os.environ["RANK"])
 world_size = int(os.environ["WORLD_SIZE"])
