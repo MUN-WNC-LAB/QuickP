@@ -85,7 +85,7 @@ def train(epoch, net, criterion, optimizer, train_loader, train_rank):
 
         elapse_time = time.time() - epoch_start
         elapse_time = datetime.timedelta(seconds=elapse_time)
-        print("From Rank: {}, Training time {}".format(train_rank, elapse_time))
+        print("From Rank: {}, Training time {}, epoch {}, steps {}".format(train_rank, elapse_time, epoch, batch_idx))
 
 
 def main():
