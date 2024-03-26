@@ -12,7 +12,7 @@ import torchvision
 import torchvision.transforms as transforms
 from torchvision.datasets import CIFAR10
 from torch.utils.data import DataLoader
-from PyUtil import getArgs, getStdCifar10DataLoader
+from UtilShared import getArgs, getStdCifar10DataLoader
 import torch.distributed as dist
 import torch.utils.data.distributed
 
