@@ -3,17 +3,21 @@
 # $ torchrun --nproc-per-node 3 example.py
 
 import os
+import sys
+
 import torch
 from pippy import pipeline
 from pippy.IR import annotate_split_points, SplitPoint
 from pippy.PipelineSchedule import PipelineScheduleGPipe
 from pippy.PipelineStage import PipelineStage
 
+sys.path.append("../")
 from PyUtil import getArgs
 
 in_dim = 512
 layer_dims = [512, 1024, 256]
 out_dim = 10
+
 
 # Single layer definition
 class MyNetworkBlock(torch.nn.Module):
@@ -96,7 +100,6 @@ if rank == 0:
     print(pipe.split_gm.submod_1)
     print(" stage 2 ".center(80, "*"))
     print(pipe.split_gm.submod_2)
-
 
 # Initialize distributed environment
 import torch.distributed as dist
