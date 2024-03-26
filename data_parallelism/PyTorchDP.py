@@ -1,20 +1,19 @@
+import datetime
 import os
 import sys
 import time
-import datetime
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-import torch.backends.cudnn as cudnn
-
-import torchvision
 import torchvision.transforms as transforms
-from torchvision.datasets import CIFAR10
 from torch.utils.data import DataLoader
+from torchvision.datasets import CIFAR10
+
+# Need to add the Util class to the module path list
 sys.path.append("../")
-from UtilShared import getArgs, getStdCifar10DataLoader
+from PyUtil import getArgs, getStdCifar10DataLoader
 import torch.distributed as dist
 import torch.utils.data.distributed
 
