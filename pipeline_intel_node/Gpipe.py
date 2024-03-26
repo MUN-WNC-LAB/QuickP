@@ -9,7 +9,7 @@ from pippy.IR import annotate_split_points, SplitPoint
 from pippy.PipelineSchedule import PipelineScheduleGPipe
 from pippy.PipelineStage import PipelineStage
 
-from util.PyUtil import getArgs
+from PyUtil import getArgs
 
 in_dim = 512
 layer_dims = [512, 1024, 256]
