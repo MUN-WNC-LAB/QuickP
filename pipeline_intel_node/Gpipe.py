@@ -62,16 +62,14 @@ class MyNetwork(torch.nn.Module):
 #
 # To learn more about `torchrun`, see
 # https://pytorch.org/docs/stable/elastic/run.html
+args = getArgs()
 local_rank = int(os.environ.get("SLURM_LOCALID"))
 ngpus_per_node = torch.cuda.device_count()
-rank = int(os.environ.get("SLURM_NODEID")) * ngpus_per_node + local_rank
-args = getArgs()
-setup(rank, args.world_size)
 torch.cuda.set_device(local_rank)
 
 torch.manual_seed(0)
-rank = int(os.environ["RANK"])
-world_size = int(os.environ["WORLD_SIZE"])
+rank = int(os.environ.get("SLURM_NODEID")) * ngpus_per_node + local_rank
+world_size = args.world_size
 
 # Figure out device to use
 if torch.cuda.is_available():
