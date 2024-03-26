@@ -10,6 +10,7 @@
 # use sbatch PyTorchDP.sh to execute
 export TORCH_NCCL_BLOCKING_WAIT=1  #Set this environment variable if you wish to use the NCCL backend for inter-GPU communication.
 export MASTER_ADDR=192.168.0.66 #Store the master node’s IP address in the MASTER_ADDR environment variable.
+export MASTER_PORT=3456
 
 echo "r$SLURM_NODEID master: $SLURM_SUBMIT_DIR"
 echo "r$SLURM_NODEID Launching python script"
