@@ -65,7 +65,7 @@ def train(epoch, net, criterion, optimizer, train_loader, train_rank):
     train_loss = 0
     correct = 0
     total = 0
-    epoch_start = time.time()
+    epoch_start = datetime.datetime.now()
     if epoch == 0:
         beginning_time = epoch_start
     for batch_idx, (inputs, targets) in enumerate(train_loader):
@@ -88,11 +88,11 @@ def train(epoch, net, criterion, optimizer, train_loader, train_rank):
 
         batch_time = time.time() - start
 
-        elapse_time = time.time() - epoch_start
+        elapse_time = datetime.datetime.now().timestamp() - epoch_start.timestamp()
         elapse_time = datetime.timedelta(seconds=elapse_time)
         print("From Rank: {}, Training time {}, epoch {}, steps {}".format(train_rank, elapse_time, epoch, batch_idx))
     if epoch == (args.max_epochs - 1):
-        ending_time = time.time()
+        ending_time = datetime.datetime.now()
 
 
 def main():
@@ -150,7 +150,7 @@ def main():
 
         train(epoch, net, criterion, optimizer, train_loader, rank)
 
-    print('From Rank: {}, starting time{}, ending time {}'.format(rank, beginning_time, ending_time))
+    print('From Rank: {}, starting time{}, ending time {}, taking time{}'.format(rank, beginning_time, ending_time, ending_time.timestamp() - beginning_time.timestamp()))
 
 
 if __name__ == '__main__':
