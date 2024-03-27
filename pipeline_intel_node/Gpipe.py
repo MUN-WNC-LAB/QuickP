@@ -131,8 +131,12 @@ x = torch.randn(batch_size, in_dim, device=device)
 # rank == 0 => the first node
 if rank == 0:
     schedule.step(x)
-else:
+# the last node
+elif rank == args.world_size - 1:
     output = schedule.step()
+# intermediate nodes
+else:
+    schedule.step()
 
 if rank == world_size - 1:
     # Run the original code and get the output for comparison
