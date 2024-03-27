@@ -32,6 +32,9 @@ parser.add_argument('--world_size', default=1, type=int, help='')
 parser.add_argument('--distributed', action='store_true', help='')
 args = parser.parse_args()
 
+beginning_time = None
+ending_time = None
+
 
 # a standard way to define a Model Class is to make it a subclass of nn.Module
 class Net(nn.Module):
@@ -63,7 +66,8 @@ def train(epoch, net, criterion, optimizer, train_loader, train_rank):
     total = 0
 
     epoch_start = time.time()
-
+    if epoch == 0:
+        beginning_time = epoch_start
     for batch_idx, (inputs, targets) in enumerate(train_loader):
         start = time.time()
 
@@ -87,6 +91,8 @@ def train(epoch, net, criterion, optimizer, train_loader, train_rank):
         elapse_time = time.time() - epoch_start
         elapse_time = datetime.timedelta(seconds=elapse_time)
         print("From Rank: {}, Training time {}, epoch {}, steps {}".format(train_rank, elapse_time, epoch, batch_idx))
+    if epoch == (args.max_epochs - 1):
+        ending_time = time.time()
 
 
 def main():
@@ -143,6 +149,8 @@ def main():
         train_sampler.set_epoch(epoch)
 
         train(epoch, net, criterion, optimizer, train_loader, rank)
+
+    print('From Rank: {}, starting time{}, ending time {}'.format(rank, beginning_time, ending_time))
 
 
 if __name__ == '__main__':
