@@ -90,7 +90,8 @@ def train(epoch, net, criterion, optimizer, train_loader, train_rank):
 
         elapse_time = datetime.datetime.now().timestamp() - epoch_start.timestamp()
         elapse_time = datetime.timedelta(seconds=elapse_time)
-        print("From Rank: {}, Training time {}, epoch {}, steps {}".format(train_rank, elapse_time, epoch, batch_idx))
+        if batch_idx % 15 == 0:
+            print("From Rank: {}, Training time {}, epoch {}, steps {}".format(train_rank, elapse_time, epoch, batch_idx))
     if epoch == (args.max_epochs - 1):
         ending_time = datetime.datetime.now()
 
