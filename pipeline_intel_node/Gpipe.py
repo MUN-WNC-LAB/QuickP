@@ -21,11 +21,11 @@ layer_dims = [512, 1024, 256]
 out_dim = 10
 
 
-def add_split_points(mbart, nranks):
-    layers_per_rank = mbart.config.num_hidden_layers // nranks
+def add_split_points(model, nranks):
     for i in range(1, nranks):
+        # the name should correspond to the layer name in the model
         annotate_split_points(
-            mbart, {f"model.decoder.layers.{i * layers_per_rank}": SplitPoint.BEGINNING})
+            model, {f"layer.{i}": SplitPoint.END})
 
 
 # Single layer definition
