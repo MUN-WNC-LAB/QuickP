@@ -25,7 +25,7 @@ def add_split_points(model, nranks):
     for i in range(1, nranks):
         # the name should correspond to the layer name in the model
         annotate_split_points(
-            model, {f"layer{i+1}": SplitPoint.END})
+            model, {f"layer{i}": SplitPoint.END})
 
 
 # Single layer definition
@@ -114,26 +114,4 @@ if rank == 0:
 
 dist.init_process_group(backend=args.dist_backend, init_method=args.init_method, rank=rank, world_size=world_size)
 
-# Pipeline stage is our main pipeline runtime. It takes in the pipe object,
-# the rank of this process, and the device.
-stage = PipelineStage(pipe, rank, device)
 
-# Attach to a schedule
-schedule = PipelineScheduleGPipe(stage, chunks)
-
-# Input data
-x = torch.randn(batch_size, in_dim, device=device)
-
-# Run the pipeline with input `x`. Divide the batch into 4 micro-batches
-# and run them in parallel on the pipeline
-if rank == 0:
-    schedule.step(x)
-else:
-    output = schedule.step()
-
-if rank == world_size - 1:
-    # Run the original code and get the output for comparison
-    reference_output = mn(x)
-    # Compare numerics of pipeline and original model
-    torch.testing.assert_close(output, reference_output)
-    print(" Pipeline parallel model ran successfully! ".center(80, "*"))
