@@ -134,7 +134,7 @@ def main():
 
     train_sampler = torch.utils.data.distributed.DistributedSampler(dataset_train)
     train_loader = DataLoader(dataset_train, batch_size=args.batch_size, shuffle=(train_sampler is None),
-                              num_workers=int(os.environ["SLURM_CPUS_PER_TASK"]), sampler=train_sampler)
+                              num_workers=0, sampler=train_sampler)
 
     criterion = nn.CrossEntropyLoss().cuda()
     optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=1e-4)
