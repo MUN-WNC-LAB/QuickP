@@ -132,13 +132,13 @@ x = torch.randn(batch_size, in_dim, device=device)
 # Need to make sure the later node cannot run before the previous one
 # rank == 0 => the first node
 if rank == 0:
-    stage(x)
+    schedule.step(x)
 # the last node
 elif rank == args.world_size - 1:
-    output = stage()
+    output = schedule.step()
 # intermediate nodes
 else:
-    stage()
+    schedule.step()
 
 if rank == world_size - 1:
     # Run the original code and get the output for comparison
