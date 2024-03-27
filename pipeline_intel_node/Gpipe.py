@@ -79,6 +79,7 @@ torch.cuda.set_device(local_rank)
 
 torch.manual_seed(0)
 rank = int(os.environ.get("SLURM_NODEID")) * ngpus_per_node + local_rank
+print("from rank: ", rank)
 world_size = args.world_size
 
 # Figure out device to use
