@@ -118,4 +118,7 @@ dist.init_process_group(backend=args.dist_backend, init_method=args.init_method,
 # the rank of this process, and the device.
 stage = PipelineStage(pipe, rank, device)
 
+# Attach to a schedule
+schedule = PipelineScheduleGPipe(stage, chunks)
+
 
