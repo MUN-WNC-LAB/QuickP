@@ -25,7 +25,7 @@ def add_split_points(model, nranks):
     for i in range(1, nranks):
         # the name should correspond to the layer name in the model
         annotate_split_points(
-            model, {f"layer.{i}": SplitPoint.END})
+            model, {f"layer{i}": SplitPoint.END})
 
 
 # Single layer definition
@@ -49,6 +49,7 @@ class MyNetwork(torch.nn.Module):
         prev_dim = in_dim
         # Add layers one by one
         for i, dim in enumerate(layer_dims):
+            # layer name must be written correctly. Thus, the split point can be added
             super().add_module(f"layer{i}", MyNetworkBlock(prev_dim, dim))
             prev_dim = dim
 
