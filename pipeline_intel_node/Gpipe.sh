@@ -7,7 +7,6 @@
 #SBATCH --time=0-03:00
 #SBATCH --output=%N-%j.out
 
-# use sbatch PyTorchDP.sh to execute
 export TORCH_NCCL_BLOCKING_WAIT=1  #Set this environment variable if you wish to use the NCCL backend for inter-GPU communication.
 export MASTER_ADDR=192.168.0.66 #Store the master node’s IP address in the MASTER_ADDR environment variable.
 export MASTER_PORT=3456
@@ -18,4 +17,5 @@ echo "r$SLURM_NODEID Launching python script"
 # The ranks for the processes will be [0, 1, 2, 3, 4, 5, 6, 7]. In each node, the local rank will be [0, 1, 2, 3]
 echo "SLURM_NTASKS_PER_NODE: $SLURM_NTASKS_PER_NODE"
 echo "SLURM_JOB_NUM_NODES: $SLURM_JOB_NUM_NODES"
+echo "NODELIST="${SLURM_NODELIST}
 srun python3.10 Gpipe.py --init_method tcp://$MASTER_ADDR:3456 --world_size $((SLURM_NTASKS_PER_NODE * SLURM_JOB_NUM_NODES))
