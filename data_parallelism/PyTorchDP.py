@@ -91,7 +91,8 @@ def train(epoch, net, criterion, optimizer, train_loader, train_rank):
         elapse_time = datetime.datetime.now().timestamp() - epoch_start.timestamp()
         elapse_time = datetime.timedelta(seconds=elapse_time)
         if batch_idx % 30 == 0:
-            print("From Rank: {}, Training time {}, epoch {}, steps {}".format(train_rank, elapse_time, epoch, batch_idx))
+            print(
+                "From Rank: {}, Training time {}, epoch {}, steps {}".format(train_rank, elapse_time, epoch, batch_idx))
     if epoch == (args.max_epochs - 1):
         ending_time = datetime.datetime.now()
 
@@ -100,16 +101,13 @@ def main():
     print("Starting...")
 
     ngpus_per_node = torch.cuda.device_count()
-    print("num of gpus per node: ", ngpus_per_node)
+
     """ This next line is the key to getting DistributedDataParallel working on SLURM:
 		SLURM_NODEID is 0 or 1 in this example, SLURM_LOCALID is the id of the 
  		current process inside a node and is also 0 or 1 in this example."""
-
+    # local rank===SLURM_LOCALID===current device; Since there are only one GPU on each server, the local rank must be 0
     local_rank = int(os.environ.get("SLURM_LOCALID"))
     rank = int(os.environ.get("SLURM_NODEID")) * ngpus_per_node + local_rank
-    print("local rank===SLURM_LOCALID===current device; Since there are only one GPU on each server, the local rank "
-          "must be 0: ", local_rank)
-    print("rank: ", rank)
     current_device = local_rank
 
     torch.cuda.set_device(current_device)
@@ -151,7 +149,8 @@ def main():
 
         train(epoch, net, criterion, optimizer, train_loader, rank)
 
-    print('From Rank: {}, starting time{}, ending time {}, taking time{}'.format(rank, beginning_time, ending_time, ending_time.timestamp() - beginning_time.timestamp()))
+    print('From Rank: {}, starting time{}, ending time {}, taking time{}'.format(rank, beginning_time, ending_time,
+                                                                                 ending_time.timestamp() - beginning_time.timestamp()))
 
 
 if __name__ == '__main__':
