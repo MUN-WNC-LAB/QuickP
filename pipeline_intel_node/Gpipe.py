@@ -128,4 +128,15 @@ x = torch.randn(batch_size, in_dim, device=device)
 # Run the pipeline with input `x`. Divide the batch into 4 micro-batches
 # and run them in parallel on the pipeline
 # This step triggers task 1: Segmentation fault (core dumped)
+# rank == 0 => the first node
+if rank == 0:
+    schedule.step(x)
+else:
+    output = schedule.step()
 
+if rank == world_size - 1:
+    # Run the original code and get the output for comparison
+    reference_output = mn(x)
+    # Compare numerics of pipeline and original model
+    torch.testing.assert_close(output, reference_output)
+    print(" Pipeline parallel model ran successfully! ".center(80, "*"))
