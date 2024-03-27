@@ -25,7 +25,7 @@ def add_split_points(model, nranks):
     for i in range(1, nranks):
         # the name should correspond to the layer name in the model
         annotate_split_points(
-            model, {f"layer{i}": SplitPoint.END})
+            model, {f"layer{i+1}": SplitPoint.END})
 
 
 # Single layer definition
