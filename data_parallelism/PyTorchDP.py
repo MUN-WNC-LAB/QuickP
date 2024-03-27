@@ -61,10 +61,10 @@ class Net(nn.Module):
 
 
 def train(epoch, net, criterion, optimizer, train_loader, train_rank):
+    global beginning_time, ending_time
     train_loss = 0
     correct = 0
     total = 0
-    beginning_time = 1
     epoch_start = time.time()
     if epoch == 0:
         beginning_time = epoch_start
