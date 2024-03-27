@@ -75,7 +75,6 @@ class MyNetwork(torch.nn.Module):
 args = getArgs()
 local_rank = int(os.environ.get("SLURM_LOCALID"))
 ngpus_per_node = torch.cuda.device_count()
-torch.cuda.set_device(local_rank)
 
 torch.manual_seed(0)
 rank = int(os.environ.get("SLURM_NODEID")) * ngpus_per_node + local_rank
@@ -130,6 +129,7 @@ x = torch.randn(batch_size, in_dim, device=device)
 # Run the pipeline with input `x`. Divide the batch into 4 micro-batches
 # and run them in parallel on the pipeline
 # This step triggers task 1: Segmentation fault (core dumped)
+# Need to make sure the later node cannot run before the previous one
 # rank == 0 => the first node
 '''
 if rank == 0:
