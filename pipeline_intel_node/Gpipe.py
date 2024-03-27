@@ -114,4 +114,8 @@ if rank == 0:
 
 dist.init_process_group(backend=args.dist_backend, init_method=args.init_method, rank=rank, world_size=world_size)
 
+# Pipeline stage is our main pipeline runtime. It takes in the pipe object,
+# the rank of this process, and the device.
+stage = PipelineStage(pipe, rank, device)
+
 
