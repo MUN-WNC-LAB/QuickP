@@ -121,4 +121,7 @@ stage = PipelineStage(pipe, rank, device)
 # Attach to a schedule
 schedule = PipelineScheduleGPipe(stage, chunks)
 
+# Input data
+x = torch.randn(batch_size, in_dim, device=device)
+
 
