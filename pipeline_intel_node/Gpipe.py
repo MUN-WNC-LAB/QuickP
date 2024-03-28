@@ -125,6 +125,7 @@ print(x)
 # This step triggers task 1: Segmentation fault (core dumped)
 # Need to make sure the later node cannot run before the previous one
 # rank == 0 => the first node
+'''
 if args.rank == 0:
     schedule.step(x)
 # the last node
@@ -133,7 +134,7 @@ elif args.rank == args.world_size - 1:
 # intermediate nodes
 else:
     schedule.step()
-'''
+
 if args.rank == args.world_size - 1:
     # Run the original code and get the output for comparison
     reference_output = mn(x)
