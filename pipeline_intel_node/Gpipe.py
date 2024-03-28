@@ -119,7 +119,7 @@ schedule = PipelineScheduleGPipe(stage, chunks)
 
 # Input data
 x = torch.randn(batch_size, in_dim, device=device)
-
+print(x)
 # Run the pipeline with input `x`. Divide the batch into 4 micro-batches
 # and run them in parallel on the pipeline
 # This step triggers task 1: Segmentation fault (core dumped)
