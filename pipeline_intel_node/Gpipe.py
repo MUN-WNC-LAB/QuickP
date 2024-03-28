@@ -1,7 +1,7 @@
 # Copyright (c) Meta Platforms, Inc. and affiliates
 # Minimal effort to run this code:
 # $ torchrun --nproc-per-node 3 example.py
-
+import datetime
 import os
 import sys
 
@@ -12,13 +12,15 @@ from pippy.PipelineSchedule import PipelineScheduleGPipe
 from pippy.PipelineStage import PipelineStage
 
 sys.path.append("../")
-from PyUtil import getArgs, setup
+from PyUtil import getArgs, printPipelineSplitInfo
 # Initialize distributed environment
 import torch.distributed as dist
 
 in_dim = 512
 layer_dims = [512, 1024, 256]
 out_dim = 10
+beginning_time = None
+ending_time = None
 
 
 def add_split_points(model, world_size):
@@ -97,7 +99,7 @@ pipe = pipeline(mn, chunks, example_args=(example_input,))
 # make sure the stage number is equal to that of total devices
 nstages = len(list(pipe.split_gm.children()))
 assert nstages == args.world_size, f"nstages = {nstages} nranks = {args.world_size}"
-
+'''
 # If there are two nodes, there can only be at most two stages
 if args.rank == 0:
     print(" pipe ".center(80, "*"))
@@ -106,8 +108,11 @@ if args.rank == 0:
     print(pipe.split_gm.submod_0)
     print(" stage 1 ".center(80, "*"))
     print(pipe.split_gm.submod_1)
+'''
+printPipelineSplitInfo(args.rank, pipe)
 
-dist.init_process_group(backend=args.dist_backend, init_method=args.init_method, rank=args.rank, world_size=args.world_size)
+dist.init_process_group(backend=args.dist_backend, init_method=args.init_method, rank=args.rank,
+                        world_size=args.world_size)
 
 # Pipeline stage is our main pipeline runtime. It takes in the pipe object,
 # the rank of this process, and the device.
@@ -119,17 +124,19 @@ schedule = PipelineScheduleGPipe(stage, chunks)
 
 # Input data
 x = torch.randn(batch_size, in_dim, device=device)
-print(x)
+
 # Run the pipeline with input `x`. Divide the batch into 4 micro-batches
 # and run them in parallel on the pipeline
 # This step triggers task 1: Segmentation fault (core dumped)
 # Need to make sure the later node cannot run before the previous one
 # rank == 0 => the first node
 if args.rank == 0:
+    beginning_time = datetime.datetime.now()
     schedule.step(x)
 # the last node
 elif args.rank == args.world_size - 1:
     output = schedule.step()
+    ending_time = datetime.datetime.now()
 # intermediate nodes
 else:
     schedule.step()
@@ -140,3 +147,5 @@ if args.rank == args.world_size - 1:
     # Compare numerics of pipeline and original model
     # torch.testing.assert_close(output, reference_output)
     print(" Pipeline parallel model ran successfully! ".center(80, "*"))
+    print(" Beginning time ", beginning_time, " Ending time ", ending_time,
+          " Elapsed time ", ending_time.timestamp() - beginning_time.timestamp())
