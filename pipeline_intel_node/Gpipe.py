@@ -82,8 +82,8 @@ if torch.cuda.is_available():
     device = torch.device(f"cuda:{rank % torch.cuda.device_count()}")
 else:
     device = torch.device("cpu")
-print("nodeID", int(os.environ.get("SLURM_NODEID")), "distributed mode: ", args.distributed, " from rank: ", args.rank, " world_size: ", args.world_size,
-      " num_workers: ", args.num_workers)
+# print("nodeID", int(os.environ.get("SLURM_NODEID")), "distributed mode: ", args.distributed, " from rank: ",
+# args.rank, " world_size: ", args.world_size, " num_workers: ", args.num_workers)
 
 # Create the model
 mn = MyNetwork().to(device)
@@ -115,7 +115,6 @@ dist.init_process_group(backend=args.dist_backend, init_method=args.init_method,
 # Pipeline stage is our main pipeline runtime. It takes in the pipe object,
 # the rank of this process, and the device.
 # Put different stages on different devices
-print(" rank ", rank, " device ", device)
 stage = PipelineStage(pipe, rank, device)
 
 # Attach to a schedule
