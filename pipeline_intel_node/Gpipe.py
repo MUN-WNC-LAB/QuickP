@@ -133,10 +133,11 @@ elif args.rank == args.world_size - 1:
 # intermediate nodes
 else:
     schedule.step()
-
+'''
 if args.rank == args.world_size - 1:
     # Run the original code and get the output for comparison
     reference_output = mn(x)
     # Compare numerics of pipeline and original model
     # torch.testing.assert_close(output, reference_output)
     print(" Pipeline parallel model ran successfully! ".center(80, "*"))
+'''
