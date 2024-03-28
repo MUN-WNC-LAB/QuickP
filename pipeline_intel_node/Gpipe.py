@@ -135,14 +135,14 @@ if args.rank == 0:
     schedule.step(x)
     ending_time = datetime.datetime.now()
     print("Rank",  args.rank, " Beginning time ", beginning_time, " Ending time ", ending_time,
-          " Elapsed time ", ending_time.timestamp() - beginning_time.timestamp())
+          " Elapsed time ", datetime.timedelta(seconds=ending_time.timestamp() - beginning_time.timestamp()))
 # the last node
 elif args.rank == args.world_size - 1:
     beginning_time = datetime.datetime.now()
     output = schedule.step()
     ending_time = datetime.datetime.now()
     print("Rank", args.rank, " Beginning time ", beginning_time, " Ending time ", ending_time,
-          " Elapsed time ", ending_time.timestamp() - beginning_time.timestamp())
+          " Elapsed time ", datetime.timedelta(seconds=ending_time.timestamp() - beginning_time.timestamp()))
 # intermediate nodes
 else:
     schedule.step()
