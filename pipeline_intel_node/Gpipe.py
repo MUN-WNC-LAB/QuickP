@@ -74,12 +74,9 @@ class MyNetwork(torch.nn.Module):
 # https://pytorch.org/docs/stable/elastic/run.html
 args = getArgs()
 
-rank = args.rank
-world_size = args.world_size
-
 # Figure out device to use
 if torch.cuda.is_available():
-    device = torch.device(f"cuda:{rank % torch.cuda.device_count()}")
+    device = torch.device(f"cuda:{args.rank % torch.cuda.device_count()}")
 else:
     device = torch.device("cpu")
 # print("nodeID", int(os.environ.get("SLURM_NODEID")), "distributed mode: ", args.distributed, " from rank: ",
@@ -102,7 +99,7 @@ nstages = len(list(pipe.split_gm.children()))
 assert nstages == args.world_size, f"nstages = {nstages} nranks = {args.world_size}"
 
 # If there are two nodes, there can only be at most two stages
-if rank == 0:
+if args.rank == 0:
     print(" pipe ".center(80, "*"))
     print(pipe)
     print(" stage 0 ".center(80, "*"))
@@ -110,12 +107,12 @@ if rank == 0:
     print(" stage 1 ".center(80, "*"))
     print(pipe.split_gm.submod_1)
 
-dist.init_process_group(backend=args.dist_backend, init_method=args.init_method, rank=rank, world_size=world_size)
+dist.init_process_group(backend=args.dist_backend, init_method=args.init_method, rank=args.rank, world_size=args.world_size)
 
 # Pipeline stage is our main pipeline runtime. It takes in the pipe object,
 # the rank of this process, and the device.
 # Put different stages on different devices
-stage = PipelineStage(pipe, rank, device)
+stage = PipelineStage(pipe, args.rank, device)
 
 # Attach to a schedule
 schedule = PipelineScheduleGPipe(stage, chunks)
@@ -128,16 +125,16 @@ x = torch.randn(batch_size, in_dim, device=device)
 # This step triggers task 1: Segmentation fault (core dumped)
 # Need to make sure the later node cannot run before the previous one
 # rank == 0 => the first node
-if rank == 0:
-    schedule.step(args=x)
+if args.rank == 0:
+    schedule.step(x)
 # the last node
-elif rank == args.world_size - 1:
+elif args.rank == args.world_size - 1:
     output = schedule.step()
 # intermediate nodes
 else:
     schedule.step()
 
-if rank == world_size - 1:
+if args.rank == args.world_size - 1:
     # Run the original code and get the output for comparison
     reference_output = mn(x)
     # Compare numerics of pipeline and original model
