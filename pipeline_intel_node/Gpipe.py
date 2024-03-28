@@ -125,7 +125,6 @@ print(x)
 # This step triggers task 1: Segmentation fault (core dumped)
 # Need to make sure the later node cannot run before the previous one
 # rank == 0 => the first node
-'''
 if args.rank == 0:
     schedule.step(x)
 # the last node
@@ -141,4 +140,3 @@ if args.rank == args.world_size - 1:
     # Compare numerics of pipeline and original model
     # torch.testing.assert_close(output, reference_output)
     print(" Pipeline parallel model ran successfully! ".center(80, "*"))
-'''
