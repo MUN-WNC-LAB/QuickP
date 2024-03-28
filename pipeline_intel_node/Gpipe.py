@@ -82,7 +82,8 @@ if torch.cuda.is_available():
     device = torch.device(f"cuda:{rank % torch.cuda.device_count()}")
 else:
     device = torch.device("cpu")
-print("from rank: ", args.rank, "device: ", device)
+print("nodeID", int(os.environ.get("SLURM_NODEID")), "distributed mode: ", args.distributed, " from rank: ", args.rank, " world_size: ", args.world_size,
+      " num_workers: ", args.num_workers)
 
 # Create the model
 mn = MyNetwork().to(device)
@@ -122,7 +123,7 @@ schedule = PipelineScheduleGPipe(stage, chunks)
 
 # Input data
 x = torch.randn(batch_size, in_dim, device=device)
-
+'''
 # Run the pipeline with input `x`. Divide the batch into 4 micro-batches
 # and run them in parallel on the pipeline
 # This step triggers task 1: Segmentation fault (core dumped)
@@ -143,3 +144,4 @@ if rank == world_size - 1:
     # Compare numerics of pipeline and original model
     torch.testing.assert_close(output, reference_output)
     print(" Pipeline parallel model ran successfully! ".center(80, "*"))
+'''
