@@ -21,11 +21,11 @@ layer_dims = [512, 1024, 256]
 out_dim = 10
 
 
-def add_split_points(model, nranks):
-    for i in range(1, nranks):
+def add_split_points(model, world_size):
+    for i in range(1, world_size):
         # the name should correspond to the layer name in the model
         annotate_split_points(
-            model, {f"layer{i}": SplitPoint.END})
+            model, {f"layer{i}": SplitPoint.BEGINNING})
 
 
 # Single layer definition
