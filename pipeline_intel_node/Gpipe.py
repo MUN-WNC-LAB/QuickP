@@ -137,15 +137,12 @@ if args.rank == 0:
     print("Rank",  args.rank, " Beginning time ", beginning_time, " Ending time ", ending_time,
           " Elapsed time ", datetime.timedelta(seconds=ending_time.timestamp() - beginning_time.timestamp()))
 # the last node
-elif args.rank == args.world_size - 1:
+else:
     beginning_time = datetime.datetime.now()
     output = schedule.step()
     ending_time = datetime.datetime.now()
     print("Rank", args.rank, " Beginning time ", beginning_time, " Ending time ", ending_time,
           " Elapsed time ", datetime.timedelta(seconds=ending_time.timestamp() - beginning_time.timestamp()))
-# intermediate nodes
-else:
-    schedule.step()
 
 if args.rank == args.world_size - 1:
     # Run the original code and get the output for comparison
