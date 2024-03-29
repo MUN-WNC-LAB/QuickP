@@ -13,6 +13,7 @@ from torchvision.datasets import CIFAR10
 
 # Need to add the Util class to the module path list
 sys.path.append("../")
+from VGGParaCifar import vgg11
 from PyUtil import getArgs, getStdCifar10DataLoader
 import torch.distributed as dist
 import torch.utils.data.distributed
@@ -125,10 +126,10 @@ def main():
 
     print('From Rank: {}, ==> Making model..'.format(rank))
 
-    net = Net()
+    model = vgg11()
 
-    net.cuda()
-    net = torch.nn.parallel.DistributedDataParallel(net, device_ids=[current_device])
+    model.cuda()
+    model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[current_device])
 
     print('From Rank: {}, ==> Preparing data..'.format(rank))
 
@@ -142,12 +143,12 @@ def main():
                               num_workers=int(os.environ["SLURM_CPUS_PER_TASK"]), sampler=train_sampler)
 
     criterion = nn.CrossEntropyLoss().cuda()
-    optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=1e-4)
+    optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=0.9, weight_decay=1e-4)
 
     for epoch in range(args.max_epochs):
         train_sampler.set_epoch(epoch)
 
-        train(epoch, net, criterion, optimizer, train_loader, rank)
+        train(epoch, model, criterion, optimizer, train_loader, rank)
 
     print('From Rank: {}, starting time{}, ending time {}, taking time{}'.format(rank, beginning_time, ending_time,
                                                                                  ending_time.timestamp() - beginning_time.timestamp()))
