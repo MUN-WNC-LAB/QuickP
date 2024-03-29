@@ -12,7 +12,7 @@ from pippy.PipelineSchedule import PipelineScheduleGPipe
 from pippy.PipelineStage import PipelineStage
 
 sys.path.append("../")
-from PyUtil import getArgs, printPipelineSplitInfo, init_distributed_group, ExePipeStep
+from PyUtil import getArgs, printPipelineSplitInfo, init_distributed_group
 # Initialize distributed environment
 import torch.distributed as dist
 
@@ -128,7 +128,23 @@ x = torch.randn(batch_size, in_dim, device=device)
 # and run them in parallel on the pipeline
 # This step triggers task 1: Segmentation fault (core dumped)
 # Need to make sure the later node cannot run before the previous one
-output = ExePipeStep(args, schedule, x)
+# rank == 0 => the first node
+if args.rank == 0:
+    beginning_time = datetime.datetime.now()
+    schedule.step(x)
+    ending_time = datetime.datetime.now()
+    print("Rank",  args.rank, " Beginning time ", beginning_time, " Ending time ", ending_time,
+          " Elapsed time ", datetime.timedelta(seconds=ending_time.timestamp() - beginning_time.timestamp()))
+# the last node
+elif args.rank == args.world_size - 1:
+    beginning_time = datetime.datetime.now()
+    output = schedule.step()
+    ending_time = datetime.datetime.now()
+    print("Rank", args.rank, " Beginning time ", beginning_time, " Ending time ", ending_time,
+          " Elapsed time ", datetime.timedelta(seconds=ending_time.timestamp() - beginning_time.timestamp()))
+# intermediate nodes
+else:
+    schedule.step()
 
 if args.rank == args.world_size - 1:
     # Run the original code and get the output for comparison
