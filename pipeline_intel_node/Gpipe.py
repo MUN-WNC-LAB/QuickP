@@ -109,7 +109,7 @@ if args.rank == 0:
     print(" stage 1 ".center(80, "*"))
     print(pipe.split_gm.submod_1)
 
-# printPipelineSplitInfo(args.rank, pipe)
+printPipelineSplitInfo(args.rank, pipe)
 
 dist.init_process_group(backend=args.dist_backend, init_method=args.init_method, rank=args.rank,
                         world_size=args.world_size)
