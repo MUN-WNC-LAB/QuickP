@@ -101,14 +101,6 @@ nstages = len(list(pipe.split_gm.children()))
 assert nstages == args.world_size, f"nstages = {nstages} nranks = {args.world_size}"
 
 # If there are two nodes, there can only be at most two stages
-if args.rank == 0:
-    print(" pipe ".center(80, "*"))
-    print(pipe)
-    print(" stage 0 ".center(80, "*"))
-    print(pipe.split_gm.submod_0)
-    print(" stage 1 ".center(80, "*"))
-    print(pipe.split_gm.submod_1)
-
 printPipelineSplitInfo(args.rank, pipe)
 
 dist.init_process_group(backend=args.dist_backend, init_method=args.init_method, rank=args.rank,
