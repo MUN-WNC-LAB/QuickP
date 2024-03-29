@@ -12,7 +12,7 @@ from pippy.PipelineSchedule import PipelineScheduleGPipe
 from pippy.PipelineStage import PipelineStage
 
 sys.path.append("../")
-from PyUtil import getArgs, printPipelineSplitInfo, init_distributed_group
+from PyUtil import getArgs, printPipelineSplitInfo
 # Initialize distributed environment
 import torch.distributed as dist
 
@@ -111,7 +111,8 @@ if args.rank == 0:
 
 # printPipelineSplitInfo(args.rank, pipe)
 
-init_distributed_group(args)
+dist.init_process_group(backend=args.dist_backend, init_method=args.init_method, rank=args.rank,
+                        world_size=args.world_size)
 
 # Pipeline stage is our main pipeline runtime. It takes in the pipe object,
 # the rank of this process, and the device.
