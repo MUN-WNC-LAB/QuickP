@@ -12,7 +12,7 @@ from pippy.PipelineSchedule import PipelineScheduleGPipe
 from pippy.PipelineStage import PipelineStage
 
 sys.path.append("../")
-from PyUtil import getArgs, printPipelineSplitInfo
+from PyUtil import getArgs, printPipelineSplitInfo, init_distributed_group, ExePipeStep
 # Initialize distributed environment
 import torch.distributed as dist
 
@@ -111,8 +111,7 @@ if args.rank == 0:
 
 # printPipelineSplitInfo(args.rank, pipe)
 
-dist.init_process_group(backend=args.dist_backend, init_method=args.init_method, rank=args.rank,
-                        world_size=args.world_size)
+init_distributed_group(args)
 
 # Pipeline stage is our main pipeline runtime. It takes in the pipe object,
 # the rank of this process, and the device.
@@ -129,29 +128,11 @@ x = torch.randn(batch_size, in_dim, device=device)
 # and run them in parallel on the pipeline
 # This step triggers task 1: Segmentation fault (core dumped)
 # Need to make sure the later node cannot run before the previous one
-# rank == 0 => the first node
-if args.rank == 0:
-    beginning_time = datetime.datetime.now()
-    schedule.step(x)
-    ending_time = datetime.datetime.now()
-    print("Rank",  args.rank, " Beginning time ", beginning_time, " Ending time ", ending_time,
-          " Elapsed time ", datetime.timedelta(seconds=ending_time.timestamp() - beginning_time.timestamp()))
-# the last node
-elif args.rank == args.world_size - 1:
-    beginning_time = datetime.datetime.now()
-    output = schedule.step()
-    ending_time = datetime.datetime.now()
-    print("Rank", args.rank, " Beginning time ", beginning_time, " Ending time ", ending_time,
-          " Elapsed time ", datetime.timedelta(seconds=ending_time.timestamp() - beginning_time.timestamp()))
-# intermediate nodes
-else:
-    schedule.step()
+output = ExePipeStep(args, schedule, x)
 
 if args.rank == args.world_size - 1:
     # Run the original code and get the output for comparison
     reference_output = mn(x)
     # Compare numerics of pipeline and original model
-    # torch.testing.assert_close(output, reference_output)
+    torch.testing.assert_close(output, reference_output)
     print(" Pipeline parallel model ran successfully! ".center(80, "*"))
-    print(" Beginning time ", beginning_time, " Ending time ", ending_time,
-          " Elapsed time ", ending_time.timestamp() - beginning_time.timestamp())
