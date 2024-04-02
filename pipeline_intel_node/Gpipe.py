@@ -12,7 +12,7 @@ from pippy.PipelineSchedule import PipelineScheduleGPipe
 from pippy.PipelineStage import PipelineStage
 
 sys.path.append("../")
-from PyUtil import getArgs, printPipelineSplitInfo
+from pyutil import getArgs, printPipelineSplitInfo
 # Initialize distributed environment
 import torch.distributed as dist
 

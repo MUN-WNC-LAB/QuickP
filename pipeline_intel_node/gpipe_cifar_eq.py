@@ -9,7 +9,7 @@ from pippy.PipelineSchedule import PipelineScheduleGPipe
 from pippy.PipelineStage import PipelineStage
 
 sys.path.append("../")
-from PyUtil import getArgs, printPipelineSplitInfo
+from pyutil import getArgs, printPipelineSplitInfo, getStdCifar10DataLoader
 # Initialize distributed environment
 import torch.distributed as dist
 from resnet import ResNet18
@@ -50,7 +50,7 @@ else:
 mn = ResNet18().to(device)
 
 batch_size = 32
-example_input = torch.randn(batch_size, in_dim, device=device)
+example_input = getStdCifar10DataLoader(num_workers=args.num_workers)
 chunks = 4
 
 pipe = pipeline(mn, chunks, example_args=(example_input,), split_policy=split_into_equal_size(args.world_size))
