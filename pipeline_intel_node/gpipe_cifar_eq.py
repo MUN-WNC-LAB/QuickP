@@ -55,8 +55,10 @@ batch_size = 32
 transform_train = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 train_dataset = torchvision.datasets.CIFAR10(root='./data', train=True, transform=transform_train, download=True)
 chunks = 4
+x, _ = train_dataset[0]
+x = x.reshape((1, x.shape[0], x.shape[1], x.shape[2])).to(device)
 
-pipe = pipeline(mn, chunks, split_policy=split_into_equal_size(args.world_size))
+pipe = pipeline(mn, chunks, example_args=(x,), split_policy=split_into_equal_size(args.world_size))
 
 # make sure the stage number is equal to that of total devices
 nstages = len(list(pipe.split_gm.children()))
@@ -75,9 +77,6 @@ stage = PipelineStage(pipe, args.rank, device)
 
 # Attach to a schedule
 schedule = PipelineScheduleGPipe(stage, chunks)
-
-# Input data
-x = torch.randn(batch_size, in_dim, device=device)
 
 # Run the pipeline with input `x`. Divide the batch into 4 micro-batches
 # and run them in parallel on the pipeline
