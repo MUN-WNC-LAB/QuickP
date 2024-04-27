@@ -54,7 +54,7 @@ mn = ResNet18().to(device)
 batch_size = 32
 transform_train = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 train_dataset = torchvision.datasets.CIFAR10(root='./data', train=True, transform=transform_train, download=True)
-chunks = 4
+chunks = 1
 x, _ = train_dataset[0]
 x = x.reshape((1, x.shape[0], x.shape[1], x.shape[2])).to(device)
 
