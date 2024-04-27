@@ -3,10 +3,12 @@ import os
 import sys
 
 import torch
+import torchvision
 from pippy import pipeline, split_into_equal_size, split_on_size_threshold
 from pippy.IR import annotate_split_points, SplitPoint
 from pippy.PipelineSchedule import PipelineScheduleGPipe
 from pippy.PipelineStage import PipelineStage
+from torchvision.transforms import transforms
 
 sys.path.append("../")
 from pyutil import getArgs, printPipelineSplitInfo, getStdCifar10DataLoader
@@ -50,10 +52,11 @@ else:
 mn = ResNet18().to(device)
 
 batch_size = 32
-example_input = getStdCifar10DataLoader(num_workers=args.num_workers)
+transform_train = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+train_dataset = torchvision.datasets.CIFAR10(root='./data', train=True, transform=transform_train, download=True)
 chunks = 4
 
-pipe = pipeline(mn, chunks, example_args=(example_input,), split_policy=split_into_equal_size(args.world_size))
+pipe = pipeline(mn, chunks, split_policy=split_into_equal_size(args.world_size))
 
 # make sure the stage number is equal to that of total devices
 nstages = len(list(pipe.split_gm.children()))
