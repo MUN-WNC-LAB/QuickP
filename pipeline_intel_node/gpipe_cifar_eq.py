@@ -51,7 +51,7 @@ else:
 # Create the model
 mn = ResNet18().to(device)
 
-batch_size = 50000
+batch_size = 8000
 transform_train = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 train_dataset = torchvision.datasets.CIFAR10(root='./data', train=True, transform=transform_train, download=True)
 dataLoader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=12)
@@ -59,7 +59,8 @@ chunks = 4
 # An image is a 3*32*32 tensor
 # A training set is a batch_size*3*32*32 tensor
 for batch_idx, (inputs, targets) in enumerate(dataLoader):
-    x = inputs.to(device)
+    if batch_idx == 0:
+        x = inputs.to(device)
 pipe = pipeline(mn, chunks, example_args=(x,), split_policy=split_into_equal_size(args.world_size))
 
 # make sure the stage number is equal to that of total devices
