@@ -4,6 +4,7 @@ import sys
 
 import torch
 import torchvision
+from pippy.PipelineSchedule import ScheduleGPipe
 from pippy import pipeline, split_into_equal_size, split_on_size_threshold
 from pippy.IR import annotate_split_points, SplitPoint
 from pippy.PipelineSchedule import PipelineScheduleGPipe
@@ -61,6 +62,7 @@ chunks = 4
 for batch_idx, (inputs, targets) in enumerate(dataLoader):
     if batch_idx == 0:
         x = inputs.to(device)
+        y = targets.to(device)
         print(x.shape)
 pipe = pipeline(mn, chunks, example_args=(x,), split_policy=split_into_equal_size(args.world_size))
 
@@ -79,8 +81,11 @@ dist.init_process_group(backend=args.dist_backend, init_method=args.init_method,
 # Put different stages on different devices
 stage = PipelineStage(pipe, args.rank, device)
 
+# Define a loss function
+loss_fn = torch.nn.MSELoss(reduction="sum")
+
 # Attach to a schedule
-schedule = PipelineScheduleGPipe(stage, chunks)
+schedule = ScheduleGPipe(stage, chunks, loss_fn=loss_fn)
 
 # Run the pipeline with input `x`. Divide the batch into 4 micro-batches
 # and run them in parallel on the pipeline
@@ -94,9 +99,17 @@ if args.rank == 0:
     print("Rank", args.rank, " Beginning time ", beginning_time, " Ending time ", ending_time,
           " Elapsed time ", datetime.timedelta(seconds=ending_time.timestamp() - beginning_time.timestamp()))
 # the last node
+elif args.rank == args.world_size - 1:
+    beginning_time = datetime.datetime.now()
+    losses = []
+    output = schedule.step(target=y, losses=losses)
+    ending_time = datetime.datetime.now()
+    print("Rank", args.rank, " Beginning time ", beginning_time, " Ending time ", ending_time,
+          " Elapsed time ", datetime.timedelta(seconds=ending_time.timestamp() - beginning_time.timestamp()))
+# nodes in the middle
 else:
     beginning_time = datetime.datetime.now()
-    output = schedule.step()
+    schedule.step()
     ending_time = datetime.datetime.now()
     print("Rank", args.rank, " Beginning time ", beginning_time, " Ending time ", ending_time,
           " Elapsed time ", datetime.timedelta(seconds=ending_time.timestamp() - beginning_time.timestamp()))
