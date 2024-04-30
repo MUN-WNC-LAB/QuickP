@@ -12,59 +12,12 @@ from pippy.IR import annotate_split_points, SplitPoint
 from pippy.PipelineSchedule import ScheduleGPipe
 from pippy.PipelineStage import PipelineStage
 
+from resnet import ResNet18
+
 sys.path.append("../")
 from py_util import getArgs, printPipelineSplitInfo
 # Initialize distributed environment
 import torch.distributed as dist
-
-in_dim = 512
-layer_dims = [512, 1024, 256]
-out_dim = 10
-beginning_time = None
-ending_time = None
-
-
-def add_split_points(model, world_size):
-    for i in range(1, world_size):
-        # the name should correspond to the layer name in the model
-        annotate_split_points(
-            model, {f"layer{i}": SplitPoint.BEGINNING})
-
-
-# Single layer definition
-class MyNetworkBlock(torch.nn.Module):
-    def __init__(self, in_dim, out_dim):
-        super().__init__()
-        self.lin = torch.nn.Linear(in_dim, out_dim)
-
-    def forward(self, x):
-        x = self.lin(x)
-        x = torch.relu(x)
-        return x
-
-
-# Full model definition
-class MyNetwork(torch.nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.num_layers = len(layer_dims)
-
-        prev_dim = in_dim
-        # Add layers one by one
-        for i, dim in enumerate(layer_dims):
-            # layer name must be written correctly. Thus, the split point can be added
-            super().add_module(f"layer{i}", MyNetworkBlock(prev_dim, dim))
-            prev_dim = dim
-
-        # Final output layer (with OUT_DIM projection classes)
-        self.output_proj = torch.nn.Linear(layer_dims[-1], out_dim)
-
-    def forward(self, x):
-        for i in range(self.num_layers):
-            layer = getattr(self, f"layer{i}")
-            x = layer(x)
-
-        return self.output_proj(x)
 
 
 # To run a distributed training job, we must launch the script in multiple
@@ -86,13 +39,13 @@ else:
 # args.rank, " world_size: ", args.world_size, " num_workers: ", args.num_workers)
 
 # Create the model
-mn = MyNetwork().to(device)
+mn = ResNet18().to(device)
 
 # Add the model split point
 # add_split_points(mn, args.world_size)
 
 batch_size = 32
-example_input = torch.randn(batch_size, in_dim, device=device)
+example_input = torch.randn(batch_size, 3, 32, 32, device=device)
 chunks = 4
 
 pipe = pipeline(mn, chunks, example_args=(example_input,), split_policy=split_into_equal_size(args.world_size))
@@ -116,7 +69,7 @@ stage = PipelineStage(pipe, args.rank, device)
 schedule = ScheduleGPipe(stage, chunks)
 
 # Input data
-x = torch.randn(batch_size, in_dim, device=device)
+x = torch.randn(batch_size, 3, 32, 32, device=device)
 
 # Run the pipeline with input `x`. Divide the batch into 4 micro-batches
 # and run them in parallel on the pipeline
