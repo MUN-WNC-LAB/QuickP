@@ -12,9 +12,8 @@ from pippy.IR import annotate_split_points, SplitPoint
 from pippy.PipelineSchedule import ScheduleGPipe
 from pippy.PipelineStage import PipelineStage
 
-from resnet import ResNet18
-
 sys.path.append("../")
+from resnet import ResNet18
 from py_util import getArgs, printPipelineSplitInfo
 # Initialize distributed environment
 import torch.distributed as dist
