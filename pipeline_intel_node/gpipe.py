@@ -44,7 +44,7 @@ else:
 # args.rank, " world_size: ", args.world_size, " num_workers: ", args.num_workers)
 
 # Create the model
-mn = getStdModelForCifar10().to(device)
+mn = ResNet18().to(device)
 
 dataLoader = getStdCifar10DataLoader(num_workers=args.num_workers, batch_size=args.batch_size)
 
