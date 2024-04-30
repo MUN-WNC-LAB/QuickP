@@ -15,7 +15,7 @@ from pippy.PipelineStage import PipelineStage
 from torchvision.transforms import transforms
 
 sys.path.append("../")
-from pyutil import getArgs, printPipelineSplitInfo, getStdCifar10DataLoader
+from py_util import getArgs, printPipelineSplitInfo, getStdCifar10DataLoader
 # Initialize distributed environment
 import torch.distributed as dist
 from resnet import ResNet18
@@ -52,19 +52,17 @@ else:
 # Create the model
 mn = ResNet18().to(device)
 
-batch_size = 1000
-dataLoader = getStdCifar10DataLoader(num_workers=args.num_workers)
-# Micro-batch number
-chunks = 4
+dataLoader = getStdCifar10DataLoader(num_workers=args.num_workers, batch_size=args.batch_size)
 
 # An image is a 3*32*32 tensor
 # A training set is a batch_size*3*32*32 tensor
-for batch_idx, (inputs, targets) in enumerate(dataLoader):
-    if batch_idx == 0:
-        x = inputs.to(device)
-        y = targets.to(device)
-        print(x.shape)
-pipe = pipeline(mn, chunks, example_args=(x,), split_policy=split_into_equal_size(args.world_size))
+for batch_idx, (inputs, targets) in enumerate(dataLoader, 0):
+    if batch_idx == 1:
+        break
+    x = inputs.to(device)
+    y = targets.to(device)
+    print(x.shape)
+pipe = pipeline(mn, args.chunks, example_args=(x,), split_policy=split_into_equal_size(args.world_size))
 
 # make sure the stage number is equal to that of total devices
 nstages = len(list(pipe.split_gm.children()))
@@ -85,7 +83,7 @@ stage = PipelineStage(pipe, args.rank, device)
 loss_fn = torch.nn.MSELoss(reduction="sum")
 
 # Attach to a schedule
-schedule = ScheduleGPipe(stage, chunks, loss_fn=loss_fn)
+schedule = ScheduleGPipe(stage, args.chunks, loss_fn=loss_fn)
 
 # Run the pipeline with input `x`. Divide the batch into 4 micro-batches
 # and run them in parallel on the pipeline

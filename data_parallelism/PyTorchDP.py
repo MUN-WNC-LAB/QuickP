@@ -14,7 +14,7 @@ from torchvision.datasets import CIFAR10
 # Need to add the Util class to the module path list
 sys.path.append("../")
 from VGGParaCifar import vgg11
-from pyutil import getArgs, getStdCifar10DataLoader
+from py_util import getArgs, getStdCifar10DataLoader
 import torch.distributed as dist
 import torch.utils.data.distributed
 
