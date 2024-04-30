@@ -41,8 +41,6 @@ if torch.cuda.is_available():
     device = torch.device(f"cuda:{args.rank % torch.cuda.device_count()}")
 else:
     device = torch.device("cpu")
-# print("nodeID", int(os.environ.get("SLURM_NODEID")), "distributed mode: ", args.distributed, " from rank: ",
-# args.rank, " world_size: ", args.world_size, " num_workers: ", args.num_workers)
 
 # Create the model
 mn = vgg11().to(device)
@@ -58,7 +56,7 @@ for batch_idx, (inputs, targets) in enumerate(dataLoader, 0):
     y = targets.to(device)
     print(x.shape)
 # https://github.com/pytorch/PiPPy/blob/main/test/test_pipe.py
-pipe = pipeline(mn, num_chunks=args.chunks, example_args=(example_input,), split_policy=split_into_equal_size(args.world_size))
+pipe = pipeline(mn, num_chunks=args.chunks, example_args=(x,), split_policy=split_into_equal_size(args.world_size))
 
 # make sure the stage number is equal to that of total devices
 nstages = len(list(pipe.split_gm.children()))
@@ -94,7 +92,8 @@ if args.rank == 0:
 elif args.rank == args.world_size - 1:
     beginning_time = datetime.datetime.now()
     losses = []
-    output = schedule.step(target=y, losses=losses)
+    output = schedule.step()
+    # output = schedule.step(target=y, losses=losses)
     ending_time = datetime.datetime.now()
     print("Rank", args.rank, " Beginning time ", beginning_time, " Ending time ", ending_time,
           " Elapsed time ", datetime.timedelta(seconds=ending_time.timestamp() - beginning_time.timestamp()))
