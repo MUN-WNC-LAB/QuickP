@@ -6,7 +6,7 @@
 #SBATCH --ntasks=2            # total number of tasks (GPUs) used in this job across all nodes
 #SBATCH --cpus-per-task=12    # accelerate data-loader workers to load data in parallel.
 #SBATCH --mem=12G
-#SBATCH --time=0-03:00
+#SBATCH --time=0-05:00
 #SBATCH --output=%N-%j.out
 
 export MASTER_ADDR=192.168.0.66 #Store the master node’s IP address in the MASTER_ADDR environment variable.
@@ -19,4 +19,4 @@ echo "r$SLURM_NODEID Launching python script"
 echo "SLURM_NTASKS_PER_NODE: $SLURM_NTASKS_PER_NODE"
 echo "SLURM_JOB_NUM_NODES: $SLURM_JOB_NUM_NODES"
 echo "NODELIST="${SLURM_NODELIST}
-srun python3.10 gpipe_cifar_eq.py
+srun python3.10 gpipe.py
