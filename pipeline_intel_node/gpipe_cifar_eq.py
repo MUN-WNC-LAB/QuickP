@@ -4,10 +4,13 @@ import sys
 
 import torch
 import torchvision
+
+'''
+must download the latest version of Pippy form https://github.com/pytorch/PiPPy/tree/main
+'''
 from pippy.PipelineSchedule import ScheduleGPipe
 from pippy import pipeline, split_into_equal_size, split_on_size_threshold
 from pippy.IR import annotate_split_points, SplitPoint
-from pippy.PipelineSchedule import PipelineScheduleGPipe
 from pippy.PipelineStage import PipelineStage
 from torchvision.transforms import transforms
 
@@ -17,9 +20,6 @@ from pyutil import getArgs, printPipelineSplitInfo, getStdCifar10DataLoader
 import torch.distributed as dist
 from resnet import ResNet18
 
-in_dim = 512
-layer_dims = [512, 1024, 256]
-out_dim = 10
 beginning_time = None
 ending_time = None
 
@@ -53,10 +53,10 @@ else:
 mn = ResNet18().to(device)
 
 batch_size = 1000
-transform_train = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-train_dataset = torchvision.datasets.CIFAR10(root='./data', train=True, transform=transform_train, download=True)
-dataLoader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=12)
+dataLoader = getStdCifar10DataLoader(num_workers=args.num_workers)
+# Micro-batch number
 chunks = 4
+
 # An image is a 3*32*32 tensor
 # A training set is a batch_size*3*32*32 tensor
 for batch_idx, (inputs, targets) in enumerate(dataLoader):
@@ -89,8 +89,6 @@ schedule = ScheduleGPipe(stage, chunks, loss_fn=loss_fn)
 
 # Run the pipeline with input `x`. Divide the batch into 4 micro-batches
 # and run them in parallel on the pipeline
-# This step triggers task 1: Segmentation fault (core dumped)
-# Need to make sure the later node cannot run before the previous one
 # rank == 0 => the first node
 if args.rank == 0:
     beginning_time = datetime.datetime.now()
@@ -114,6 +112,7 @@ else:
     print("Rank", args.rank, " Beginning time ", beginning_time, " Ending time ", ending_time,
           " Elapsed time ", datetime.timedelta(seconds=ending_time.timestamp() - beginning_time.timestamp()))
 
+# Finish training
 if args.rank == args.world_size - 1:
     # Run the original code and get the output for comparison
     reference_output = mn(x)
