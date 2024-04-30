@@ -14,6 +14,7 @@ from pippy.PipelineStage import PipelineStage
 
 sys.path.append("../")
 from resnet import ResNet18
+from vgg import vgg11
 from py_util import getArgs, printPipelineSplitInfo, getStdModelForCifar10
 # Initialize distributed environment
 import torch.distributed as dist
@@ -38,7 +39,7 @@ else:
 # args.rank, " world_size: ", args.world_size, " num_workers: ", args.num_workers)
 
 # Create the model
-mn = getStdModelForCifar10().to(device)
+mn = vgg11().to(device)
 
 # Add the model split point
 # add_split_points(mn, args.world_size)
