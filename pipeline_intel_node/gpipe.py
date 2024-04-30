@@ -62,7 +62,8 @@ for batch_idx, (inputs, targets) in enumerate(dataLoader, 0):
     x = inputs.to(device)
     y = targets.to(device)
     print(x.shape)
-pipe = pipeline(mn, args.chunks, example_args=(x,), split_policy=split_into_equal_size(args.world_size))
+# https://github.com/pytorch/PiPPy/blob/main/test/test_pipe.py
+pipe = pipeline(mn, args.chunks, example_args=(x,))
 
 # make sure the stage number is equal to that of total devices
 nstages = len(list(pipe.split_gm.children()))
