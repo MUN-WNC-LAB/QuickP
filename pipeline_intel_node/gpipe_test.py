@@ -7,7 +7,7 @@ import os
 import sys
 
 import torch
-from pippy import pipeline
+from pippy import pipeline, split_into_equal_size
 from pippy.IR import annotate_split_points, SplitPoint
 from pippy.PipelineSchedule import ScheduleGPipe
 from pippy.PipelineStage import PipelineStage
@@ -89,13 +89,13 @@ else:
 mn = MyNetwork().to(device)
 
 # Add the model split point
-add_split_points(mn, args.world_size)
+# add_split_points(mn, args.world_size)
 
 batch_size = 32
 example_input = torch.randn(batch_size, in_dim, device=device)
 chunks = 4
 
-pipe = pipeline(mn, chunks, example_args=(example_input,))
+pipe = pipeline(mn, chunks, example_args=(example_input,), split_policy=split_into_equal_size(args.world_size))
 
 # make sure the stage number is equal to that of total devices
 nstages = len(list(pipe.split_gm.children()))
