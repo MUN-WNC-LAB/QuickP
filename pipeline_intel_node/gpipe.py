@@ -7,6 +7,7 @@ import torchvision
 
 '''
 must download the latest version of Pippy form https://github.com/pytorch/PiPPy/tree/main
+good example: https://github.com/pytorch/PiPPy/blob/main/examples/checkpoint/toy_model.py
 '''
 from pippy.PipelineSchedule import ScheduleGPipe
 from pippy import pipeline, split_into_equal_size, split_on_size_threshold
@@ -15,20 +16,13 @@ from pippy.PipelineStage import PipelineStage
 from torchvision.transforms import transforms
 
 sys.path.append("../")
-from py_util import getArgs, printPipelineSplitInfo, getStdCifar10DataLoader
+from py_util import getArgs, printPipelineSplitInfo, getStdCifar10DataLoader, getStdModelForCifar10
 # Initialize distributed environment
 import torch.distributed as dist
 from resnet import ResNet18
 
 beginning_time = None
 ending_time = None
-
-
-def add_split_points(model, world_size):
-    for i in range(1, world_size):
-        # the name should correspond to the layer name in the model
-        annotate_split_points(
-            model, {f"layer{i}": SplitPoint.BEGINNING})
 
 
 # To run a distributed training job, we must launch the script in multiple
@@ -50,7 +44,7 @@ else:
 # args.rank, " world_size: ", args.world_size, " num_workers: ", args.num_workers)
 
 # Create the model
-mn = ResNet18().to(device)
+mn = getStdModelForCifar10().to(device)
 
 dataLoader = getStdCifar10DataLoader(num_workers=args.num_workers, batch_size=args.batch_size)
 
@@ -63,7 +57,7 @@ for batch_idx, (inputs, targets) in enumerate(dataLoader, 0):
     y = targets.to(device)
     print(x.shape)
 # https://github.com/pytorch/PiPPy/blob/main/test/test_pipe.py
-pipe = pipeline(mn, args.chunks, example_args=(x,))
+pipe = pipeline(mn, 2, example_args=(x,), split_policy=split_into_equal_size(args.world_size))
 
 # make sure the stage number is equal to that of total devices
 nstages = len(list(pipe.split_gm.children()))
