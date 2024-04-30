@@ -20,6 +20,7 @@ from py_util import getArgs, printPipelineSplitInfo, getStdCifar10DataLoader, ge
 # Initialize distributed environment
 import torch.distributed as dist
 from resnet import ResNet18
+from vgg import vgg11
 
 beginning_time = None
 ending_time = None
@@ -44,7 +45,7 @@ else:
 # args.rank, " world_size: ", args.world_size, " num_workers: ", args.num_workers)
 
 # Create the model
-mn = ResNet18().to(device)
+mn = vgg11().to(device)
 
 dataLoader = getStdCifar10DataLoader(num_workers=args.num_workers, batch_size=args.batch_size)
 example_input = torch.randn(args.batch_size, 3, 32, 32, device=device)
