@@ -49,15 +49,6 @@ dataLoader = getStdCifar10DataLoader(num_workers=args.num_workers, batch_size=ar
 example_input = torch.randn(args.batch_size, 3, 32, 32, device=device)
 example_output = torch.randn(args.batch_size, 10, device=device)
 
-# An image is a 3*32*32 tensor
-# A training set is a batch_size*3*32*32 tensor
-for batch_idx, (inputs, targets) in enumerate(dataLoader, 0):
-    if batch_idx == 1:
-        break
-    x = inputs.to(device)
-    y = targets.to(device)
-    print(x.shape)
-    print(y.shape)
 # https://github.com/pytorch/PiPPy/blob/main/test/test_pipe.py
 pipe = pipeline(mn, num_chunks=args.chunks, example_args=(example_input,), split_policy=split_into_equal_size(args.world_size))
 
@@ -82,31 +73,41 @@ loss_fn = torch.nn.CrossEntropyLoss()
 # Attach to a schedule
 schedule = ScheduleGPipe(stage, args.chunks, loss_fn=loss_fn)
 
-# Run the pipeline with input `x`. Divide the batch into 4 micro-batches
-# and run them in parallel on the pipeline
-# rank == 0 => the first node
-if args.rank == 0:
-    beginning_time = datetime.datetime.now()
-    schedule.step(x)
-    ending_time = datetime.datetime.now()
-    print("Rank", args.rank, " Beginning time ", beginning_time, " Ending time ", ending_time,
-          " Elapsed time ", datetime.timedelta(seconds=ending_time.timestamp() - beginning_time.timestamp()))
-# the last node
-elif args.rank == args.world_size - 1:
-    beginning_time = datetime.datetime.now()
-    losses = []
-    output = schedule.step(target=y, losses=losses)
-    # output = schedule.step(target=y, losses=losses)
-    ending_time = datetime.datetime.now()
-    print("Rank", args.rank, " Beginning time ", beginning_time, " Ending time ", ending_time,
-          " Elapsed time ", datetime.timedelta(seconds=ending_time.timestamp() - beginning_time.timestamp()))
-# nodes in the middle
-else:
-    beginning_time = datetime.datetime.now()
-    schedule.step()
-    ending_time = datetime.datetime.now()
-    print("Rank", args.rank, " Beginning time ", beginning_time, " Ending time ", ending_time,
-          " Elapsed time ", datetime.timedelta(seconds=ending_time.timestamp() - beginning_time.timestamp()))
+# An image is a 3*32*32 tensor
+# A training set is a batch_size*3*32*32 tensor
+for batch_idx, (inputs, targets) in enumerate(dataLoader, 0):
+    if batch_idx == 1:
+        break
+    x = inputs.to(device)
+    y = targets.to(device)
+    print(x.shape)
+    print(y.shape)
+
+    # Run the pipeline with input `x`. Divide the batch into 4 micro-batches
+    # and run them in parallel on the pipeline
+    # rank == 0 => the first node
+    if args.rank == 0:
+        beginning_time = datetime.datetime.now()
+        schedule.step(x)
+        ending_time = datetime.datetime.now()
+        print("Rank", args.rank, " Beginning time ", beginning_time, " Ending time ", ending_time,
+              " Elapsed time ", datetime.timedelta(seconds=ending_time.timestamp() - beginning_time.timestamp()))
+    # the last node
+    elif args.rank == args.world_size - 1:
+        beginning_time = datetime.datetime.now()
+        losses = []
+        output = schedule.step(target=y, losses=losses)
+        # output = schedule.step(target=y, losses=losses)
+        ending_time = datetime.datetime.now()
+        print("Rank", args.rank, " Beginning time ", beginning_time, " Ending time ", ending_time,
+              " Elapsed time ", datetime.timedelta(seconds=ending_time.timestamp() - beginning_time.timestamp()))
+    # nodes in the middle
+    else:
+        beginning_time = datetime.datetime.now()
+        schedule.step()
+        ending_time = datetime.datetime.now()
+        print("Rank", args.rank, " Beginning time ", beginning_time, " Ending time ", ending_time,
+              " Elapsed time ", datetime.timedelta(seconds=ending_time.timestamp() - beginning_time.timestamp()))
 
 # Finish training
 if args.rank == args.world_size - 1:
