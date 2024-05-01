@@ -77,7 +77,7 @@ dist.init_process_group(backend=args.dist_backend, init_method=args.init_method,
 stage = PipelineStage(pipe, args.rank, device)
 
 # Define a loss function
-loss_fn = torch.nn.MSELoss(reduction="sum")
+loss_fn = torch.nn.CrossEntropyLoss()
 
 # Attach to a schedule
 schedule = ScheduleGPipe(stage, args.chunks, loss_fn=loss_fn)
