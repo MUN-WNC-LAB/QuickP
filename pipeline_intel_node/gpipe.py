@@ -76,8 +76,6 @@ schedule = ScheduleGPipe(stage, args.chunks, loss_fn=loss_fn)
 # An image is a 3*32*32 tensor
 # A training set is a batch_size*3*32*32 tensor
 for batch_idx, (inputs, targets) in enumerate(dataLoader, 0):
-    if batch_idx == 1:
-        break
     x = inputs.to(device)
     y = targets.to(device)
     print(x.shape)
