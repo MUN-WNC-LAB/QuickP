@@ -94,7 +94,7 @@ if args.rank == 0:
 elif args.rank == args.world_size - 1:
     beginning_time = datetime.datetime.now()
     losses = []
-    output = schedule.step(target=y, losses=losses)
+    output = schedule.step()
     # output = schedule.step(target=y, losses=losses)
     ending_time = datetime.datetime.now()
     print("Rank", args.rank, " Beginning time ", beginning_time, " Ending time ", ending_time,
