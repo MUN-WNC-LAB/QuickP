@@ -47,6 +47,8 @@ mn = vgg11().to(device)
 
 dataLoader = getStdCifar10DataLoader(num_workers=args.num_workers, batch_size=args.batch_size)
 example_input = torch.randn(args.batch_size, 3, 32, 32, device=device)
+example_output = torch.randn(args.batch_size, 10, device=device)
+
 # An image is a 3*32*32 tensor
 # A training set is a batch_size*3*32*32 tensor
 for batch_idx, (inputs, targets) in enumerate(dataLoader, 0):
@@ -56,7 +58,7 @@ for batch_idx, (inputs, targets) in enumerate(dataLoader, 0):
     y = targets.to(device)
     print(x.shape)
 # https://github.com/pytorch/PiPPy/blob/main/test/test_pipe.py
-pipe = pipeline(mn, num_chunks=args.chunks, example_args=(x,), split_policy=split_into_equal_size(args.world_size))
+pipe = pipeline(mn, num_chunks=args.chunks, example_args=(example_input, example_output), split_policy=split_into_equal_size(args.world_size))
 
 # make sure the stage number is equal to that of total devices
 nstages = len(list(pipe.split_gm.children()))
