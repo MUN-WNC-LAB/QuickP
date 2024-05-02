@@ -77,13 +77,6 @@ with profile(
         activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
 ) as prof:
     for epoch in range(args.epochs):  # change to no. epochs
-        '''
-        save_checkpoint(
-            pipe,
-            checkpoint_dir=os.path.join("checkpoints", f"{epoch + 1}"),
-            optimizer=optimizer,
-        )
-        '''
         for batch_idx, (inputs, targets) in enumerate(dataLoader, 0):
             x = inputs.to(device)
             y = targets.to(device)
@@ -119,9 +112,12 @@ with profile(
             # nodes in the middle
             else:
                 schedule.step()
+'''                
 prof.export_chrome_trace(
     f"{os.path.splitext(os.path.basename(__file__))[0]}_{args.rank}.json"
 )
+'''
+print(prof.key_averages().table(sort_by="cuda_time_total"))
 
 # Finish training
 dist.barrier()
