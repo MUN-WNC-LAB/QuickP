@@ -25,14 +25,8 @@ from vgg import vgg11
 beginning_time = None
 ending_time = None
 
-# To run a distributed training job, we must launch the script in multiple
-# different processes. We are using `torchrun` to do so in this example.
-# `torchrun` defines two environment variables: `RANK` and `WORLD_SIZE`,
-# which represent the index of this process within the set of processes and
-# the total number of processes, respectively.
-#
-# To learn more about `torchrun`, see
-# https://pytorch.org/docs/stable/elastic/run.html
+# https://github.com/pytorch/PiPPy/blob/main/examples/checkpoint/toy_model.py is a good example found
+
 args = getArgs()
 
 # Figure out device to use
@@ -69,8 +63,9 @@ dist.init_process_group(backend=args.dist_backend, init_method=args.init_method,
 # Put different stages on different devices
 stage = PipelineStage(pipe, args.rank, device)
 
-# Define a loss function
+# Define a loss function and optimizer
 loss_fn = torch.nn.CrossEntropyLoss()
+optimizer = torch.optim.SGD(stage.submod.parameters(), lr=1e-3, momentum=0.9)
 
 # Attach to a schedule
 schedule = ScheduleGPipe(stage, args.chunks, loss_fn=loss_fn)
@@ -80,6 +75,8 @@ schedule = ScheduleGPipe(stage, args.chunks, loss_fn=loss_fn)
 for batch_idx, (inputs, targets) in enumerate(dataLoader, 0):
     x = inputs.to(device)
     y = targets.to(device)
+
+    optimizer.zero_grad()
 
     # Run the pipeline with input `x`. Divide the batch into 4 micro-batches
     # and run them in parallel on the pipeline
@@ -99,22 +96,16 @@ for batch_idx, (inputs, targets) in enumerate(dataLoader, 0):
             beginning_time = datetime.datetime.now()
         losses = []
         output = schedule.step(target=y, losses=losses)
+        # Take an optimization step
+        optimizer.step()
         if batch_idx == dataLoader.__len__() - 1:
             ending_time = datetime.datetime.now()
             print("Rank", args.rank, " Beginning time ", beginning_time, " Ending time ", ending_time,
                   " Elapsed time ", datetime.timedelta(seconds=ending_time.timestamp() - beginning_time.timestamp()))
     # nodes in the middle
     else:
-        beginning_time = datetime.datetime.now()
         schedule.step()
-        ending_time = datetime.datetime.now()
-        print("Rank", args.rank, " Beginning time ", beginning_time, " Ending time ", ending_time,
-              " Elapsed time ", datetime.timedelta(seconds=ending_time.timestamp() - beginning_time.timestamp()))
 
 # Finish training
-if args.rank == args.world_size - 1:
-    # Run the original code and get the output for comparison
-    reference_output = mn(x)
-    # Compare numerics of pipeline and original model
-    torch.testing.assert_close(output, reference_output)
-    print(" Pipeline parallel model ran successfully! ".center(80, "*"))
+dist.barrier()
+print(f"Rank {args.rank} completes")
