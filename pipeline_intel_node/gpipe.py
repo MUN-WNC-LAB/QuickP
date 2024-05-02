@@ -77,11 +77,13 @@ with profile(
         activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
 ) as prof:
     for epoch in range(args.epochs):  # change to no. epochs
+        '''
         save_checkpoint(
             pipe,
             checkpoint_dir=os.path.join("checkpoints", f"{epoch + 1}"),
             optimizer=optimizer,
         )
+        '''
         for batch_idx, (inputs, targets) in enumerate(dataLoader, 0):
             x = inputs.to(device)
             y = targets.to(device)
