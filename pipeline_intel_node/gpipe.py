@@ -71,6 +71,7 @@ schedule = ScheduleGPipe(stage, args.chunks, loss_fn=loss_fn)
 
 # An image is a 3*32*32 tensor
 # A training set is a batch_size*3*32*32 tensor
+mn.train()
 with profile(
         activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
 ) as prof:
@@ -109,9 +110,9 @@ with profile(
         # nodes in the middle
         else:
             schedule.step()
-    prof.export_chrome_trace(
-        f"{os.path.splitext(os.path.basename(__file__))[0]}_{args.rank}.json"
-    )
+prof.export_chrome_trace(
+    f"{os.path.splitext(os.path.basename(__file__))[0]}_{args.rank}.json"
+)
 
 # Finish training
 dist.barrier()
