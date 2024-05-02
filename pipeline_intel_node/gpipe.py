@@ -14,6 +14,7 @@ from pippy import pipeline, split_into_equal_size, split_on_size_threshold
 from pippy.IR import annotate_split_points, SplitPoint
 from pippy.PipelineStage import PipelineStage
 from torch.profiler import profile, ProfilerActivity
+from pippy.SaveModule import save_checkpoint
 
 sys.path.append("../")
 from py_util import getArgs, printPipelineSplitInfo, getStdCifar10DataLoader, getStdModelForCifar10
@@ -75,41 +76,42 @@ mn.train()
 with profile(
         activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
 ) as prof:
-    for batch_idx, (inputs, targets) in enumerate(dataLoader, 0):
-        x = inputs.to(device)
-        y = targets.to(device)
+    for epoch in range(args.epochs):  # change to no. epochs
+        for batch_idx, (inputs, targets) in enumerate(dataLoader, 0):
+            x = inputs.to(device)
+            y = targets.to(device)
 
-        optimizer.zero_grad()
+            optimizer.zero_grad()
 
-        # Run the pipeline with input `x`. Divide the batch into 4 micro-batches
-        # and run them in parallel on the pipeline
-        # rank == 0 => the first node
-        if args.rank == 0:
-            if batch_idx == 0:
-                beginning_time = datetime.datetime.now()
-            schedule.step(x)
-            ending_time = datetime.datetime.now()
-            if batch_idx == dataLoader.__len__() - 1:
+            # Run the pipeline with input `x`. Divide the batch into 4 micro-batches
+            # and run them in parallel on the pipeline
+            # rank == 0 => the first node
+            if args.rank == 0:
+                if batch_idx == 0:
+                    beginning_time = datetime.datetime.now()
+                schedule.step(x)
                 ending_time = datetime.datetime.now()
-                print("Rank", args.rank, " Beginning time ", beginning_time, " Ending time ", ending_time,
-                      " Elapsed time ",
-                      datetime.timedelta(seconds=ending_time.timestamp() - beginning_time.timestamp()))
-        # the last node
-        elif args.rank == args.world_size - 1:
-            if batch_idx == 0:
-                beginning_time = datetime.datetime.now()
-            losses = []
-            output = schedule.step(target=y, losses=losses)
-            # Take an optimization step
-            optimizer.step()
-            if batch_idx == dataLoader.__len__() - 1:
-                ending_time = datetime.datetime.now()
-                print("Rank", args.rank, " Beginning time ", beginning_time, " Ending time ", ending_time,
-                      " Elapsed time ",
-                      datetime.timedelta(seconds=ending_time.timestamp() - beginning_time.timestamp()))
-        # nodes in the middle
-        else:
-            schedule.step()
+                if batch_idx == dataLoader.__len__() - 1:
+                    ending_time = datetime.datetime.now()
+                    print("Rank", args.rank, " Beginning time ", beginning_time, " Ending time ", ending_time,
+                          " Elapsed time ",
+                          datetime.timedelta(seconds=ending_time.timestamp() - beginning_time.timestamp()))
+            # the last node
+            elif args.rank == args.world_size - 1:
+                if batch_idx == 0:
+                    beginning_time = datetime.datetime.now()
+                losses = []
+                output = schedule.step(target=y, losses=losses)
+                # Take an optimization step
+                optimizer.step()
+                if batch_idx == dataLoader.__len__() - 1:
+                    ending_time = datetime.datetime.now()
+                    print("Rank", args.rank, " Beginning time ", beginning_time, " Ending time ", ending_time,
+                          " Elapsed time ",
+                          datetime.timedelta(seconds=ending_time.timestamp() - beginning_time.timestamp()))
+            # nodes in the middle
+            else:
+                schedule.step()
 prof.export_chrome_trace(
     f"{os.path.splitext(os.path.basename(__file__))[0]}_{args.rank}.json"
 )
