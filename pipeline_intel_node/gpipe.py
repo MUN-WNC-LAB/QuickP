@@ -43,7 +43,9 @@ else:
 
 # Create the model
 mn = vgg11().to(device)
-
+'''
+it is important batch size is dividable by the number of images
+'''
 dataLoader = getStdCifar10DataLoader(num_workers=args.num_workers, batch_size=args.batch_size)
 example_input = torch.randn(args.batch_size, 3, 32, 32, device=device)
 example_output = torch.randn(args.batch_size, 10, device=device)
