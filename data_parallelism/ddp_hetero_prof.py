@@ -17,6 +17,7 @@ import torch.nn as nn
 sys.path.append("../")
 from py_util import getStdModelForCifar10, getArgs
 from data_parallelism.sampler import UnevenDistributedSampler, get_uneven_loader
+from data_parallelism.prof_util import get_communication_cost
 from vgg import vgg16, vgg11
 from resnet import ResNet18
 from alexnet import AlexNet
@@ -122,7 +123,7 @@ def train_one_epoch(train_loader, model, criterion, optimizer, epoch, nodeID, de
             if batch_idx % 24 == 0:
                 print(
                     "From Node: {}, epoch {}, steps {}, batch size {}".format(nodeID, epoch, batch_idx, inputs.size()))
-    print(prof.key_averages().table(sort_by="cuda_time_total"))
+    print(get_communication_cost(prof.key_averages().table(sort_by="cuda_time_total")))
 
 
 if __name__ == '__main__':
