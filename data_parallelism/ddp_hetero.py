@@ -14,7 +14,7 @@ import torch.nn as nn
 
 sys.path.append("../")
 from py_util import getStdModelForCifar10, getArgs
-from data_parallelism_new.sampler import UnevenDistributedSampler, get_uneven_loader
+from data_parallelism.sampler import UnevenDistributedSampler, get_uneven_loader
 from vgg import vgg16, vgg11
 from resnet import ResNet18
 from alexnet import AlexNet
