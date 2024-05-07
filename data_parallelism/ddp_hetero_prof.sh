@@ -24,4 +24,4 @@ echo "SLURM MASTER ="${SLURM_SUBMIT_DIR}
 echo "MASTER_ADDR="$MASTER_ADDR
 
 ### the command to run
-srun python3.10 ddp.py --epochs 1
+srun python3.10 ddp_hetero_prof.py --epochs 1

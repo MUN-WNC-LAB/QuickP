@@ -7,6 +7,8 @@ import torch
 import numpy as np
 import random
 import torch.distributed as dist
+from torch._C._profiler import ProfilerActivity
+from torch.profiler import profile
 from torch.utils.data import DistributedSampler
 from torchvision.datasets import CIFAR10
 import torchvision.transforms as transforms
@@ -101,28 +103,27 @@ def main(args):
 
 def train_one_epoch(train_loader, model, criterion, optimizer, epoch, nodeID, device):
     global computing_time
+    with profile(
+            activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
+    ) as prof:
+        for batch_idx, (inputs, targets) in enumerate(train_loader):
+            start = datetime.datetime.now().timestamp()
+            inputs = inputs.to(device)
+            targets = targets.to(device)
 
-    for batch_idx, (inputs, targets) in enumerate(train_loader):
-        start = datetime.datetime.now().timestamp()
-        inputs = inputs.to(device)
-        targets = targets.to(device)
+            outputs = model(inputs)
+            loss = criterion(outputs, targets)
 
-        outputs = model(inputs)
-        loss = criterion(outputs, targets)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            computing_time += datetime.datetime.now().timestamp() - start
 
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        computing_time += datetime.datetime.now().timestamp() - start
+            if batch_idx % 24 == 0:
+                print(
+                    "From Node: {}, epoch {}, steps {}, batch size {}".format(nodeID, epoch, batch_idx, inputs.size()))
+    print(prof.key_averages().table(sort_by="cuda_time_total"))
 
-        if batch_idx % 24 == 0:
-            print("From Node: {}, epoch {}, steps {}, batch size {}".format(nodeID, epoch, batch_idx, inputs.size()))
-
-
-'''
-def validate(val_loader, model, criterion, epoch, args):
-    pass
-'''
 
 if __name__ == '__main__':
     args = getArgs()
