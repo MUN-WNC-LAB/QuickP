@@ -112,8 +112,8 @@ def train_one_epoch(train_loader, model, criterion, optimizer, epoch, nodeID):
             if batch_idx % 24 == 0:
                 print(
                     "From Node: {}, epoch {}, steps {}, batch size {}".format(nodeID, epoch, batch_idx, inputs.size()))
-    prof.export_chrome_trace("ddp_prof.json")
-    print_communication_cost(prof.key_averages().table(sort_by="cuda_time_total"))
+    # prof.export_chrome_trace("ddp_prof.json")
+    print(prof.key_averages().table(sort_by="cuda_time_total"))
 
 
 '''
