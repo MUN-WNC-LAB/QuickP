@@ -7,9 +7,7 @@ import torch
 import numpy as np
 import random
 import torch.distributed as dist
-from torch._C._profiler import ProfilerActivity
-from torch.autograd.profiler import record_function
-from torch.profiler import profile
+from torch.profiler import profile, record_function, ProfilerActivity
 from torch.utils.data import DistributedSampler
 from torchvision.datasets import CIFAR10
 import torchvision.transforms as transforms
