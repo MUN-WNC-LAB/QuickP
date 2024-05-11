@@ -1,7 +1,6 @@
 import datetime
 import os
 import sys
-import time
 
 import torch
 import numpy as np
@@ -14,11 +13,7 @@ import torchvision.transforms as transforms
 import torch.nn as nn
 
 sys.path.append("../")
-from py_util import getStdModelForCifar10, getArgs, print_communication_cost
-from data_parallelism.sampler import UnevenDistributedSampler
-from vgg import vgg16, vgg11
-from resnet import ResNet18
-from alexnet import AlexNet
+from py_util import getStdModelForCifar10, getArgs
 
 device = torch.device("cuda:0")
 computing_time = 0

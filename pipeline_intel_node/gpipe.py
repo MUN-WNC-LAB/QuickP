@@ -1,27 +1,22 @@
 import datetime
-import os
 import sys
 
 import torch
-import torchvision
 
 '''
 must download the latest version of Pippy form https://github.com/pytorch/PiPPy/tree/main
 good example: https://github.com/pytorch/PiPPy/blob/main/examples/checkpoint/toy_model.py
 '''
 from pippy.PipelineSchedule import ScheduleGPipe
-from pippy import pipeline, split_into_equal_size, split_on_size_threshold
-from pippy.IR import annotate_split_points, SplitPoint
+from pippy import pipeline, split_into_equal_size
 from pippy.PipelineStage import PipelineStage
 from torch.profiler import profile, ProfilerActivity
-from pippy.SaveModule import save_checkpoint
 
 sys.path.append("../")
-from py_util import getArgs, printPipelineSplitInfo, getStdCifar10DataLoader, getStdModelForCifar10
+from py_util import getArgs, printPipelineSplitInfo, getStdCifar10DataLoader
 # Initialize distributed environment
 import torch.distributed as dist
-from resnet import ResNet18
-from vgg import vgg11
+from DNN_model_ptytorch.vgg import vgg11
 
 beginning_time = None
 ending_time = None
