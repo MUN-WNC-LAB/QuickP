@@ -4,7 +4,7 @@
 
 ### e.g. request 2 nodes with 1 gpu each, totally 2 gpus (WORLD_SIZE==2)
 #SBATCH --gpus=2              # specifies the total number of GPUs required for an entire job across all nodes
-#SBATCH --gres=gpu:1          #GPU number in each node; should equal to ntasks-per-node
+#SBATCH --gpus-per-node=1          #GPU number in each node; should equal to ntasks-per-node
 #SBATCH --nodes=2
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=12    #accelerate Pytorch data loader
