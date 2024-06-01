@@ -48,17 +48,6 @@ def start_iperf_server(hostname, port: int, username, password):
         # Start iperf3 server on the remote machine
         command = f"iperf3 -s -p {port}"
         stdin, stdout, stderr = client.exec_command(command)
-
-        # Allow some time for the iperf3 server to start
-        time.sleep(2)
-
-        # Check if the server started successfully
-        errors = stderr.read().decode()
-        if errors:
-            print(f"Error starting iperf3 server: {errors}")
-        else:
-            print(f"iperf3 server started on {hostname}:{port}")
-
     except paramiko.SSHException as e:
         print(f"SSH connection failed: {e}")
     finally:
