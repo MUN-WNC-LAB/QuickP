@@ -20,34 +20,23 @@ def run_iperf_client(server_ip: str, duration=10, port=5201):
     # Parse the JSON output
     output = result.stdout.decode('utf-8')
     iperf_data = json.loads(output)
-
     # Extract relevant information
-    start = iperf_data["start"]
+    assert iperf_data is not None
     end = iperf_data["end"]
-    intervals = iperf_data["intervals"]
-
-    total_sent = end["sum_sent"]["bytes"] * 8 / 1_000_000  # Convert to Megabits
-    total_received = end["sum_received"]["bytes"] * 8 / 1_000_000  # Convert to Megabits
-    duration = end["sum_sent"]["seconds"]
-    bandwidth_sent = total_sent / duration  # Mbps
-    bandwidth_received = total_received / duration  # Mbps
-
-    print(f"Total data sent: {total_sent:.2f} Mbits")
-    print(f"Total data received: {total_received:.2f} Mbits")
-    print(f"Duration: {duration:.2f} seconds")
-    print(f"Bandwidth sent: {bandwidth_sent:.2f} Mbps")
-    print(f"Bandwidth received: {bandwidth_received:.2f} Mbps")
-
-    return {
-        "total_sent_mbits": total_sent,
-        "total_received_mbits": total_received,
+    assert end is not None
+    duration = end["sum_received"]["seconds"]
+    bandwidth_sent = end["sum_sent"]["bits_per_second"]  # Mbps
+    bandwidth_received = end["sum_received"]["bits_per_second"]  # Mbps
+    band_dict = {
         "duration_seconds": duration,
         "bandwidth_sent_mbps": bandwidth_sent,
         "bandwidth_received_mbps": bandwidth_received,
     }
+    print(band_dict)
+    return band_dict
 
 
-def start_iperf_server(hostname, port, username, password):
+def start_iperf_server(hostname, port: int, username, password):
     # Create an SSH client
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -64,7 +53,6 @@ def start_iperf_server(hostname, port, username, password):
         time.sleep(2)
 
         # Check if the server started successfully
-        output = stdout.read().decode()
         errors = stderr.read().decode()
         if errors:
             print(f"Error starting iperf3 server: {errors}")
@@ -78,7 +66,7 @@ def start_iperf_server(hostname, port, username, password):
 
 
 if __name__ == "__main__":
-    port = 7575
+    port = 7100
     server_ip = "192.168.0.6"  # Replace with the server's IP address
     # Start iperf3 server on the remote machine
     start_iperf_server(server_ip, port, "root", "1314520")
