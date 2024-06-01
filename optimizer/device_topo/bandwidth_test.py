@@ -1,11 +1,14 @@
-# git clone https://github.com/NVIDIA/cuda-samples.git
-# sudo apt-get install freeglut3-dev build-essential libx11-dev libxmu-dev libxi-dev libgl1-mesa-glx libglu1-mesa libglu1-mesa-dev libglfw3-dev libgles2-mesa-dev
-# sudo apt-get install build-essential cmake
-# git reset --hard v12.3 since the current CUDA version is 12.3 but avoid this issue https://github.com/NVIDIA/cuda-samples/issues/235. Choose the next commit e8568c417356f7e66bb9b7130d6be7e55324a519
-# hola@hola-Legion-T7-34IAZ7:~/Desktop/cuda-samples/bin/x86_64/linux/release$ ./bandwidthTest --device=all --dtoh --htod --dtod
+# git clone https://github.com/NVIDIA/cuda-samples.git sudo apt-get install freeglut3-dev build-essential libx11-dev
+# libxmu-dev libxi-dev libgl1-mesa-glx libglu1-mesa libglu1-mesa-dev libglfw3-dev libgles2-mesa-dev build-essential
+# cmake git reset --hard v12.3 since the current CUDA version is 12.3 but avoid this issue
+# https://github.com/NVIDIA/cuda-samples/issues/235. Choose the next commit e8568c417356f7e66bb9b7130d6be7e55324a519
+
 import subprocess
 import re
 
+
+# /usr/local/cuda-samples/bin/x86_64/linux/release$ ./bandwidthTest --device=all --dtoh --htod --dtod
+test_url = "/usr/local/cuda-samples/bin/x86_64/linux/release"
 
 def get_gpu_bandwidth():
     # Run the bandwidthTest utility
