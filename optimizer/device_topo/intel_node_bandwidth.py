@@ -4,6 +4,7 @@ import json
 import time
 
 import paramiko
+from paramiko.client import SSHClient
 
 
 # Sender side command example: iperf3 -c 192.168.0.6 -p 7575; -c state running as client end
@@ -37,6 +38,23 @@ def run_iperf_client(server_ip: str, duration=10, port=5201):
 
 
 def start_iperf_server(hostname, port: int, username, password):
+    def is_iperf3_active(client: SSHClient):
+        # Command to check what application is listening on the specified port
+        command = f"sudo lsof -i :{port} | grep LISTEN"
+
+        # Execute the command
+        stdin, stdout, stderr = client.exec_command(command)
+        output = stdout.read().decode().strip()
+        if output and "iperf3" in output:
+            print(f"iperf3 is listening on port {port}:\n{output}")
+            return True
+        elif output and "iperf3" not in output:
+            print(f"Wrong application is listening on port {port}.")
+            return False
+        else:
+            print(f"No application is listening on port {port}. Waiting to start iperf3.")
+            return False
+
     # Create an SSH client
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -44,10 +62,14 @@ def start_iperf_server(hostname, port: int, username, password):
     try:
         # Connect to the remote server
         client.connect(hostname, username=username, password=password)
-
+        if is_iperf3_active(client):
+            return None
         # Start iperf3 server on the remote machine
         command = f"iperf3 -s -p {port}"
-        stdin, stdout, stderr = client.exec_command(command)
+        client.exec_command(command)
+        # give iperf3 two seconds to start
+        time.sleep(2)
+        print("iperf3 started")
     except paramiko.SSHException as e:
         print(f"SSH connection failed: {e}")
     finally:
