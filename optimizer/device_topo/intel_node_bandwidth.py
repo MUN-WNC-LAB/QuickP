@@ -12,6 +12,7 @@ from paramiko.client import SSHClient
 def run_iperf_client(server_ip: str, duration=10, port=5201):
     # Run the iperf3 client command
     command = ["iperf3", "-c", server_ip, "-t", str(duration), "-p", str(port), "-J"]  # '-J' for JSON output
+    print(f"Start profiling bandwidth. Wait for {duration} seconds")
     result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     if result.returncode != 0:
