@@ -1,11 +1,11 @@
 from optimizer.device_topo.intel_node_bandwidth import start_iperf_server, run_iperf_client
-from optimizer.device_topo.intra_node_bandwidth import get_gpu_bandwidth
+from optimizer.device_topo.intra_node_bandwidth import get_device_bandwidth
 from optimizer.model.graph import DeviceGraph
 
 
 def init_topo():
     G = DeviceGraph()
-    bandwidths = get_gpu_bandwidth()
+    bandwidths = get_device_bandwidth()
     G.a
 
     port = 7100

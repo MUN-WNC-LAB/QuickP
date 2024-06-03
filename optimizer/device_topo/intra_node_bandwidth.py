@@ -7,7 +7,8 @@ import io
 import os
 import socket
 import subprocess
-import re
+import torch
+import tensorflow as tf
 
 # /usr/local/cuda-samples/bin/x86_64/linux/release/bandwidthTest --device=all --dtoh --htod --dtod
 sample_addr = "/usr/local/cuda-samples/bin/x86_64/linux/release"
@@ -15,8 +16,12 @@ bandwidth_addr = os.path.join(sample_addr, "bandwidthTest")
 print(bandwidth_addr)
 
 
-def get_gpu_bandwidth():
+def get_device_bandwidth():
     hostname = socket.gethostname()
+    # check if GPU configuration is okay
+    gpus = tf.config.experimental.list_physical_devices('GPU')
+    if not gpus:
+        raise ValueError("No GPUs found")
     """Run the bandwidthTest utility and return the raw CSV output."""
     try:
         result = subprocess.run(
@@ -30,10 +35,11 @@ def get_gpu_bandwidth():
                 parts = line
                 device_name = parts[0].split('-')[1]
                 bandwidth = parts[1].split('=')[1].strip()
-                key = f"{device_name}-{hostname}"
+                # key = f"{device_name}-{hostname}"
                 # Append the bandwidth data to the device entry
-                bandwidths[key] = bandwidth
+                bandwidths[device_name] = bandwidth
 
-        return bandwidths
+        devices = [device.name for device in tf.config.experimental.list_physical_devices()]
+        return hostname, bandwidths, devices
     except subprocess.CalledProcessError as e:
         print(f"Error running bandwidthTest: {e}")
