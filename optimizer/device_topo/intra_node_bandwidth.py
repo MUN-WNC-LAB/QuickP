@@ -9,6 +9,7 @@ import socket
 import subprocess
 import torch
 import tensorflow as tf
+from tensorflow.python.client import device_lib
 
 # /usr/local/cuda-samples/bin/x86_64/linux/release/bandwidthTest --device=all --dtoh --htod --dtod
 sample_addr = "/usr/local/cuda-samples/bin/x86_64/linux/release"
@@ -39,7 +40,19 @@ def get_device_bandwidth():
                 # Append the bandwidth data to the device entry
                 bandwidths[device_name] = bandwidth
 
-        devices = [device.name for device in tf.config.experimental.list_physical_devices()]
-        return hostname, bandwidths, devices
+        device_info = []
+
+        for device in device_lib.list_local_devices():
+
+            device_info.append({
+                'name': device.name,
+                'device_type': device.device_type,
+                'memory_limit': device.memory_limit
+            })
+            print(device_lib.list_local_devices())
+        print(bandwidths, device_info)
+        return bandwidths, device_info
     except subprocess.CalledProcessError as e:
         print(f"Error running bandwidthTest: {e}")
+
+get_device_bandwidth()

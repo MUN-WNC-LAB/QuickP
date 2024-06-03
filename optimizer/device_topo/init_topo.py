@@ -5,8 +5,8 @@ from optimizer.model.graph import DeviceGraph
 
 def init_topo():
     G = DeviceGraph()
-    bandwidths = get_device_bandwidth()
-    G.a
+    bandwidths, devices = get_device_bandwidth()
+    for
 
     port = 7100
     server_ip = "192.168.0.6"  # Replace with the server's IP address
