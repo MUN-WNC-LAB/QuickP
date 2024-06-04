@@ -6,11 +6,17 @@ from optimizer.model.graph import DeviceGraph
 def init_topo():
     G = DeviceGraph()
     bandwidths, devices = get_device_bandwidth()
-    for
-
+    for device in devices:
+        G.add_new_node(device["name"], device["memory_limit"])
+    print(G.edges)
+    '''
     port = 7100
     server_ip = "192.168.0.6"  # Replace with the server's IP address
     # Start iperf3 server on the remote machine
     start_iperf_server(server_ip, port, "root", "1314520")
     duration = 10  # Duration in seconds for the test
     run_iperf_client(server_ip, duration, port)
+    '''
+
+
+init_topo()
