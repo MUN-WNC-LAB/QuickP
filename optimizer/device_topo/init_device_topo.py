@@ -11,7 +11,7 @@ def get_key_including_substring(d, substring):
     return None  # Return None if no such key is found
 
 
-def init_intra_node_topo():
+def get_intra_node_topo():
     G = DeviceGraph()
     bandwidths, devices = get_device_bandwidth()
     for (name, attributes) in devices.items():
@@ -39,4 +39,4 @@ def init_intra_node_topo():
     '''
 
 
-init_intra_node_topo()
+get_intra_node_topo()
