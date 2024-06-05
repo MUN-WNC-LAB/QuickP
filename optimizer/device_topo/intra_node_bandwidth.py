@@ -43,14 +43,15 @@ def get_device_bandwidth():
         # Function to extract device information
         def extract_device_info(device):
             return {
-                'name': f"{device.name}-{hostname}",
                 'device_type': device.device_type,
                 'memory_limit': device.memory_limit
                 # Convert bytes to GB for GPU
             }
 
         # Get the list of local devices and map them to the desired format
-        device_info = list(map(extract_device_info, device_lib.list_local_devices()))
+        device_info = {}
+        for device in device_lib.list_local_devices():
+            device_info[f"{device.name}-{hostname}"] = extract_device_info(device)
         print(bandwidths, device_info)
         return bandwidths, device_info
     except subprocess.CalledProcessError as e:
