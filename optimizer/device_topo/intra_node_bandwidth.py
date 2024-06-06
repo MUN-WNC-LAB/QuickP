@@ -82,7 +82,6 @@ def get_device_bandwidth():
         device_info = {}
         for device in device_lib.list_local_devices():
             device_info[f"{device.name}-{hostname}"] = extract_device_info(device)
-        print(bandwidths, device_info)
         return bandwidths, device_info
     except subprocess.CalledProcessError as e:
         print(f"Error running bandwidthTest: {e}")

@@ -1,3 +1,6 @@
+import sys
+
+sys.path.append("../")
 from optimizer.device_topo.intel_node_bandwidth import start_iperf_server, run_iperf_client
 from optimizer.device_topo.intra_node_bandwidth import get_device_bandwidth
 from optimizer.model.graph import DeviceGraph
@@ -28,6 +31,7 @@ def get_intra_node_topo() -> DeviceGraph:
         if not from_device or not to_device:
             raise ValueError("device not found")
         G.update_link_bandwidth(from_device, to_device, band)
+    print(G.nodes.data(), G.edges.data())
     return G
 
 
@@ -38,3 +42,6 @@ def get_intel_node_topo():
     start_iperf_server(server_ip, port, "root", "1314520")
     duration = 10  # Duration in seconds for the test
     run_iperf_client(server_ip, duration, port)
+
+
+get_intra_node_topo()

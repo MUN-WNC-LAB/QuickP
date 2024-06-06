@@ -25,4 +25,4 @@ echo "SLURM MASTER ="${SLURM_SUBMIT_DIR}
 echo "MASTER_ADDR="$MASTER_ADDR
 
 ### the command to run
-srun python3 intra_node_bandwidth.py
+srun python3 init_device_topo.py
