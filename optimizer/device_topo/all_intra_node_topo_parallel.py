@@ -1,7 +1,10 @@
+"""
+This file is called by a Slurm script .sh file
+"""
+import os
 import sys
 
 sys.path.append("../../")
-from optimizer.device_topo.intel_node_bandwidth import start_iperf_server, run_iperf_client
 from optimizer.device_topo.intra_node_bandwidth import get_device_bandwidth
 from optimizer.model.graph import DeviceGraph
 
@@ -35,7 +38,9 @@ def get_intra_node_topo() -> DeviceGraph:
         if not from_device or not to_device:
             raise ValueError("device not found")
         G.update_link_bandwidth(from_device, to_device, band)
-    print(G.nodes.data(), G.edges.data())
+    print("Remove Later:", os.environ.get("SLURMD_NODENAME"), "start profiling")
+    print(G.edges.data())
+    print("Remove Later:", os.environ.get("SLURMD_NODENAME"), "end profiling")
     return G
 
 
