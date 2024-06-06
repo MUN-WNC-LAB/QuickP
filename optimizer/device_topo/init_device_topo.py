@@ -1,6 +1,6 @@
 import sys
 
-sys.path.append("../")
+sys.path.append("../../")
 from optimizer.device_topo.intel_node_bandwidth import start_iperf_server, run_iperf_client
 from optimizer.device_topo.intra_node_bandwidth import get_device_bandwidth
 from optimizer.model.graph import DeviceGraph
