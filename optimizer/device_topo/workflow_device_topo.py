@@ -18,17 +18,21 @@ def get_slurm_available_nodes():
 
 def create_slurm_script(nodes):
     script_content = f"""#!/bin/bash
-    #SBATCH --job-name=All_Device_Intra_Node_Bandwidth
-    #SBATCH --output=device_intra_node_output.txt
-    #SBATCH --error=/dev/null 
-    #SBATCH --nodes={nodes}
-    #SBATCH --ntasks-per-node=1
-    #SBATCH --cpus-per-task=12   
-    #SBATCH --time=00:30
-    
-    # Your command to run on all nodes
-    srun python3 all_intra_node_topo_parallel.py
-    """
+#SBATCH --job-name=All_Device_Intra_Node_Bandwidth
+#SBATCH --time=00:30
+
+#SBATCH --gpus={nodes}              
+#SBATCH --gpus-per-node=1     
+#SBATCH --nodes={nodes}           
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=12    
+#SBATCH --output=device_intra_node_output.txt
+#SBATCH --error=/dev/null     
+#SBATCH --mem=1000            
+
+### the command to run
+srun python3 all_intra_node_topo_parallel.py
+"""
     with open("all_device_intra.sh", "w") as f:
         f.write(script_content)
 
