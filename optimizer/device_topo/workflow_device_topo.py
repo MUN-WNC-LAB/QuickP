@@ -1,5 +1,8 @@
 import subprocess
 
+output_path = "device_intra_node_output.txt"
+sh_path = "all_device_intra.sh"
+
 
 def get_slurm_available_nodes():
     try:
@@ -16,7 +19,7 @@ def get_slurm_available_nodes():
         return 0
 
 
-def create_slurm_script(nodes):
+def create_slurm_script(nodes, out_path):
     script_content = f"""#!/bin/bash
 #SBATCH --job-name=All_Device_Intra_Node_Bandwidth
 #SBATCH --time=00:30
@@ -26,20 +29,20 @@ def create_slurm_script(nodes):
 #SBATCH --nodes={nodes}           
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=12    
-#SBATCH --output=device_intra_node_output.txt
+#SBATCH --output={out_path}
 #SBATCH --error=/dev/null     
 #SBATCH --mem=1000            
 
 ### the command to run
 srun python3 all_intra_node_topo_parallel.py
 """
-    with open("all_device_intra.sh", "w") as f:
+    with open(sh_path, "w") as f:
         f.write(script_content)
 
 
 def submit_slurm_script():
     try:
-        subprocess.run(['sbatch', 'all_device_intra.sh'], check=True)
+        subprocess.run(['sbatch', sh_path], check=True)
         print("Job submitted successfully.")
     except subprocess.CalledProcessError as e:
         print(f"An error occurred while submitting the job: {e}")
@@ -50,7 +53,7 @@ if __name__ == "__main__":
     print(f"Number of available nodes: {nodes}")
 
     if nodes > 0:
-        create_slurm_script(nodes)
+        create_slurm_script(nodes, output_path)
         submit_slurm_script()
     else:
         print("No available nodes to run the job.")
