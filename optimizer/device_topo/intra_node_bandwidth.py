@@ -1,7 +1,39 @@
-# git clone https://github.com/NVIDIA/cuda-samples.git sudo apt-get install freeglut3-dev build-essential libx11-dev
-# libxmu-dev libxi-dev libgl1-mesa-glx libglu1-mesa libglu1-mesa-dev libglfw3-dev libgles2-mesa-dev build-essential
-# cmake git reset --hard v12.3 since the current CUDA version is 12.3 but avoid this issue
-# https://github.com/NVIDIA/cuda-samples/issues/235. Choose the next commit e8568c417356f7e66bb9b7130d6be7e55324a519
+'''
+Step 1
+# Step 1: Clone the CUDA Samples Repository
+# Clone the repository to your local machine:
+# git clone https://github.com/NVIDIA/cuda-samples.git /path/to/local/clone
+
+# Step 2: Reset to a Suitable Version
+# Navigate to the cloned repository and reset it to the commit that matches your CUDA version.
+# For example, if your CUDA version is 12.3, run:
+# cd /path/to/local/clone/cuda-samples
+# git reset --hard e8568c417356f7e66bb9b7130d6be7e55324a519
+
+# Step 3: Install Required Dependencies
+# Install the necessary libraries and tools:
+# sudo apt-get install freeglut3-dev build-essential libx11-dev libxmu-dev libxi-dev \
+# libgl1-mesa-glx libglu1-mesa libglu1-mesa-dev libglfw3-dev libgles2-mesa-dev cmake
+
+# Step 4: Build the CUDA Samples
+# Navigate to the CUDA samples directory and compile the samples:
+# cd /path/to/local/clone/cuda-samples
+# make
+
+# Step 5: Move the CUDA Samples
+# Move the compiled CUDA samples to a desired path, for example:
+# sudo mv /path/to/local/clone/cuda-samples /usr/local/cuda-samples
+
+# Step 6: Update the PATH Environment Variable
+# Add the CUDA samples binary directory to your PATH in .bashrc.
+# If the CUDA samples are located in /usr/local/cuda-samples, the PATH will be:
+# echo 'export PATH=/usr/local/cuda-samples/bin/x86_64/linux/release:$PATH' >> ~/.bashrc
+# source ~/.bashrc
+
+# Step 7: Run the Bandwidth Test
+# Execute the bandwidth test with the following command:
+# bandwidthTest --device=all --dtoh --htod --dtod
+'''
 import csv
 import io
 import os
@@ -10,11 +42,6 @@ import subprocess
 import torch
 import tensorflow as tf
 from tensorflow.python.client import device_lib
-
-# /usr/local/cuda-samples/bin/x86_64/linux/release/bandwidthTest --device=all --dtoh --htod --dtod
-sample_addr = "/usr/local/cuda-samples/bin/x86_64/linux/release"
-bandwidth_addr = os.path.join(sample_addr, "bandwidthTest")
-print(bandwidth_addr)
 
 
 def get_device_bandwidth():
@@ -26,7 +53,7 @@ def get_device_bandwidth():
     """Run the bandwidthTest utility and return the raw CSV output."""
     try:
         result = subprocess.run(
-            [bandwidth_addr, "-device=all", "-dtoh", "-htod", "-dtod", "-csv"],
+            ["bandwidthTest", "-device=all", "-dtoh", "-htod", "-dtod", "-csv"],
             capture_output=True, text=True
         )
         csv_reader = csv.reader(io.StringIO(result.stdout))
@@ -56,3 +83,5 @@ def get_device_bandwidth():
         return bandwidths, device_info
     except subprocess.CalledProcessError as e:
         print(f"Error running bandwidthTest: {e}")
+
+get_device_bandwidth()
