@@ -5,6 +5,10 @@ from optimizer.device_topo.intel_node_bandwidth import start_iperf_server, run_i
 from optimizer.device_topo.intra_node_bandwidth import get_device_bandwidth
 from optimizer.model.graph import DeviceGraph
 
+import warnings
+
+warnings.filterwarnings("ignore")
+
 
 # Function to get a key that includes a specific substring
 def get_key_including_substring(d, substring):
@@ -33,15 +37,6 @@ def get_intra_node_topo() -> DeviceGraph:
         G.update_link_bandwidth(from_device, to_device, band)
     print(G.nodes.data(), G.edges.data())
     return G
-
-
-def get_intel_node_topo():
-    port = 7100
-    server_ip = "192.168.0.6"  # Replace with the server's IP address
-    # Start iperf3 server on the remote machine
-    start_iperf_server(server_ip, port, "root", "1314520")
-    duration = 10  # Duration in seconds for the test
-    run_iperf_client(server_ip, duration, port)
 
 
 get_intra_node_topo()
