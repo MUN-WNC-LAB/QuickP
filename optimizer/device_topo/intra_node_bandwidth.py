@@ -1,4 +1,4 @@
-'''
+"""
 Step 1
 # Step 1: Clone the CUDA Samples Repository
 # Clone the repository to your local machine:
@@ -33,7 +33,7 @@ Step 1
 # Step 7: Run the Bandwidth Test
 # Execute the bandwidth test with the following command:
 # bandwidthTest --device=all --dtoh --htod --dtod
-'''
+"""
 import csv
 import io
 import os
@@ -48,6 +48,9 @@ def get_device_bandwidth():
     hostname = socket.gethostname()
     # check if GPU configuration is okay
     gpus = tf.config.experimental.list_physical_devices('GPU')
+    # add env variables to path
+    os.environ["PATH"] += os.pathsep + "/usr/local/cuda-samples/bin/x86_64/linux/release"
+
     if not gpus:
         raise ValueError("No GPUs found")
     """Run the bandwidthTest utility and return the raw CSV output."""
@@ -83,5 +86,3 @@ def get_device_bandwidth():
         return bandwidths, device_info
     except subprocess.CalledProcessError as e:
         print(f"Error running bandwidthTest: {e}")
-
-get_device_bandwidth()
