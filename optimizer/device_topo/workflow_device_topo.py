@@ -48,6 +48,14 @@ def submit_slurm_script():
         print(f"An error occurred while submitting the job: {e}")
 
 
+def retrieve_slurm_output():
+    with open('device_intra_node_output.txt', 'r') as file:
+        lines = file.readlines()
+
+    for line in lines:
+        print(line.strip())  # strip() to remove leading/trailing whitespace including newline characters
+
+
 if __name__ == "__main__":
     nodes = get_slurm_available_nodes()
     print(f"Number of available nodes: {nodes}")
