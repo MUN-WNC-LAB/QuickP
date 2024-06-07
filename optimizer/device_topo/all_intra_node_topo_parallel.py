@@ -38,9 +38,7 @@ def get_intra_node_topo() -> DeviceGraph:
         if not from_device or not to_device:
             raise ValueError("device not found")
         G.update_link_bandwidth(from_device, to_device, band)
-    print("Remove Later:", os.environ.get("SLURMD_NODENAME"), "start profiling")
-    print(G.edges.data())
-    print("Remove Later:", os.environ.get("SLURMD_NODENAME"), "end profiling")
+    print("INFO ROW: ", os.environ.get("SLURMD_NODENAME"), G.edges.data())
     return G
 
 
