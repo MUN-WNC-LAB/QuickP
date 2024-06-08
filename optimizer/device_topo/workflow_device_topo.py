@@ -25,44 +25,30 @@ def get_slurm_available_nodes():
         return 0
 
 
-def create_slurm_script(nodes, out_path):
-    script_content = f"""#!/bin/bash
-#SBATCH --job-name=All_Device_Intra_Node_Bandwidth
-#SBATCH --time=00:30
-
-#SBATCH --gpus={nodes}              
-#SBATCH --gpus-per-node=1     
-#SBATCH --nodes={nodes}           
-#SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=12    
-#SBATCH --output={out_path}
-#SBATCH --error=/dev/null     
-#SBATCH --mem=1000            
-
-### the command to run
-srun python3 all_intra_node_topo_parallel.py
-"""
-    with open(sh_path, "w") as f:
-        f.write(script_content)
-
-
-def submit_slurm_script():
+def run_srun_command(nodes):
     try:
-        result = subprocess.run(['sbatch', sh_path], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        job_id = result.stdout.decode().strip().split()[-1]
-        print(f"Job {job_id} submitted successfully.")
-        return job_id
+        result = subprocess.run([
+            'srun',
+            '--job-name=All_Device_Intra_Node_Bandwidth',
+            '--time=00:30',
+            f'--gpus={nodes}',
+            '--gpus-per-node=1',
+            f'--nodes={nodes}',
+            '--ntasks-per-node=1',
+            '--cpus-per-task=12',
+            '--mem=1000',
+            'python3', 'all_intra_node_topo_parallel.py'
+        ], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        if result.stdout:
+            output = result.stdout.decode()
+            return output
+        else:
+            print(f"Error: {result.stderr.decode()}")
+            return None
     except subprocess.CalledProcessError as e:
-        print(f"An error occurred while submitting the job: {e}")
+        print(f"An error occurred while running the srun command: {e}")
         return None
-
-
-def retrieve_slurm_output():
-    with open('device_intra_node_output.txt', 'r') as file:
-        lines = file.readlines()
-
-    for line in lines:
-        print(line.strip())  # strip() to remove leading/trailing whitespace including newline characters
 
 
 def phase_slurm_2_DiGraph() -> DiGraph:
@@ -72,6 +58,7 @@ def phase_slurm_2_DiGraph() -> DiGraph:
             if substring in key:
                 return key
         return None  # Return None if no such key is found
+
     G = DeviceGraph()
     bandwidths, devices = get_device_bandwidth()
     for (name, attributes) in devices.items():
@@ -99,8 +86,8 @@ if __name__ == "__main__":
     if nodes < 0:
         raise ValueError("No available nodes in Slurm to run the job.")
 
-    create_slurm_script(nodes, output_path)
-    submit_slurm_script()
-    # guarantee the txt file contain the full info
-    #time.sleep(5)
-    retrieve_slurm_output()
+    output = run_srun_command(nodes)
+    if output:
+        print(output)
+    else:
+        raise ValueError("No available nodes in Slurm to run the job.")
