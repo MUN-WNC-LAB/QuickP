@@ -1,3 +1,4 @@
+import re
 import subprocess
 import time
 
@@ -51,7 +52,18 @@ def run_srun_command(nodes):
         return None
 
 
-def phase_slurm_2_DiGraph() -> DiGraph:
+def phase_slurm_2_DiGraphs(slurm_output: str) -> [DiGraph]:
+    def check_slurm_row_pattern(row: str) -> bool:
+        pattern = re.compile(r"^bandwidths:  (\{.*\}) devices:  (\{.*\})$")
+        match = pattern.match(row)
+        if match:
+            bandwidths_part = match.group(1)
+            devices_part = match.group(2)
+            print(bandwidths_part, devices_part)
+            return True
+        else:
+            return False
+
     # Function to get a key that includes a specific substring
     def get_key_including_substring(d, substring):
         for key in d:
@@ -59,7 +71,12 @@ def phase_slurm_2_DiGraph() -> DiGraph:
                 return key
         return None  # Return None if no such key is found
 
+    slurm_output = output.splitlines()
+    for line in slurm_output:
+        if check_slurm_row_pattern(line):
+            print("right pattern found")
     G = DeviceGraph()
+    '''
     bandwidths, devices = get_device_bandwidth()
     for (name, attributes) in devices.items():
         G.add_new_node(name, attributes["memory_limit"])
@@ -76,7 +93,8 @@ def phase_slurm_2_DiGraph() -> DiGraph:
             raise ValueError("device not found")
         G.update_link_bandwidth(from_device, to_device, band)
     print("INFO ROW: ", G.edges.data())
-    return G
+    '''
+    return [G]
 
 
 if __name__ == "__main__":
@@ -88,6 +106,6 @@ if __name__ == "__main__":
 
     output = run_srun_command(nodes)
     if output:
-        print(output)
+        phase_slurm_2_DiGraphs(output)
     else:
         raise ValueError("No available nodes in Slurm to run the job.")
