@@ -1,10 +1,9 @@
+import ast
 import re
 import subprocess
-import time
 
 from networkx import DiGraph
 
-from optimizer.device_topo.intra_node_bandwidth import get_device_bandwidth
 from optimizer.model.graph import DeviceGraph
 
 output_path = "device_intra_node_output.txt"
@@ -53,16 +52,16 @@ def run_srun_command(nodes):
 
 
 def phase_slurm_2_DiGraphs(slurm_output: str) -> [DiGraph]:
-    def check_slurm_row_pattern(row: str) -> bool:
+    def check_slurm_row_pattern(row: str):
         pattern = re.compile(r"^bandwidths:  (\{.*\}) devices:  (\{.*\})$")
         match = pattern.match(row)
         if match:
-            bandwidths_part = match.group(1)
-            devices_part = match.group(2)
-            print(bandwidths_part, devices_part)
-            return True
+            # ast.literal_eval convert string to dict
+            bandwidths = ast.literal_eval(match.group(1))
+            devices = ast.literal_eval(match.group(2))
+            return bandwidths, devices
         else:
-            return False
+            return None
 
     # Function to get a key that includes a specific substring
     def get_key_including_substring(d, substring):
@@ -71,11 +70,14 @@ def phase_slurm_2_DiGraphs(slurm_output: str) -> [DiGraph]:
                 return key
         return None  # Return None if no such key is found
 
-    slurm_output = output.splitlines()
-    for line in slurm_output:
-        if check_slurm_row_pattern(line):
-            print("right pattern found")
-    G = DeviceGraph()
+    graph_list = []
+    lines = slurm_output.splitlines()
+    for line in lines:
+        bandwidths_part, devices_part = check_slurm_row_pattern(line)
+        if bandwidths_part and devices_part:
+            G = DeviceGraph()
+            print(bandwidths_part, devices_part)
+            print(type(bandwidths_part), type(devices_part))
     '''
     bandwidths, devices = get_device_bandwidth()
     for (name, attributes) in devices.items():
@@ -94,7 +96,7 @@ def phase_slurm_2_DiGraphs(slurm_output: str) -> [DiGraph]:
         G.update_link_bandwidth(from_device, to_device, band)
     print("INFO ROW: ", G.edges.data())
     '''
-    return [G]
+    return graph_list
 
 
 if __name__ == "__main__":
