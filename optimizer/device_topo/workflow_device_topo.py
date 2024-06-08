@@ -1,4 +1,5 @@
 import subprocess
+import time
 
 from networkx import DiGraph
 
@@ -47,10 +48,13 @@ srun python3 all_intra_node_topo_parallel.py
 
 def submit_slurm_script():
     try:
-        subprocess.run(['sbatch', sh_path], check=True)
-        print("Job submitted successfully.")
+        result = subprocess.run(['sbatch', sh_path], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        job_id = result.stdout.decode().strip().split()[-1]
+        print(f"Job {job_id} submitted successfully.")
+        return job_id
     except subprocess.CalledProcessError as e:
         print(f"An error occurred while submitting the job: {e}")
+        return None
 
 
 def retrieve_slurm_output():
@@ -92,8 +96,11 @@ if __name__ == "__main__":
     nodes = get_slurm_available_nodes()
     print(f"Number of available nodes: {nodes}")
 
-    if nodes > 0:
-        create_slurm_script(nodes, output_path)
-        submit_slurm_script()
-    else:
-        print("No available nodes to run the job.")
+    if nodes < 0:
+        raise ValueError("No available nodes in Slurm to run the job.")
+
+    create_slurm_script(nodes, output_path)
+    submit_slurm_script()
+    # guarantee the txt file contain the full info
+    #time.sleep(5)
+    retrieve_slurm_output()
