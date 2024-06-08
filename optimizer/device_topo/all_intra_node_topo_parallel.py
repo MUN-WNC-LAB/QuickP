@@ -16,7 +16,7 @@ warnings.filterwarnings("ignore")
 def get_intra_node_topo() -> DeviceGraph:
     G = DeviceGraph()
     bandwidths, devices = get_device_bandwidth()
-    print("bandwidths: ", G.edges.data(), "devices: ", devices)
+    print("bandwidths: ", bandwidths, "devices: ", devices)
     return G
 
 
