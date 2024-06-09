@@ -4,7 +4,7 @@ import subprocess
 
 from networkx import DiGraph
 
-from optimizer.model.graph import DeviceGraph
+from optimizer.model.graph import DeviceGraph, combine_graphs, visualize_graph
 
 output_path = "device_intra_node_output.txt"
 sh_path = "all_device_intra.sh"
@@ -76,26 +76,21 @@ def phase_slurm_2_DiGraphs(slurm_output: str) -> [DiGraph]:
         bandwidths_part, devices_part = check_slurm_row_pattern(line)
         if bandwidths_part and devices_part:
             G = DeviceGraph()
-            print(bandwidths_part, devices_part)
-            print(type(bandwidths_part), type(devices_part))
-    '''
-    bandwidths, devices = get_device_bandwidth()
-    for (name, attributes) in devices.items():
-        G.add_new_node(name, attributes["memory_limit"])
-    for (direction, band) in bandwidths.items():
-        if direction == "H2D":
-            from_device = get_key_including_substring(G.nodes, "CPU:0")
-            to_device = get_key_including_substring(G.nodes, "GPU:0")
-        elif direction == "D2H":
-            from_device = get_key_including_substring(G.nodes, "GPU:0")
-            to_device = get_key_including_substring(G.nodes, "CPU:0")
-        else:
-            continue
-        if not from_device or not to_device:
-            raise ValueError("device not found")
-        G.update_link_bandwidth(from_device, to_device, band)
-    print("INFO ROW: ", G.edges.data())
-    '''
+            for (name, attributes) in devices_part.items():
+                G.add_new_node(name, attributes["memory_limit"])
+            for (direction, band) in bandwidths_part.items():
+                if direction == "H2D":
+                    from_device = get_key_including_substring(G.nodes, "CPU:0")
+                    to_device = get_key_including_substring(G.nodes, "GPU:0")
+                elif direction == "D2H":
+                    from_device = get_key_including_substring(G.nodes, "GPU:0")
+                    to_device = get_key_including_substring(G.nodes, "CPU:0")
+                else:
+                    continue
+                if not from_device or not to_device:
+                    raise ValueError("device not found")
+                G.update_link_bandwidth(from_device, to_device, band)
+            graph_list.append(G)
     return graph_list
 
 
@@ -108,6 +103,8 @@ if __name__ == "__main__":
 
     output = run_srun_command(nodes)
     if output:
-        phase_slurm_2_DiGraphs(output)
+        graph_list = phase_slurm_2_DiGraphs(output)
+        graph_combined = combine_graphs(graph_list)
+        visualize_graph(graph_combined)
     else:
         raise ValueError("No available nodes in Slurm to run the job.")
