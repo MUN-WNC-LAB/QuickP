@@ -25,24 +25,24 @@ def get_slurm_available_nodes():
         return 0
 
 
-def run_srun_command(nodes):
+def run_srun_command(num_nodes: int, intra: bool):
+    path = 'all_intra_node_topo_parallel.py' if intra else 'all_intel_node_topo_parallel.py'
     try:
         result = subprocess.run([
             'srun',
             '--job-name=All_Device_Intra_Node_Bandwidth',
             '--time=00:30',
-            f'--gpus={nodes}',
+            f'--gpus={num_nodes}',
             '--gpus-per-node=1',
-            f'--nodes={nodes}',
+            f'--nodes={num_nodes}',
             '--ntasks-per-node=1',
             '--cpus-per-task=12',
             '--mem=1000',
-            'python3', 'all_intra_node_topo_parallel.py'
+            'python3', f'{path}'
         ], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         if result.stdout:
-            output = result.stdout.decode()
-            return output
+            return result.stdout.decode()
         else:
             print(f"Error: {result.stderr.decode()}")
             return None
@@ -101,7 +101,7 @@ if __name__ == "__main__":
     if nodes < 0:
         raise ValueError("No available nodes in Slurm to run the job.")
 
-    output = run_srun_command(nodes)
+    output = run_srun_command(nodes, intra=True)
     if output:
         graph_list = phase_slurm_2_DiGraphs(output)
         graph_combined = combine_graphs(graph_list)
