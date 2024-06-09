@@ -5,6 +5,7 @@ import subprocess
 from networkx import DiGraph
 
 from optimizer.model.graph import DeviceGraph, combine_graphs, visualize_graph
+from slurm_util import get_server_ips
 
 output_path = "device_intra_node_output.txt"
 sh_path = "all_device_intra.sh"
@@ -51,7 +52,26 @@ def run_srun_command(num_nodes: int, intra: bool):
         return None
 
 
-def phase_slurm_2_DiGraphs(slurm_output: str) -> [DiGraph]:
+def gather_intel_bandwidth_data(servers: list, num_nodes: int):
+    if num_nodes != len(servers):
+        raise ValueError("Number of nodes does not match the number of servers")
+    all_results = {}
+
+    for server in servers:
+        other_servers = [s for s in servers if s != server]
+        server_results = {}
+
+        for target in other_servers:
+            print(f"bandwidth_test_{server}_to_{target}")
+            result = run_srun_command(intra=False, num_nodes=num_nodes)
+            server_results[target] = result
+
+        all_results[server] = server_results
+
+    return all_results
+
+
+def phase_slurm_intra_2_DiGraphs(slurm_output: str) -> [DiGraph]:
     def check_slurm_row_pattern(row: str):
         pattern = re.compile(r"^bandwidths:  (\{.*\}) devices:  (\{.*\})$")
         match = pattern.match(row)
@@ -95,6 +115,7 @@ def phase_slurm_2_DiGraphs(slurm_output: str) -> [DiGraph]:
 
 
 if __name__ == "__main__":
+    servers = get_server_ips()
     nodes = get_slurm_available_nodes()
     print(f"Number of available nodes: {nodes}")
 
@@ -104,7 +125,7 @@ if __name__ == "__main__":
     output_intra = run_srun_command(nodes, intra=True)
     # output_intel = run_srun_command(nodes, intra=False)
     if output_intra:
-        graph_list_intra = phase_slurm_2_DiGraphs(output_intra)
+        graph_list_intra = phase_slurm_intra_2_DiGraphs(output_intra)
         graph_list_intel = []
         graph_combined = combine_graphs(graph_list_intra + graph_list_intel)
         visualize_graph(graph_combined)
