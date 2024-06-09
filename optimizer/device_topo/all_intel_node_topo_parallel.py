@@ -17,3 +17,6 @@ def get_intel_node_topo():
     start_iperf_server(server_ip, port, "root", "1314520")
     duration = 10  # Duration in seconds for the test
     run_iperf_client(server_ip, duration, port)
+
+
+get_intel_node_topo()

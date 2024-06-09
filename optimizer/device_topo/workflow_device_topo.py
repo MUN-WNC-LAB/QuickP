@@ -101,10 +101,12 @@ if __name__ == "__main__":
     if nodes < 0:
         raise ValueError("No available nodes in Slurm to run the job.")
 
-    output = run_srun_command(nodes, intra=True)
-    if output:
-        graph_list = phase_slurm_2_DiGraphs(output)
-        graph_combined = combine_graphs(graph_list)
+    output_intra = run_srun_command(nodes, intra=True)
+    # output_intel = run_srun_command(nodes, intra=False)
+    if output_intra:
+        graph_list_intra = phase_slurm_2_DiGraphs(output_intra)
+        graph_list_intel = []
+        graph_combined = combine_graphs(graph_list_intra + graph_list_intel)
         visualize_graph(graph_combined)
     else:
         raise ValueError("No available nodes in Slurm to run the job.")
