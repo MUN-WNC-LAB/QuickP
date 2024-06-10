@@ -1,29 +1,15 @@
 import ast
 import re
+import socket
 import subprocess
 
 from networkx import DiGraph
 
 from optimizer.model.graph import DeviceGraph, combine_graphs, visualize_graph
-from slurm_util import get_server_ips
+from slurm_util import get_server_ips, get_slurm_available_nodes
 
 output_path = "device_intra_node_output.txt"
 sh_path = "all_device_intra.sh"
-
-
-def get_slurm_available_nodes():
-    try:
-        # Run sinfo command to get the number of idle nodes
-        result = subprocess.run(['sinfo', '--noheader', '--states=idle', '--format=%D'],
-                                stdout=subprocess.PIPE, text=True, check=True)
-
-        # Parse the output to get the total number of available nodes
-        available_nodes = sum(int(x) for x in result.stdout.split())
-
-        return available_nodes
-    except subprocess.CalledProcessError as e:
-        print(f"An error occurred while running sinfo: {e}")
-        return 0
 
 
 def run_srun_command(num_nodes: int, intra: bool):
@@ -52,22 +38,20 @@ def run_srun_command(num_nodes: int, intra: bool):
         return None
 
 
-def gather_intel_bandwidth_data(servers: list, num_nodes: int):
-    if num_nodes != len(servers):
-        raise ValueError("Number of nodes does not match the number of servers")
+def gather_intel_bandwidth_data(servers: dict, num_nodes: int):
+
     all_results = {}
+    local_hostname = socket.gethostname()
+    other_servers = {key: value for key, value in servers.items() if key != local_hostname}
+    print(servers, other_servers)
+    '''
+    for target in other_servers:
+        print(f"bandwidth_test_{server}_to_{target}")
+        result = run_srun_command(intra=False, num_nodes=num_nodes)
+        server_results[target] = result
 
-    for server in servers:
-        other_servers = [s for s in servers if s != server]
-        server_results = {}
-
-        for target in other_servers:
-            print(f"bandwidth_test_{server}_to_{target}")
-            result = run_srun_command(intra=False, num_nodes=num_nodes)
-            server_results[target] = result
-
-        all_results[server] = server_results
-
+    all_results[server] = server_results
+    '''
     return all_results
 
 
@@ -121,9 +105,12 @@ if __name__ == "__main__":
 
     if nodes < 0:
         raise ValueError("No available nodes in Slurm to run the job.")
+    if nodes != len(servers):
+        raise ValueError("Number of nodes does not match the number of servers")
 
     output_intra = run_srun_command(nodes, intra=True)
     # output_intel = run_srun_command(nodes, intra=False)
+    gather_intel_bandwidth_data(servers, nodes)
     if output_intra:
         graph_list_intra = phase_slurm_intra_2_DiGraphs(output_intra)
         graph_list_intel = []
