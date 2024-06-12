@@ -12,7 +12,7 @@ output_path = "device_intra_node_output.txt"
 sh_path = "all_device_intra.sh"
 
 
-def run_srun_command(num_nodes: int, intra: bool, intel_target_server: str, intel_target_port: int):
+def run_srun_command(num_nodes: int, intra: bool, intel_target_server: str = None, intel_target_port: int = None):
     if not intra and (not intel_target_server or not intel_target_port):
         raise ValueError("target ip and port should be specified for intel node command")
     path = 'all_intra_node_topo_parallel.py' if intra else 'all_intel_node_topo_parallel.py'
@@ -49,14 +49,12 @@ def gather_intel_bandwidth_data(servers: dict, num_nodes: int):
     local_hostname = socket.gethostname()
     other_servers = {key: value for key, value in servers.items() if key != local_hostname}
     print(servers, other_servers)
-    '''
-    for target in other_servers:
-        print(f"bandwidth_test_{server}_to_{target}")
-        result = run_srun_command(intra=False, num_nodes=num_nodes)
-        server_results[target] = result
 
-    all_results[server] = server_results
-    '''
+    for target_name, target_ip in other_servers.items():
+        print(f"bandwidth_test_{local_hostname}_to_{target_name}")
+        result = run_srun_command(intra=False, num_nodes=num_nodes, intel_target_server=target_ip, intel_target_port=7100)
+        all_results[local_hostname, target_ip] = result
+
     return all_results
 
 
@@ -114,7 +112,6 @@ if __name__ == "__main__":
         raise ValueError("Number of nodes does not match the number of servers")
 
     output_intra = run_srun_command(nodes, intra=True)
-    # output_intel = run_srun_command(nodes, intra=False)
     gather_intel_bandwidth_data(servers, nodes)
     if output_intra:
         graph_list_intra = phase_slurm_intra_2_DiGraphs(output_intra)
