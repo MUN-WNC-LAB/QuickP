@@ -32,10 +32,3 @@ if __name__ == "__main__":
     other_servers = {key: value for key, value in servers.items() if key != local_hostname}
     print(servers, other_servers)
 
-    for target_name, target_ip in other_servers.items():
-        print(f"bandwidth_test_{local_hostname}_to_{target_name}")
-        result = run_srun_command(intra=False, num_nodes=nodes)
-        all_results[local_hostname, target_ip] = result
-        print(all_results)
-
-        get_intel_node_topo(target_ip, 7100)
