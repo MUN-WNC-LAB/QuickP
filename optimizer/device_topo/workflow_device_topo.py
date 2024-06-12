@@ -94,7 +94,7 @@ if __name__ == "__main__":
 
     output_intra = run_srun_command(nodes, intra=True)
     output_intel = run_srun_command(nodes, intra=False)
-    print(output_intel)
+    print("output_intel", output_intel)
     if output_intra:
         graph_list_intra = phase_slurm_intra_2_DiGraphs(output_intra)
         graph_list_intel = []
