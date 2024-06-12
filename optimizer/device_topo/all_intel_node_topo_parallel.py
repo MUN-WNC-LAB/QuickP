@@ -22,13 +22,10 @@ def get_intel_node_topo(target_ip: str, target_port: int):
     run_iperf_client(target_ip, duration, target_port)
 
 
-if __name__ == "__main__":
+servers = get_server_ips()
+nodes = get_slurm_available_nodes()
 
-    servers = get_server_ips()
-    nodes = get_slurm_available_nodes()
-
-    all_results = {}
-    local_hostname = socket.gethostname()
-    other_servers = {key: value for key, value in servers.items() if key != local_hostname}
-    print(servers, other_servers)
-
+all_results = {}
+local_hostname = socket.gethostname()
+other_servers = {key: value for key, value in servers.items() if key != local_hostname}
+print(servers, other_servers)
