@@ -1,3 +1,4 @@
+import argparse
 import sys
 
 sys.path.append("../../")
@@ -10,13 +11,18 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-def get_intel_node_topo():
-    port = 7100
-    server_ip = "192.168.0.6"  # Replace with the server's IP address
+def get_intel_node_topo(target_ip: str, target_port: int):
     # Start iperf3 server on the remote machine
-    start_iperf_server(server_ip, port, "root", "1314520")
-    duration = 10  # Duration in seconds for the test
-    run_iperf_client(server_ip, duration, port)
+    start_iperf_server(target_ip, target_port, "root", "1314520")
+    duration = 3  # Duration in seconds for the test
+    run_iperf_client(target_ip, duration, target_port)
 
 
-get_intel_node_topo()
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Run Intel Node Topology Test.')
+    parser.add_argument('--target_ip', type=str, required=True, help='Target IP address for the test')
+    parser.add_argument('--target_port', type=int, required=True, help='Target port for the test')
+
+    args = parser.parse_args()
+
+    get_intel_node_topo(args.target_ip, args.target_port)

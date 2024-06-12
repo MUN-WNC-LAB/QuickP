@@ -12,10 +12,11 @@ output_path = "device_intra_node_output.txt"
 sh_path = "all_device_intra.sh"
 
 
-def run_srun_command(num_nodes: int, intra: bool):
+def run_srun_command(num_nodes: int, intra: bool, intel_target_server: str, intel_target_port: int):
+    if not intra and (not intel_target_server or not intel_target_port):
+        raise ValueError("target ip and port should be specified for intel node command")
     path = 'all_intra_node_topo_parallel.py' if intra else 'all_intel_node_topo_parallel.py'
-    try:
-        result = subprocess.run([
+    command = [
             'srun',
             '--job-name=All_Device_Intra_Node_Bandwidth',
             '--time=00:30',
@@ -26,7 +27,11 @@ def run_srun_command(num_nodes: int, intra: bool):
             '--cpus-per-task=12',
             '--mem=1000',
             'python3', f'{path}'
-        ], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        ]
+    if not intra:
+        command.extend(['--target_ip', intel_target_server, '--target_port', str(intel_target_port)])
+    try:
+        result = subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         if result.stdout:
             return result.stdout.decode()
