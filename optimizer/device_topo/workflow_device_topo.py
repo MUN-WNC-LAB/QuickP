@@ -26,6 +26,8 @@ def run_srun_command(num_nodes: int, intra: bool):
             '--mem=1000',
             'python3', f'{path}'
         ]
+    if not intra:
+        command.extend(['--dict', get_server_ips()])
     try:
         result = subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 

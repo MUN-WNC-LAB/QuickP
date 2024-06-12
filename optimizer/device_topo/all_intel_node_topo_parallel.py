@@ -1,4 +1,5 @@
 import argparse
+import json
 import socket
 import sys
 
@@ -22,8 +23,13 @@ def get_intel_node_topo(target_ip: str, target_port: int):
     run_iperf_client(target_ip, duration, target_port)
 
 
-servers = get_server_ips()
-nodes = get_slurm_available_nodes()
+parser = argparse.ArgumentParser(description='Process some dictionary.')
+parser.add_argument('--dict', type=str, required=True, help='all available servers in Slurm and their ips as a JSON string')
+
+args = parser.parse_args()
+
+# Deserialize the JSON string to a dictionary
+servers = json.loads(args.dict)
 
 all_results = {}
 local_hostname = socket.gethostname()
