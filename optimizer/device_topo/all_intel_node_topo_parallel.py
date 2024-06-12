@@ -28,4 +28,4 @@ nodes = get_slurm_available_nodes()
 all_results = {}
 local_hostname = socket.gethostname()
 other_servers = {key: value for key, value in servers.items() if key != local_hostname}
-print(servers, other_servers)
+print(servers, local_hostname, other_servers)
