@@ -1,5 +1,9 @@
 import argparse
+import socket
 import sys
+
+from optimizer.device_topo.workflow_device_topo import run_srun_command
+from slurm_util import get_server_ips, get_slurm_available_nodes
 
 sys.path.append("../../")
 from optimizer.device_topo.intel_node_bandwidth import start_iperf_server, run_iperf_client
@@ -19,10 +23,19 @@ def get_intel_node_topo(target_ip: str, target_port: int):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Run Intel Node Topology Test.')
-    parser.add_argument('--target_ip', type=str, required=True, help='Target IP address for the test')
-    parser.add_argument('--target_port', type=int, required=True, help='Target port for the test')
 
-    args = parser.parse_args()
+    servers = get_server_ips()
+    nodes = get_slurm_available_nodes()
 
-    get_intel_node_topo(args.target_ip, args.target_port)
+    all_results = {}
+    local_hostname = socket.gethostname()
+    other_servers = {key: value for key, value in servers.items() if key != local_hostname}
+    print(servers, other_servers)
+
+    for target_name, target_ip in other_servers.items():
+        print(f"bandwidth_test_{local_hostname}_to_{target_name}")
+        result = run_srun_command(intra=False, num_nodes=nodes)
+        all_results[local_hostname, target_ip] = result
+        print(all_results)
+
+        get_intel_node_topo(target_ip, 7100)
