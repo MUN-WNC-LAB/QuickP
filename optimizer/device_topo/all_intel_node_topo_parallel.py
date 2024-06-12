@@ -34,4 +34,6 @@ servers = json.loads(args.dict)
 all_results = {}
 local_hostname = socket.gethostname()
 other_servers = {key: value for key, value in servers.items() if key != local_hostname}
-print(servers, local_hostname, other_servers)
+for target_name, target_ip in other_servers.items():
+    print(f"bandwidth_test_{local_hostname}_to_{target_name}")
+    get_intel_node_topo(target_ip, 7100)
