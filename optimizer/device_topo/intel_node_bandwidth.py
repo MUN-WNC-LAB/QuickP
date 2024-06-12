@@ -12,7 +12,7 @@ sudo apt-get install libmlx4-1 infiniband-diags rdmacm-utils ibutils ibverbs-uti
 apt-get install tgt
 https://developer.nvidia.com/networking/mlnx-ofed-eula?mtag=linux_sw_drivers&mrequest=downloads&mtype=ofed&mver=MLNX_OFED-24.04-0.6.6.0&mname=MLNX_OFED_LINUX-24.04-0.6.6.0-ubuntu22.04-x86_64.tgz
 '''
-authority = {}
+
 
 # Sender side command example: iperf3 -c 192.168.0.6 -p 7575; -c state running as client end
 # Receiver side command example: iperf3 -s -p 7575; -s state running as server end, -p specifies a self-defined port

@@ -34,14 +34,62 @@ Step 1
 # Execute the bandwidth test with the following command:
 # bandwidthTest --device=all --dtoh --htod --dtod
 """
+import ast
 import csv
 import io
 import os
+import re
 import socket
 import subprocess
 import torch
 import tensorflow as tf
+from networkx import DiGraph
 from tensorflow.python.client import device_lib
+
+from optimizer.model.graph import DeviceGraph
+
+
+def phase_slurm_intra_2_DiGraphs(slurm_output: str) -> [DiGraph]:
+    def check_slurm_row_pattern(row: str):
+        pattern = re.compile(r"^bandwidths:  (\{.*\}) devices:  (\{.*\})$")
+        match = pattern.match(row)
+        if match:
+            # ast.literal_eval convert string to dict
+            bandwidths = ast.literal_eval(match.group(1))
+            devices = ast.literal_eval(match.group(2))
+            return bandwidths, devices
+        else:
+            return None
+
+    # Function to get a key that includes a specific substring
+    def get_key_including_substring(d, substring):
+        for key in d:
+            if substring in key:
+                return key
+        return None  # Return None if no such key is found
+
+    graph_list = []
+    lines = slurm_output.splitlines()
+    for line in lines:
+        bandwidths_part, devices_part = check_slurm_row_pattern(line)
+        if bandwidths_part and devices_part:
+            G = DeviceGraph()
+            for (name, attributes) in devices_part.items():
+                G.add_new_node(name, attributes["memory_limit"])
+            for (direction, band) in bandwidths_part.items():
+                if direction == "H2D":
+                    from_device = get_key_including_substring(G.nodes, "CPU:0")
+                    to_device = get_key_including_substring(G.nodes, "GPU:0")
+                elif direction == "D2H":
+                    from_device = get_key_including_substring(G.nodes, "GPU:0")
+                    to_device = get_key_including_substring(G.nodes, "CPU:0")
+                else:
+                    continue
+                if not from_device or not to_device:
+                    raise ValueError("device not found")
+                G.update_link_bandwidth(from_device, to_device, band)
+            graph_list.append(G)
+    return graph_list
 
 
 def get_device_bandwidth():
