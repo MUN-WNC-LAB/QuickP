@@ -1,4 +1,5 @@
 import ast
+import json
 import re
 import socket
 import subprocess
@@ -27,7 +28,8 @@ def run_srun_command(num_nodes: int, intra: bool):
             'python3', f'{path}'
         ]
     if not intra:
-        command.extend(['--dict', get_server_ips()])
+        # # Serialize the dictionary to a JSON string
+        command.extend(['--dict', json.dumps(get_server_ips())])
     try:
         result = subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
