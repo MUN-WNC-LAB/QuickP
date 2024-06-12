@@ -38,8 +38,7 @@ def run_iperf_client(server_ip: str, duration=10, port=5201):
     bandwidth_received = end["sum_received"]["bits_per_second"]  # Mbps
     band_dict = {
         "duration_seconds": duration,
-        "bandwidth_sent_mbps": bandwidth_sent,
-        "bandwidth_received_mbps": bandwidth_received,
+        "bandwidth_received_bps": bandwidth_received / (8 * 1_000_000_000),
     }
     print(band_dict)
     return band_dict
