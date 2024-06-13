@@ -16,7 +16,7 @@ sh_path = "all_device_intra.sh"
 
 
 def run_srun_command(num_nodes: int, intra: bool):
-    path = 'all_intra_node_topo_parallel.py' if intra else 'all_intel_node_topo_parallel.py'
+    path = 'intra_node_topo_parallel.py' if intra else 'intel_node_topo_parallel.py'
     command = [
             'srun',
             '--job-name=All_Device_Intra_Node_Bandwidth',
