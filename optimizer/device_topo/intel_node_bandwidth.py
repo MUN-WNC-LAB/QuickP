@@ -10,6 +10,8 @@ import paramiko
 from networkx import DiGraph
 from paramiko.client import SSHClient
 
+from optimizer.model.graph import DeviceGraph
+
 '''
 Need update to RDMA but most hardware does not support. For now, it only supports TCP/UDP connections.
 sudo apt-get install libmlx4-1 infiniband-diags rdmacm-utils ibutils ibverbs-utils perftest rdma-core
@@ -45,7 +47,7 @@ def run_iperf_client(server_ip: str, duration: int, from_node: str, to_node: str
         "from": from_node,
         "to": to_node,
         "duration_seconds": duration,
-        "bandwidth_received_GBs": bandwidth_received / (8 * 1_000_000_000),
+        "bandwidth": bandwidth_received / (8 * 1_000_000_000),
     }
     print("Result: ", band_dict)
 
@@ -111,7 +113,7 @@ def slurm_output_intel_2_dict(slurm_output: str) -> list[dict]:
     return graph_list
 
 
-def update_intra_graph_with_intel(existing_graph: DiGraph, intel_dict_list: dict) -> None:
+def update_intra_graph_with_intel(existing_graph: DeviceGraph, intel_dict_list: list[dict]) -> None:
     # Function to get a key that includes a specific substring
     def find_nodes_with_substring(substring):
         return [node for node in existing_graph.nodes if substring in node]
@@ -121,4 +123,4 @@ def update_intra_graph_with_intel(existing_graph: DiGraph, intel_dict_list: dict
         to_nodes = find_nodes_with_substring(band_dict["to"])
         for from_node in from_nodes:
             for to_node in to_nodes:
-                pass
+                existing_graph.update_link_bandwidth(from_node, to_node, band_dict["bandwidth"])
