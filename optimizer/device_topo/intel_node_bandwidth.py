@@ -1,7 +1,10 @@
 # sudo apt-get install iperf3
+import ast
+import re
 import subprocess
 import json
 import time
+from typing import List, Any
 
 import paramiko
 from paramiko.client import SSHClient
@@ -44,8 +47,7 @@ def run_iperf_client(server_ip: str, duration: int, from_node: str, to_node: str
         "duration_seconds": duration,
         "bandwidth_received_bps": bandwidth_received / (8 * 1_000_000_000),
     }
-    print(band_dict)
-    return band_dict
+    print("Result: ", band_dict)
 
 
 # server end
@@ -61,14 +63,12 @@ def start_iperf_server(hostname, username, password):
         stdin, stdout, stderr = client_obj.exec_command(cmd)
         output = stdout.read().decode().strip()
         if output and "iperf3" in output:
-            print(f"iperf3 is listening on port {default_port}:\n{output}")
             return True
         elif output and "iperf3" not in output:
             print(f"Wrong application is listening on port {default_port}. Run on new port")
             default_port += 1
             return False
         else:
-            print(f"No application is listening on port {default_port}. Waiting to start iperf3.")
             return False
 
     # Create an SSH client
@@ -85,22 +85,20 @@ def start_iperf_server(hostname, username, password):
         client.exec_command(command)
         # give iperf3 two seconds to start
         time.sleep(2)
-        print("iperf3 started")
     except paramiko.SSHException as e:
         print(f"SSH connection failed: {e}")
     finally:
         client.close()
 
 
-def slurm_output_intel_2_dict(slurm_output: str) -> dict:
+def slurm_output_intel_2_dict(slurm_output: str) -> list[dict]:
     def check_slurm_row_pattern(row: str):
-        pattern = re.compile(r"^bandwidths:  (\{.*\}) devices:  (\{.*\})$")
+        pattern = re.compile(r"^Result:  (\{.*\}) ")
         match = pattern.match(row)
         if match:
             # ast.literal_eval convert string to dict
             bandwidths = ast.literal_eval(match.group(1))
-            devices = ast.literal_eval(match.group(2))
-            return bandwidths, devices
+            return bandwidths
         else:
             return None
 
@@ -115,22 +113,6 @@ def slurm_output_intel_2_dict(slurm_output: str) -> dict:
     graph_list = []
     lines = slurm_output.splitlines()
     for line in lines:
-        bandwidths_part, devices_part = check_slurm_row_pattern(line)
-        if bandwidths_part and devices_part:
-            G = DeviceGraph()
-            for (name, attributes) in devices_part.items():
-                G.add_new_node(name, attributes["memory_limit"])
-            for (direction, band) in bandwidths_part.items():
-                if direction == "H2D":
-                    from_device = get_key_including_substring(G.nodes, "CPU:0")
-                    to_device = get_key_including_substring(G.nodes, "GPU:0")
-                elif direction == "D2H":
-                    from_device = get_key_including_substring(G.nodes, "GPU:0")
-                    to_device = get_key_including_substring(G.nodes, "CPU:0")
-                else:
-                    continue
-                if not from_device or not to_device:
-                    raise ValueError("device not found")
-                G.update_link_bandwidth(from_device, to_device, band)
-            graph_list.append(G)
+        bandwidths_part = check_slurm_row_pattern(line)
+        graph_list.append(bandwidths_part)
     return graph_list
