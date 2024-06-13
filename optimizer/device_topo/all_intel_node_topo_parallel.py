@@ -8,8 +8,7 @@ from slurm_util import get_server_ips, get_slurm_available_nodes
 
 sys.path.append("../../")
 from optimizer.device_topo.intel_node_bandwidth import start_iperf_server, run_iperf_client
-from optimizer.device_topo.intra_node_bandwidth import get_device_bandwidth
-from optimizer.model.graph import DeviceGraph
+
 
 import warnings
 
@@ -37,5 +36,4 @@ if __name__ == "__main__":
     local_hostname = socket.gethostname()
     other_servers = {key: value for key, value in servers.items() if key != local_hostname}
     for target_name, target_ip in other_servers.items():
-        print(f"bandwidth_test_{local_hostname}_to_{target_name}")
         get_intel_node_topo(target_ip, from_node=local_hostname, to_node=target_name)
