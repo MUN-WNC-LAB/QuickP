@@ -25,7 +25,6 @@ default_port = 7100
 def run_iperf_client(server_ip: str, duration: int, from_node: str, to_node: str):
     # Run the iperf3 client command
     command = ["iperf3", "-c", server_ip, "-t", str(duration), "-p", str(default_port), "-J"]  # '-J' for JSON output
-    print(f"Start profiling bandwidth. Wait for {duration} seconds")
     result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     if result.returncode != 0:
@@ -95,7 +94,7 @@ def slurm_output_intel_2_dict(slurm_output: str) -> list[dict]:
     print("slurm_output_intel", slurm_output)
 
     def check_slurm_row_pattern(row: str):
-        pattern = re.compile(r"^Result:  (\{.*\}) ")
+        pattern = re.compile(r"Result:\s+(\{.*\})")
         match = pattern.match(row)
         if match:
             # ast.literal_eval convert string to dict
@@ -117,6 +116,7 @@ def slurm_output_intel_2_dict(slurm_output: str) -> list[dict]:
     for line in lines:
         print("lines", line)
         bandwidths_part = check_slurm_row_pattern(line)
-        print("bandwidths_part", bandwidths_part)
-        graph_list.append(bandwidths_part)
+        if bandwidths_part:
+            print("bandwidths_part", bandwidths_part)
+            graph_list.append(bandwidths_part)
     return graph_list

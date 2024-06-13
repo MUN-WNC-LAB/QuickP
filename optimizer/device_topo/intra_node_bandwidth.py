@@ -51,7 +51,7 @@ from optimizer.model.graph import DeviceGraph
 
 def phase_slurm_intra_2_DiGraphs(slurm_output: str) -> [DiGraph]:
     def check_slurm_row_pattern(row: str):
-        pattern = re.compile(r"^bandwidths:  (\{.*\}) devices:  (\{.*\})$")
+        pattern = re.compile(r"^bandwidths:\s+(\{.*\})\s+devices:\s+(\{.*\})$")
         match = pattern.match(row)
         if match:
             # ast.literal_eval convert string to dict
