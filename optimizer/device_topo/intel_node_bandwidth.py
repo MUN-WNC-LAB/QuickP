@@ -113,6 +113,7 @@ def slurm_output_intel_2_dict(slurm_output: str) -> list[dict]:
     graph_list = []
     lines = slurm_output.splitlines()
     for line in lines:
+        print(line)
         bandwidths_part = check_slurm_row_pattern(line)
         graph_list.append(bandwidths_part)
     return graph_list
