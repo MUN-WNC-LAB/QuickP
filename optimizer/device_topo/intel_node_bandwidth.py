@@ -45,7 +45,7 @@ def run_iperf_client(server_ip: str, duration: int, from_node: str, to_node: str
         "from": from_node,
         "to": to_node,
         "duration_seconds": duration,
-        "bandwidth_received_bps": bandwidth_received / (8 * 1_000_000_000),
+        "bandwidth_received_GBs": bandwidth_received / (8 * 1_000_000_000),
     }
     print("Result: ", band_dict)
 
@@ -92,6 +92,8 @@ def start_iperf_server(hostname, username, password):
 
 
 def slurm_output_intel_2_dict(slurm_output: str) -> list[dict]:
+    print("slurm_output_intel", slurm_output)
+
     def check_slurm_row_pattern(row: str):
         pattern = re.compile(r"^Result:  (\{.*\}) ")
         match = pattern.match(row)
@@ -113,7 +115,8 @@ def slurm_output_intel_2_dict(slurm_output: str) -> list[dict]:
     graph_list = []
     lines = slurm_output.splitlines()
     for line in lines:
-        print(line)
+        print("lines", line)
         bandwidths_part = check_slurm_row_pattern(line)
+        print("bandwidths_part", bandwidths_part)
         graph_list.append(bandwidths_part)
     return graph_list
