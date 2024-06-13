@@ -20,4 +20,5 @@ def get_intra_node_topo() -> DeviceGraph:
     return G
 
 
-get_intra_node_topo()
+if __name__ == "__main__":
+    get_intra_node_topo()
