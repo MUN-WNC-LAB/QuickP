@@ -3,7 +3,7 @@ import json
 import socket
 import sys
 
-from optimizer.device_topo.workflow_device_topo import run_srun_command
+from optimizer.device_topo.device_graph import run_srun_command
 from slurm_util import get_server_ips, get_slurm_available_nodes
 
 sys.path.append("../../")

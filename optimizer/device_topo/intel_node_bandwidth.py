@@ -7,6 +7,7 @@ import time
 from typing import List, Any
 
 import paramiko
+from networkx import DiGraph
 from paramiko.client import SSHClient
 
 '''
@@ -91,8 +92,6 @@ def start_iperf_server(hostname, username, password):
 
 
 def slurm_output_intel_2_dict(slurm_output: str) -> list[dict]:
-    print("slurm_output_intel", slurm_output)
-
     def check_slurm_row_pattern(row: str):
         pattern = re.compile(r"Result:\s+(\{.*\})")
         match = pattern.match(row)
@@ -103,20 +102,23 @@ def slurm_output_intel_2_dict(slurm_output: str) -> list[dict]:
         else:
             return None
 
-        # Function to get a key that includes a specific substring
-
-    def get_key_including_substring(d, substring):
-        for key in d:
-            if substring in key:
-                return key
-        return None  # Return None if no such key is found
-
     graph_list = []
     lines = slurm_output.splitlines()
     for line in lines:
-        print("lines", line)
         bandwidths_part = check_slurm_row_pattern(line)
         if bandwidths_part:
-            print("bandwidths_part", bandwidths_part)
             graph_list.append(bandwidths_part)
     return graph_list
+
+
+def update_intra_graph_with_intel(existing_graph: DiGraph, intel_dict_list: dict) -> None:
+    # Function to get a key that includes a specific substring
+    def find_nodes_with_substring(substring):
+        return [node for node in existing_graph.nodes if substring in node]
+
+    for band_dict in intel_dict_list:
+        from_nodes = find_nodes_with_substring(band_dict["from"])
+        to_nodes = find_nodes_with_substring(band_dict["to"])
+        for from_node in from_nodes:
+            for to_node in to_nodes:
+                pass
