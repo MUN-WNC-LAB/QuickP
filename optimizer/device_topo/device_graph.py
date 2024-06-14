@@ -3,11 +3,8 @@ from optimizer.device_topo.intra_node_bandwidth import phase_slurm_intra_2_DiGra
 from optimizer.model.graph import DeviceGraph, combine_graphs, visualize_graph
 from slurm_util import get_server_ips, get_slurm_available_nodes, run_srun_command, SLURM_RUN_CONF
 
-output_path = "device_intra_node_output.txt"
-sh_path = "all_device_intra.sh"
 
-
-if __name__ == "__main__":
+def get_device_topo():
     servers = get_server_ips()
     nodes = get_slurm_available_nodes()
 
