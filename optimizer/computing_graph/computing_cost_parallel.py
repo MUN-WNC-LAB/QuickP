@@ -1,12 +1,14 @@
+import argparse
 import sys
 
-sys.path.append("../../")
+from DNN_model_tf.model_enum import model_mapping
+from DNN_model_tf.vgg_tf import VGG16_tf
 
+sys.path.append("../../")
 
 import warnings
 
 warnings.filterwarnings("ignore")
-
 
 import keras
 # it is weird that on my server, have to import torch to activate tensorflow
@@ -42,23 +44,17 @@ def get_computation_graph(model: Sequential, optimizer=keras.optimizers.Adam(3e-
         train_accuracy.update_state(train_y, predictions)
         return loss
 
-    # tf.TensorSpec constrain the type of inputs accepted by a tf.function
-    # shape=[200, 32, 32, 3], 200 is batch size, 32x32x3 is the size for each image
     inputs_constraint = tf.TensorSpec(shape=[batch_size, 32, 32, 3], dtype=tf.float32, name="input")
     targets_constraint = tf.TensorSpec(shape=[batch_size, 1], dtype=tf.uint8, name="target")
-    # to obtain a concrete function from a tf.function.
-    # ConcreteFunctions can be executed just like PolymorphicFunctions,
-    # but their input is restricted to the types to which they're specialized.
-    concrete_function = training_step.get_concrete_function(inputs_constraint, targets_constraint)
-    graph = parse_to_comp_graph(concrete_function)
-    parent_directory = profile_train(concrete_function, get_cifar_data_loader(batch_size, True), num_prof_step=20)
-    plane_pb_file = find_specific_pb_file(parent_directory, "xplane.pb")
-    dataframe = parse_tensorboard(plane_pb_file, Conf_TB(CONF.OP))
-    mem_data = parse_tensorboard(plane_pb_file, Conf_TB(CONF.MEM))
-    op_dict = process_op_df(dataframe)
-    mem_dict = process_mem_dict(mem_data)
 
+    concrete_function = training_step.get_concrete_function(inputs_constraint, targets_constraint)
+    parent_directory = profile_train(concrete_function, get_cifar_data_loader(batch_size, True), num_prof_step=20)
 
 
 if __name__ == "__main__":
-    get_computation_graph()
+    parser = argparse.ArgumentParser(description='Process some dictionary.')
+    parser.add_argument('--model', type=str, required=True,
+                        help='specify the model type')
+
+    args = parser.parse_args()
+    get_computation_graph(model=model_mapping.get(args.model))
