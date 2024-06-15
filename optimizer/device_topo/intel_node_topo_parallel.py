@@ -7,7 +7,7 @@ from optimizer.device_topo.device_graph import run_srun_command
 from slurm_util import get_server_ips, get_slurm_available_nodes
 
 sys.path.append("../../")
-from optimizer.device_topo.intel_node_bandwidth import start_iperf_server, run_iperf_client
+from optimizer.device_topo.intel_node_util import start_iperf_server, run_iperf_client
 
 
 import warnings

@@ -5,7 +5,7 @@ import os
 import sys
 
 sys.path.append("../../")
-from optimizer.device_topo.intra_node_bandwidth import get_device_bandwidth
+from optimizer.device_topo.intra_node_util import get_device_bandwidth
 from optimizer.model.graph import DeviceGraph
 
 import warnings

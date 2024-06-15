@@ -1,14 +1,11 @@
 from keras import Sequential
 from keras.src.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
 
-from DNN_model_tf.vgg_tf import VGG16_tf
-from tf_util import compile_model, getCifar, train_model
+from optimizer.computing_graph.op_graph_util import compile_model, train_model
 import tensorflow as tf
-import datetime
-import torch
 
 from DNN_model_tf.vgg_tf import VGG16_tf
-from tf_util import getCifar
+from optimizer.computing_graph.op_graph_util import getCifar
 
 
 def create_cifar10_model():

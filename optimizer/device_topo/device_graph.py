@@ -1,5 +1,5 @@
-from optimizer.device_topo.intel_node_bandwidth import slurm_output_intel_2_dict, update_intra_graph_with_intel
-from optimizer.device_topo.intra_node_bandwidth import phase_slurm_intra_2_DiGraphs
+from optimizer.device_topo.intel_node_util import slurm_output_intel_2_dict, update_intra_graph_with_intel
+from optimizer.device_topo.intra_node_util import phase_slurm_intra_2_DiGraphs
 from optimizer.model.graph import DeviceGraph, combine_graphs, visualize_graph
 from slurm_util import get_server_ips, get_slurm_available_nodes, run_srun_command, SLURM_RUN_CONF
 
