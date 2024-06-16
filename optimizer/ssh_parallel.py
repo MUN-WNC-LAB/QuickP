@@ -73,3 +73,5 @@ def execute_parallel(command_type: SLURM_RUN_CONF, model_type: str = None):
 
 if __name__ == "__main__":
     execute_parallel(SLURM_RUN_CONF.INTRA_NODE)
+    execute_parallel(SLURM_RUN_CONF.INTER_NODE)
+    # execute_parallel(SLURM_RUN_CONF.COMPUTING_COST, "VGG16_tf")
