@@ -47,10 +47,10 @@ def execute_command_on_server(server, command: str, timeout: int):
     error = stderr.read().decode()
 
     ssh.close()
-    '''
+
     if error:
         return f"Error from {server['hostname']}: {error}"
-    '''
+
     return f"Output from {server['hostname']}: {output}"
 
 

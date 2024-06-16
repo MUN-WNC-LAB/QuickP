@@ -1,6 +1,6 @@
 import argparse
+import os
 import sys
-from DNN_model_tf.model_enum import model_mapping
 
 import warnings
 
@@ -11,14 +11,16 @@ import keras
 import tensorflow as tf
 from keras import Sequential
 
-sys.path.append("../../")
-from optimizer.model.graph import CompGraph
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.abspath(os.path.join(script_dir, '..', '..'))
+sys.path.append(project_root)
+from DNN_model_tf.model_enum import model_mapping
 from optimizer.computing_graph.op_graph_util import compile_model, train_loss, train_accuracy, parse_to_comp_graph, \
     process_op_df, profile_train, get_cifar_data_loader
 
 
 def get_computation_graph(model: Sequential, optimizer=keras.optimizers.Adam(3e-4),
-                          loss_fn=keras.losses.SparseCategoricalCrossentropy(), batch_size=200) -> CompGraph:
+                          loss_fn=keras.losses.SparseCategoricalCrossentropy(), batch_size=200) -> None:
     compile_model(model, optimizer, loss_fn)
 
     # tf.function is a decorator that tells TensorFlow to create a graph from the Python function
