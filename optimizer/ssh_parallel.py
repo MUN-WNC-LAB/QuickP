@@ -43,7 +43,9 @@ def execute_command_on_server(server, command_type: SLURM_RUN_CONF, model_type: 
     return f"Output from {server['hostname']}: {output}"
 
 
-def execute_parallel(command_type: SLURM_RUN_CONF, model_type: str):
+def execute_parallel(command_type: SLURM_RUN_CONF, model_type: str = None):
+    if model_type is None and command_type == SLURM_RUN_CONF.COMPUTING_COST:
+        raise Exception("fuck")
     with ThreadPoolExecutor(max_workers=len(servers)) as executor:
         futures = {executor.submit(execute_command_on_server, server, command_type, model_type): server for server in
                    servers}
