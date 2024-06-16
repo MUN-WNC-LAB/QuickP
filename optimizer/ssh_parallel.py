@@ -1,10 +1,8 @@
 import json
 import os
 from enum import Enum
-
 import paramiko
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
 from slurm_util import get_server_ips
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -17,9 +15,9 @@ servers = [
 
 
 class SLURM_RUN_CONF(Enum):
-    INTRA_NODE = {"path": 'optimizer/device_topo/intra_node_topo_parallel.py', "time": '00:30', "mem": '2000'}
-    INTER_NODE = {"path": 'optimizer/device_topo/intel_node_topo_parallel.py', "time": '00:30', "mem": '2000'}
-    COMPUTING_COST = {"path": 'optimizer/computing_graph/computing_cost_parallel.py', "time": "1:30", "mem": '3G'}
+    INTRA_NODE = {"path": 'device_topo/intra_node_topo_parallel.py', "time": '00:30', "mem": '2000'}
+    INTER_NODE = {"path": 'device_topo/inter_node_topo_parallel.py', "time": '00:30', "mem": '2000'}
+    COMPUTING_COST = {"path": 'computing_graph/computing_cost_parallel.py', "time": "1:30", "mem": '3G'}
 
 
 def command_builder(command_type: SLURM_RUN_CONF, model_type: str):
@@ -37,18 +35,29 @@ def execute_command_on_server(server, command_type: SLURM_RUN_CONF, model_type: 
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh.connect(server["hostname"], username=server["username"], password=server["password"])
-    stdin, stdout, stderr = ssh.exec_command(command_builder(command_type, model_type))
+
+    command = command_builder(command_type, model_type)
+    print(f"Executing on {server['hostname']}: {command}")
+    stdin, stdout, stderr = ssh.exec_command(command)
+
     output = stdout.read().decode()
+    error = stderr.read().decode()
+
     ssh.close()
+
+    if error:
+        return f"Error from {server['hostname']}: {error}"
     return f"Output from {server['hostname']}: {output}"
 
 
 def execute_parallel(command_type: SLURM_RUN_CONF, model_type: str = None):
     if model_type is None and command_type == SLURM_RUN_CONF.COMPUTING_COST:
-        raise Exception("fuck")
+        raise ValueError("model_type should not be None if getting COMPUTING_COST")
+
     with ThreadPoolExecutor(max_workers=len(servers)) as executor:
         futures = {executor.submit(execute_command_on_server, server, command_type, model_type): server for server in
                    servers}
+
         for future in as_completed(futures):
             server = futures[future]
             try:
@@ -56,3 +65,7 @@ def execute_parallel(command_type: SLURM_RUN_CONF, model_type: str = None):
                 print(result)
             except Exception as e:
                 print(f"Error on {server['hostname']}: {e}")
+
+
+if __name__ == "__main__":
+    execute_parallel(SLURM_RUN_CONF.INTRA_NODE)
