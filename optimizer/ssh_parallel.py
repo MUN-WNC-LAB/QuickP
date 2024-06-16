@@ -19,9 +19,9 @@ servers = [
 
 
 class SLURM_RUN_CONF(Enum):
-    INTRA_NODE = {"path": 'device_topo/intra_node_topo_parallel.py', "time": '00:30', "mem": '2000'}
-    INTER_NODE = {"path": 'device_topo/intel_node_topo_parallel.py', "time": '00:30', "mem": '2000'}
-    COMPUTING_COST = {"path": 'computing_graph/computing_cost_parallel.py', "time": "1:30", "mem": '3G'}
+    INTRA_NODE = {"path": 'device_topo/intra_node_topo_parallel.py', "time": 30, "mem": '2000'}
+    INTER_NODE = {"path": 'device_topo/intel_node_topo_parallel.py', "time": 30, "mem": '2000'}
+    COMPUTING_COST = {"path": 'computing_graph/computing_cost_parallel.py', "time": 90, "mem": '3G'}
 
 
 def command_builder(command_type: SLURM_RUN_CONF, model_type: str) -> str:
@@ -35,13 +35,14 @@ def command_builder(command_type: SLURM_RUN_CONF, model_type: str) -> str:
     return command
 
 
-def execute_command_on_server(server, command: str):
+def execute_command_on_server(server, command: str, timeout: int):
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh.connect(server["hostname"], username=server["username"], password=server["password"])
 
     stdin, stdout, stderr = ssh.exec_command(command)
-
+    stdout.channel.settimeout(timeout)
+    stderr.channel.settimeout(timeout)
     output = stdout.read().decode()
     error = stderr.read().decode()
 
@@ -59,7 +60,8 @@ def execute_parallel(command_type: SLURM_RUN_CONF, model_type: str = None):
     results = []
     with ThreadPoolExecutor(max_workers=len(servers)) as executor:
         exe_command = command_builder(command_type, model_type)
-        futures = {executor.submit(execute_command_on_server, server, exe_command): server for server in
+        time_out = command_type.value['time']
+        futures = {executor.submit(execute_command_on_server, server, exe_command, time_out): server for server in
                    servers}
 
         for future in as_completed(futures):
