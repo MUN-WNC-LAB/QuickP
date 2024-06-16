@@ -4,11 +4,14 @@ from enum import Enum
 import paramiko
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from slurm_util import get_server_ips
+import warnings
+
+warnings.filterwarnings("ignore")
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
 servers = [
-    {"hostname": "192.168.0.6", "username": "root", "password": "1314520"},
+
     {"hostname": "192.168.0.66", "username": "root", "password": "1314520"},
     # Add more servers as needed
 ]
@@ -39,7 +42,6 @@ def execute_command_on_server(server, command_type: SLURM_RUN_CONF, model_type: 
     command = command_builder(command_type, model_type)
     # Assuming the script directory is part of the Python path
     pythonpath = f"export PYTHONPATH=$PYTHONPATH:{script_dir}; {command}"
-    print(f"Executing on {server['hostname']}: {pythonpath}")
     stdin, stdout, stderr = ssh.exec_command(pythonpath)
 
     output = stdout.read().decode()
