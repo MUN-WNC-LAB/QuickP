@@ -66,6 +66,7 @@ def execute_parallel(command_type: SLURM_RUN_CONF, model_type: str = None):
             server = futures[future]
             try:
                 result = future.result()
+                print("hh")
                 print(result)
             except Exception as e:
                 print(f"Error on {server['hostname']}: {e}")
