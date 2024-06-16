@@ -1,11 +1,14 @@
 import argparse
 import json
+import os
 import socket
 import sys
 import warnings
 
 warnings.filterwarnings("ignore")
-sys.path.append("../../")
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.abspath(os.path.join(script_dir, '..', '..'))
+sys.path.append(project_root)
 from optimizer.device_topo.intel_node_util import start_iperf_server, run_iperf_client
 
 
