@@ -16,7 +16,13 @@ servers = [
 ]
 
 
-def command_builder(command_type, model_type: str):
+class SLURM_RUN_CONF(Enum):
+    INTRA_NODE = {"path": 'optimizer/device_topo/intra_node_topo_parallel.py', "time": '00:30', "mem": '2000'}
+    INTER_NODE = {"path": 'optimizer/device_topo/intel_node_topo_parallel.py', "time": '00:30', "mem": '2000'}
+    COMPUTING_COST = {"path": 'optimizer/computing_graph/computing_cost_parallel.py', "time": "1:30", "mem": '3G'}
+
+
+def command_builder(command_type: SLURM_RUN_CONF, model_type: str):
     global script_dir
     path = os.path.join(script_dir, command_type.value['path'])
     command = f"python3 {path}"
@@ -25,12 +31,6 @@ def command_builder(command_type, model_type: str):
     elif command_type == SLURM_RUN_CONF.COMPUTING_COST:
         command += f" --model {model_type}"
     return command
-
-
-class SLURM_RUN_CONF(Enum):
-    INTRA_NODE = {"path": 'optimizer/device_topo/intra_node_topo_parallel.py', "time": '00:30', "mem": '2000'}
-    INTER_NODE = {"path": 'optimizer/device_topo/intel_node_topo_parallel.py', "time": '00:30', "mem": '2000'}
-    COMPUTING_COST = {"path": 'optimizer/computing_graph/computing_cost_parallel.py', "time": "1:30", "mem": '3G'}
 
 
 def execute_command_on_server(server, command_type: SLURM_RUN_CONF, model_type: str):
@@ -45,7 +45,8 @@ def execute_command_on_server(server, command_type: SLURM_RUN_CONF, model_type: 
 
 def execute_parallel(command_type: SLURM_RUN_CONF, model_type: str):
     with ThreadPoolExecutor(max_workers=len(servers)) as executor:
-        futures = {executor.submit(execute_command_on_server, server, command_type, model_type): server for server in servers}
+        futures = {executor.submit(execute_command_on_server, server, command_type, model_type): server for server in
+                   servers}
         for future in as_completed(futures):
             server = futures[future]
             try:
