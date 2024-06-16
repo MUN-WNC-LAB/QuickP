@@ -24,7 +24,7 @@ class SLURM_RUN_CONF(Enum):
     COMPUTING_COST = {"path": 'computing_graph/computing_cost_parallel.py', "time": "1:30", "mem": '3G'}
 
 
-def command_builder(command_type: SLURM_RUN_CONF, model_type: str):
+def command_builder(command_type: SLURM_RUN_CONF, model_type: str) -> str:
     global script_dir
     path = os.path.join(script_dir, command_type.value['path'])
     command = f"python3 {path}"
@@ -35,12 +35,11 @@ def command_builder(command_type: SLURM_RUN_CONF, model_type: str):
     return command
 
 
-def execute_command_on_server(server, command_type: SLURM_RUN_CONF, model_type: str):
+def execute_command_on_server(server, command: str):
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh.connect(server["hostname"], username=server["username"], password=server["password"])
 
-    command = command_builder(command_type, model_type)
     stdin, stdout, stderr = ssh.exec_command(command)
 
     output = stdout.read().decode()
@@ -59,7 +58,8 @@ def execute_parallel(command_type: SLURM_RUN_CONF, model_type: str = None):
         raise ValueError("model_type should not be None if getting COMPUTING_COST")
     results = []
     with ThreadPoolExecutor(max_workers=len(servers)) as executor:
-        futures = {executor.submit(execute_command_on_server, server, command_type, model_type): server for server in
+        exe_command = command_builder(command_type, model_type)
+        futures = {executor.submit(execute_command_on_server, server, exe_command): server for server in
                    servers}
 
         for future in as_completed(futures):
