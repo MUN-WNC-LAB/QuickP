@@ -1,10 +1,6 @@
 import argparse
 import sys
-
 from DNN_model_tf.model_enum import model_mapping
-from DNN_model_tf.vgg_tf import VGG16_tf
-
-sys.path.append("../../")
 
 import warnings
 
@@ -15,11 +11,10 @@ import keras
 import tensorflow as tf
 from keras import Sequential
 
-from optimizer.computing_graph.tool import Conf_TB, CONF
+sys.path.append("../../")
 from optimizer.model.graph import CompGraph
 from optimizer.computing_graph.op_graph_util import compile_model, train_loss, train_accuracy, parse_to_comp_graph, \
-    process_op_df, profile_train, get_cifar_data_loader, parse_tensorboard, \
-    find_specific_pb_file, process_mem_dict
+    process_op_df, profile_train, get_cifar_data_loader
 
 
 def get_computation_graph(model: Sequential, optimizer=keras.optimizers.Adam(3e-4),
