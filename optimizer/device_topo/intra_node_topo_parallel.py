@@ -20,8 +20,9 @@ def get_intra_node_topo() -> DeviceGraph:
     G = DeviceGraph()
     bandwidths, devices = get_device_bandwidth()
     print("bandwidths: ", bandwidths, "devices: ", devices)
-    return G
+    return "fuck 3"
 
 
 if __name__ == "__main__":
+    print("fuck2")
     get_intra_node_topo()
