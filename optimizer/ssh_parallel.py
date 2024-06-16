@@ -13,6 +13,7 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 servers = [
 
     {"hostname": "192.168.0.66", "username": "root", "password": "1314520"},
+    {"hostname": "192.168.0.6", "username": "root", "password": "1314520"}
     # Add more servers as needed
 ]
 
