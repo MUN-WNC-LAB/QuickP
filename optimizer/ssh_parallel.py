@@ -37,8 +37,10 @@ def execute_command_on_server(server, command_type: SLURM_RUN_CONF, model_type: 
     ssh.connect(server["hostname"], username=server["username"], password=server["password"])
 
     command = command_builder(command_type, model_type)
-    print(f"Executing on {server['hostname']}: {command}")
-    stdin, stdout, stderr = ssh.exec_command(command)
+    # Assuming the script directory is part of the Python path
+    pythonpath = f"export PYTHONPATH=$PYTHONPATH:{script_dir}; {command}"
+    print(f"Executing on {server['hostname']}: {pythonpath}")
+    stdin, stdout, stderr = ssh.exec_command(pythonpath)
 
     output = stdout.read().decode()
     error = stderr.read().decode()

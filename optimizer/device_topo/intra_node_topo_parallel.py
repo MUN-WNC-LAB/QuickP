@@ -4,7 +4,9 @@ This file is called by a Slurm script .sh file
 import os
 import sys
 
-sys.path.append("../../")
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.abspath(os.path.join(script_dir, '..', '..'))
+sys.path.append(project_root)
 from optimizer.device_topo.intra_node_util import get_device_bandwidth
 from optimizer.model.graph import DeviceGraph
 
