@@ -57,7 +57,7 @@ def execute_command_on_server(server, command_type: SLURM_RUN_CONF, model_type: 
 def execute_parallel(command_type: SLURM_RUN_CONF, model_type: str = None):
     if model_type is None and command_type == SLURM_RUN_CONF.COMPUTING_COST:
         raise ValueError("model_type should not be None if getting COMPUTING_COST")
-
+    results = []
     with ThreadPoolExecutor(max_workers=len(servers)) as executor:
         futures = {executor.submit(execute_command_on_server, server, command_type, model_type): server for server in
                    servers}
@@ -66,8 +66,8 @@ def execute_parallel(command_type: SLURM_RUN_CONF, model_type: str = None):
             server = futures[future]
             try:
                 result = future.result()
-                print("hh")
-                print(result)
+                results.append(result)
+                print(results)
             except Exception as e:
                 print(f"Error on {server['hostname']}: {e}")
 
