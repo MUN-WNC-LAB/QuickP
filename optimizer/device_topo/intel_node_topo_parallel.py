@@ -2,17 +2,11 @@ import argparse
 import json
 import socket
 import sys
-
-from optimizer.device_topo.device_graph import run_srun_command
-from slurm_util import get_server_ips, get_slurm_available_nodes
-
-sys.path.append("../../")
-from optimizer.device_topo.intel_node_util import start_iperf_server, run_iperf_client
-
-
 import warnings
 
 warnings.filterwarnings("ignore")
+sys.path.append("../../")
+from optimizer.device_topo.intel_node_util import start_iperf_server, run_iperf_client
 
 
 def get_intel_node_topo(target_ip: str, from_node, to_node):
