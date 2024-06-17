@@ -20,26 +20,24 @@ servers = [
 ]
 
 
-class SLURM_RUN_CONF(Enum):
+class ParallelCommandType(Enum):
     INTRA_NODE = {"path": 'device_topo/intra_node_topo_parallel.py', "time": 30, "mem": '2000'}
     INTER_NODE = {"path": 'device_topo/intel_node_topo_parallel.py', "time": 30, "mem": '2000'}
     COMPUTING_COST = {"path": 'computing_graph/computing_cost_parallel.py', "time": 90, "mem": '3G'}
+    IP_ADD_MAPPING = {"time": 30}
 
 
-def graph_command_builder(command_type: SLURM_RUN_CONF, model_type: str) -> str:
+def graph_command_builder(command_type: ParallelCommandType, model_type: str) -> str:
+    if command_type == ParallelCommandType.IP_ADD_MAPPING:
+        return "python3 -c 'import socket; print(socket.gethostname())'"
     global script_dir
     path = os.path.join(script_dir, command_type.value['path'])
     command = f"python3 {path}"
-    if command_type == SLURM_RUN_CONF.INTER_NODE:
+    if command_type == ParallelCommandType.INTER_NODE:
         command += f" --dict '{json.dumps(get_server_ips())}'"
-    elif command_type == SLURM_RUN_CONF.COMPUTING_COST:
+    elif command_type == ParallelCommandType.COMPUTING_COST:
         command += f" --model {model_type}"
     return command
-
-
-def address_hostname_command() -> str:
-    # -c means execution the command within a string
-    return "python3 -c 'import socket; print(socket.gethostname())'"
 
 
 def execute_command_on_server(server, command: str, timeout: int):
@@ -61,8 +59,8 @@ def execute_command_on_server(server, command: str, timeout: int):
     return output
 
 
-def execute_parallel(command_type: Union[SLURM_RUN_CONF, str], model_type: str = None) -> dict:
-    if model_type is None and command_type == SLURM_RUN_CONF.COMPUTING_COST:
+def execute_parallel(command_type: ParallelCommandType, model_type: str = None) -> dict:
+    if model_type is None and command_type == ParallelCommandType.COMPUTING_COST:
         raise ValueError("model_type should not be None if getting COMPUTING_COST")
     results = {}
     with ThreadPoolExecutor(max_workers=len(servers)) as executor:
@@ -83,7 +81,7 @@ def execute_parallel(command_type: Union[SLURM_RUN_CONF, str], model_type: str =
 
 
 if __name__ == "__main__":
-    print(execute_parallel(address_hostname_command()))
-    print(execute_parallel(SLURM_RUN_CONF.INTRA_NODE))
-    print(execute_parallel(SLURM_RUN_CONF.INTER_NODE))
+    print(execute_parallel(ParallelCommandType.IP_ADD_MAPPING))
+    print(execute_parallel(ParallelCommandType.INTRA_NODE))
+    print(execute_parallel(ParallelCommandType.INTER_NODE))
     # print(execute_parallel(SLURM_RUN_CONF.COMPUTING_COST, "VGG16_tf"))
