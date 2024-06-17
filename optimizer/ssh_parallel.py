@@ -1,6 +1,8 @@
 import json
 import os
 from enum import Enum
+from typing import Union
+
 import paramiko
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from slurm_util import get_server_ips
@@ -35,8 +37,9 @@ def graph_command_builder(command_type: SLURM_RUN_CONF, model_type: str) -> str:
     return command
 
 
-def address_hostname_command_builder() -> str:
-    pass
+def address_hostname_command() -> str:
+    # -c means execution the command within a string
+    return "python3 -c 'import socket; print(socket.gethostname())'"
 
 
 def execute_command_on_server(server, command: str, timeout: int):
@@ -58,7 +61,7 @@ def execute_command_on_server(server, command: str, timeout: int):
     return output
 
 
-def execute_parallel(command_type: SLURM_RUN_CONF, model_type: str = None) -> dict:
+def execute_parallel(command_type: Union[SLURM_RUN_CONF, str], model_type: str = None) -> dict:
     if model_type is None and command_type == SLURM_RUN_CONF.COMPUTING_COST:
         raise ValueError("model_type should not be None if getting COMPUTING_COST")
     results = {}
@@ -80,6 +83,7 @@ def execute_parallel(command_type: SLURM_RUN_CONF, model_type: str = None) -> di
 
 
 if __name__ == "__main__":
+    print(execute_parallel(address_hostname_command()))
     print(execute_parallel(SLURM_RUN_CONF.INTRA_NODE))
     print(execute_parallel(SLURM_RUN_CONF.INTER_NODE))
     # print(execute_parallel(SLURM_RUN_CONF.COMPUTING_COST, "VGG16_tf"))
