@@ -14,8 +14,8 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 
 servers = [
 
-    {"hostname": "192.168.0.66", "username": "root", "password": "1314520"},
-    {"hostname": "192.168.0.6", "username": "root", "password": "1314520"}
+    {"ip": "192.168.0.66", "username": "root", "password": "1314520"},
+    {"ip": "192.168.0.6", "username": "root", "password": "1314520"}
     # Add more servers as needed
 ]
 
@@ -43,7 +43,7 @@ def graph_command_builder(command_type: ParallelCommandType, model_type: str) ->
 def execute_command_on_server(server, command: str, timeout: int):
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(server["hostname"], username=server["username"], password=server["password"])
+    ssh.connect(server["ip"], username=server["username"], password=server["password"])
 
     stdin, stdout, stderr = ssh.exec_command(command)
     stdout.channel.settimeout(timeout)
@@ -54,7 +54,7 @@ def execute_command_on_server(server, command: str, timeout: int):
     ssh.close()
     '''
     if error:
-        return f"Error from {server['hostname']}: {error}"
+        return f"Error from {server['ip']}: {error}"
     '''
     return output
 
@@ -73,9 +73,12 @@ def execute_parallel(command_type: ParallelCommandType, model_type: str = None) 
             server = futures[future]
             try:
                 result = future.result()
-                results[server["hostname"]] = result
+                if command_type == ParallelCommandType.IP_ADD_MAPPING:
+                    results[result] = server["ip"]
+                else:
+                    results[server["ip"]] = result
             except Exception as e:
-                print(f"Error on {server['hostname']}: {e}")
+                print(f"Error on {server['ip']}: {e}")
 
     return results
 
@@ -84,4 +87,4 @@ if __name__ == "__main__":
     print(execute_parallel(ParallelCommandType.IP_ADD_MAPPING))
     print(execute_parallel(ParallelCommandType.INTRA_NODE))
     print(execute_parallel(ParallelCommandType.INTER_NODE))
-    # print(execute_parallel(SLURM_RUN_CONF.COMPUTING_COST, "VGG16_tf"))
+    print(execute_parallel(ParallelCommandType.COMPUTING_COST, "VGG16_tf"))

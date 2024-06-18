@@ -4,6 +4,8 @@ import sys
 
 import warnings
 
+from optimizer.computing_graph.tool import Conf_TB, CONF
+
 warnings.filterwarnings("ignore")
 
 import keras
@@ -16,7 +18,7 @@ project_root = os.path.abspath(os.path.join(script_dir, '..', '..'))
 sys.path.append(project_root)
 from DNN_model_tf.model_enum import model_mapping
 from optimizer.computing_graph.op_graph_util import compile_model, train_loss, train_accuracy, parse_to_comp_graph, \
-    process_op_df, profile_train, get_cifar_data_loader
+    process_op_df, profile_train, get_cifar_data_loader, parse_tensorboard, find_specific_pb_file
 
 
 def get_computation_graph(model: Sequential, optimizer=keras.optimizers.Adam(3e-4),
@@ -46,6 +48,11 @@ def get_computation_graph(model: Sequential, optimizer=keras.optimizers.Adam(3e-
 
     concrete_function = training_step.get_concrete_function(inputs_constraint, targets_constraint)
     parent_directory = profile_train(concrete_function, get_cifar_data_loader(batch_size, True), num_prof_step=20)
+    plane_pb_file = find_specific_pb_file(parent_directory, "xplane.pb")
+    dataframe = parse_tensorboard(plane_pb_file, Conf_TB(CONF.OP))
+    mem_data = parse_tensorboard(plane_pb_file, Conf_TB(CONF.MEM))
+    print(dataframe)
+    print(mem_data)
 
 
 if __name__ == "__main__":
