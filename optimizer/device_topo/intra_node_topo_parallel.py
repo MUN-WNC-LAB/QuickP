@@ -14,9 +14,10 @@ sys.path.append(project_root)
 from optimizer.device_topo.intra_node_util import get_device_bandwidth
 
 
-def get_intra_node_topo() -> None:
+def get_intra_node_topo():
     bandwidths, devices = get_device_bandwidth()
     print("bandwidths: ", bandwidths, "devices: ", devices)
+    return bandwidths, devices
 
 
 if __name__ == "__main__":
