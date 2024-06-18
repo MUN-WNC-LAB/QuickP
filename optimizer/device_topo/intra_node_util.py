@@ -41,11 +41,17 @@ import os
 import re
 import socket
 import subprocess
+import sys
+
 import torch
 import tensorflow as tf
 from networkx import DiGraph
 from tensorflow.python.client import device_lib
 
+# Ensure the parent directory is in the Python path
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.abspath(os.path.join(script_dir, '..', '..'))
+sys.path.append(project_root)
 from optimizer.model.graph import DeviceGraph
 
 
