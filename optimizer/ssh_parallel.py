@@ -59,6 +59,28 @@ def execute_command_on_server(server, command: str, timeout: int):
     return output
 
 
+def execute_commands_on_server(server, commands: list, timeout: int):
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh.connect(server["ip"], username=server["username"], password=server["password"])
+
+    results = []
+    for command in commands:
+        stdin, stdout, stderr = ssh.exec_command(command)
+        stdout.channel.settimeout(timeout)
+        stderr.channel.settimeout(timeout)
+        output = stdout.read().decode()
+        error = stderr.read().decode()
+
+        if error:
+            results.append(f"Error from {server['ip']} for command '{command}': {error}")
+        else:
+            results.append(f"Output from {server['ip']} for command '{command}': {output}")
+
+    ssh.close()
+    return results
+
+
 def execute_parallel(command_type: ParallelCommandType, model_type: str = None) -> dict:
     if model_type is None and command_type == ParallelCommandType.COMPUTING_COST:
         raise ValueError("model_type should not be None if getting COMPUTING_COST")
