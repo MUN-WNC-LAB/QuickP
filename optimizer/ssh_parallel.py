@@ -101,8 +101,6 @@ def execute_parallel(command_type: ParallelCommandType, model_type: str = None) 
 
 
 if __name__ == "__main__":
-    mapping = execute_parallel(ParallelCommandType.IP_ADD_MAPPING)
-    print(mapping)
     print(execute_parallel(ParallelCommandType.INTRA_NODE))
     print(execute_parallel(ParallelCommandType.INTER_NODE))
-    print(execute_parallel(ParallelCommandType.COMPUTING_COST, "VGG16_tf"))
+    print(execute_parallel(ParallelCommandType.COMPUTING_COST, "vgg"))

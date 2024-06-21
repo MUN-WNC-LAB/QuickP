@@ -15,6 +15,7 @@ warnings.filterwarnings("ignore")
 script_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(script_dir, '..', '..'))
 sys.path.append(project_root)
+from DNN_model_tf.vgg_tf import VGG16_tf
 from DNN_model_tf.model_enum import model_mapping
 from optimizer.computing_graph.tool import Conf_TB, CONF
 from optimizer.computing_graph.op_graph_util import compile_model, train_loss, train_accuracy, parse_to_comp_graph, \
@@ -71,4 +72,6 @@ if __name__ == "__main__":
                         help='specify the model type')
 
     args = parser.parse_args()
+    if 'vgg' in args.model:
+        model = VGG16_tf()
     get_computation_graph(model=model_mapping.get(args.model))
