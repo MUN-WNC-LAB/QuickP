@@ -10,6 +10,7 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(script_dir, '..', '..'))
 sys.path.append(project_root)
 from optimizer.device_topo.intel_node_util import start_iperf_server, run_iperf_client
+from optimizer.ssh_parallel import execute_parallel, ParallelCommandType
 
 
 def get_intel_node_topo(target_ip: str, from_node, to_node):
@@ -27,8 +28,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Deserialize the JSON string to a dictionary
-    servers = json.loads(args.dict)
-
+    servers = execute_parallel(ParallelCommandType.IP_ADD_MAPPING)
+    print(servers)
     all_results = {}
     local_hostname = socket.gethostname()
     other_servers = {key: value for key, value in servers.items() if key != local_hostname}

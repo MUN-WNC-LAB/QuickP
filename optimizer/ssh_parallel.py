@@ -1,11 +1,8 @@
-import json
 import os
 from enum import Enum
-from typing import Union
 
 import paramiko
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from slurm_util import get_server_ips
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -33,9 +30,7 @@ def graph_command_builder(command_type: ParallelCommandType, model_type: str) ->
     global script_dir
     path = os.path.join(script_dir, command_type.value['path'])
     command = f"python3 {path}"
-    if command_type == ParallelCommandType.INTER_NODE:
-        command += f" --dict '{json.dumps(get_server_ips())}'"
-    elif command_type == ParallelCommandType.COMPUTING_COST:
+    if command_type == ParallelCommandType.COMPUTING_COST:
         command += f" --model {model_type}"
     return command
 
@@ -106,7 +101,7 @@ def execute_parallel(command_type: ParallelCommandType, model_type: str = None) 
 
 
 if __name__ == "__main__":
-    print(execute_parallel(ParallelCommandType.IP_ADD_MAPPING))
+    mapping = execute_parallel(ParallelCommandType.IP_ADD_MAPPING)
     print(execute_parallel(ParallelCommandType.INTRA_NODE))
     print(execute_parallel(ParallelCommandType.INTER_NODE))
     print(execute_parallel(ParallelCommandType.COMPUTING_COST, "VGG16_tf"))
