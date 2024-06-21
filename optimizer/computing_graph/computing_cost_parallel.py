@@ -1,11 +1,9 @@
-import argparse
 import os
 import sys
 
 import keras
 # it is weird that on my server, have to import torch to activate tensorflow
 import tensorflow as tf
-
 from keras import Sequential
 from networkx import is_directed_acyclic_graph
 import warnings
@@ -16,15 +14,15 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(script_dir, '..', '..'))
 sys.path.append(project_root)
 from DNN_model_tf.vgg_tf import VGG16_tf
-from DNN_model_tf.model_enum import model_mapping
 from optimizer.computing_graph.tool import Conf_TB, CONF
+from optimizer.model.graph import CompGraph
 from optimizer.computing_graph.op_graph_util import compile_model, train_loss, train_accuracy, parse_to_comp_graph, \
     process_op_df, update_graph_with_prof, profile_train, get_cifar_data_loader, parse_tensorboard, \
     find_specific_pb_file, process_mem_dict
 
 
 def get_computation_graph(model: Sequential, optimizer=keras.optimizers.Adam(3e-4),
-                          loss_fn=keras.losses.SparseCategoricalCrossentropy(), batch_size=200) -> None:
+                          loss_fn=keras.losses.SparseCategoricalCrossentropy(), batch_size=200) -> CompGraph:
     compile_model(model, optimizer, loss_fn)
 
     # tf.function is a decorator that tells TensorFlow to create a graph from the Python function
@@ -60,10 +58,7 @@ def get_computation_graph(model: Sequential, optimizer=keras.optimizers.Adam(3e-
     mem_data = parse_tensorboard(plane_pb_file, Conf_TB(CONF.MEM))
     op_dict = process_op_df(dataframe)
     mem_dict = process_mem_dict(mem_data)
-    update_graph_with_prof(graph, op_dict, mem_dict)
-    if not is_directed_acyclic_graph(graph):
-        raise "comp_graph is not directed acyclic"
-    print(graph.nodes, graph.edges)
+
 
 
 if __name__ == "__main__":
