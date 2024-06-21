@@ -1,6 +1,7 @@
+import argparse
 import os
 import sys
-
+import torch
 import keras
 # it is weird that on my server, have to import torch to activate tensorflow
 import tensorflow as tf
@@ -22,7 +23,7 @@ from optimizer.computing_graph.op_graph_util import compile_model, train_loss, t
 
 
 def get_computation_graph(model: Sequential, optimizer=keras.optimizers.Adam(3e-4),
-                          loss_fn=keras.losses.SparseCategoricalCrossentropy(), batch_size=200) -> CompGraph:
+                          loss_fn=keras.losses.SparseCategoricalCrossentropy(), batch_size=200) -> None:
     compile_model(model, optimizer, loss_fn)
 
     # tf.function is a decorator that tells TensorFlow to create a graph from the Python function
@@ -58,15 +59,17 @@ def get_computation_graph(model: Sequential, optimizer=keras.optimizers.Adam(3e-
     mem_data = parse_tensorboard(plane_pb_file, Conf_TB(CONF.MEM))
     op_dict = process_op_df(dataframe)
     mem_dict = process_mem_dict(mem_data)
-
+    update_graph_with_prof(graph, op_dict, mem_dict)
+    print(graph.nodes)
 
 
 if __name__ == "__main__":
-    #parser = argparse.ArgumentParser(description='Process some dictionary.')
-    #parser.add_argument('--model', type=str, required=True,
-    #                    help='specify the model type')
+    parser = argparse.ArgumentParser(description='Process some dictionary.')
+    parser.add_argument('--model', type=str, required=True, help='specify the model type')
 
-    #args = parser.parse_args()
-    #if 'vgg' in args.model:
-    model = VGG16_tf()
+    args = parser.parse_args()
+    if 'vgg' in args.model:
+        model = VGG16_tf()
+    else:
+        model = VGG16_tf()
     get_computation_graph(model=model)
