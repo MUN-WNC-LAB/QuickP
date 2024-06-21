@@ -1,6 +1,7 @@
 # sudo apt-get install iperf3
 import ast
 import re
+import socket
 import subprocess
 import json
 import time
@@ -25,7 +26,7 @@ default_port = 7100
 # Receiver side command example: iperf3 -s -p 7575; -s state running as server end, -p specifies a self-defined port
 
 # client end
-def run_iperf_client(server_ip: str, duration: int, from_node: str, to_node: str):
+def run_iperf_client(server_ip: str, duration: int):
     # Run the iperf3 client command
     command = ["iperf3", "-c", server_ip, "-t", str(duration), "-p", str(default_port), "-J"]  # '-J' for JSON output
     result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -44,8 +45,8 @@ def run_iperf_client(server_ip: str, duration: int, from_node: str, to_node: str
     duration = end["sum_received"]["seconds"]
     bandwidth_received = end["sum_received"]["bits_per_second"]
     band_dict = {
-        "from": from_node,
-        "to": to_node,
+        "from": socket.gethostname(),
+        "to": server_ip,
         "duration_seconds": duration,
         "bandwidth": bandwidth_received / (8 * 1_000_000_000),
     }
