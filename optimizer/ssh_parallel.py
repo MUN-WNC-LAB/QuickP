@@ -48,10 +48,10 @@ def execute_command_on_server(server, command: str, timeout: int):
 
     ssh.close()
 
-    if error:
-        return f"Error from {server['ip']}: {error}"
+    if output:
+        return output
 
-    return output
+    return f"Error from {server['ip']}: {error}"
 
 
 def execute_commands_on_server(server, commands: list, timeout: int):
