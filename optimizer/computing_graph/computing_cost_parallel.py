@@ -67,11 +67,11 @@ def get_computation_graph(model: Sequential, optimizer=keras.optimizers.Adam(3e-
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Process some dictionary.')
-    parser.add_argument('--model', type=str, required=True,
-                        help='specify the model type')
+    #parser = argparse.ArgumentParser(description='Process some dictionary.')
+    #parser.add_argument('--model', type=str, required=True,
+    #                    help='specify the model type')
 
-    args = parser.parse_args()
-    if 'vgg' in args.model:
-        model = VGG16_tf()
+    #args = parser.parse_args()
+    #if 'vgg' in args.model:
+    model = VGG16_tf()
     get_computation_graph(model=model)
