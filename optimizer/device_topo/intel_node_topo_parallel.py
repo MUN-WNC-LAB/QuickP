@@ -10,8 +10,7 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(script_dir, '..', '..'))
 sys.path.append(project_root)
 from optimizer.device_topo.intel_node_util import start_iperf_server, run_iperf_client
-from optimizer.ssh_parallel import execute_parallel, ParallelCommandType
-from optimizer.cluster_info import host_ip_mapping
+from optimizer.host_ip import host_ip_mapping
 
 
 def get_intel_node_topo(target_ip: str, from_node, to_node):
