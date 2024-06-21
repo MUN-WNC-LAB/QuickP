@@ -21,12 +21,6 @@ def get_intel_node_topo(target_ip: str, from_node, to_node):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Process some dictionary.')
-    parser.add_argument('--dict', type=str, required=True,
-                        help='all available servers in Slurm and their ips as a JSON string')
-
-    args = parser.parse_args()
-
     # Deserialize the JSON string to a dictionary
     servers = execute_parallel(ParallelCommandType.IP_ADD_MAPPING)
     print(servers)
