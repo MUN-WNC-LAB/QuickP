@@ -96,9 +96,9 @@ def execute_parallel(command_type: ParallelCommandType, model_type: str = None) 
             try:
                 result = future.result()
                 if command_type == ParallelCommandType.IP_ADD_MAPPING:
-                    results[result] = server["ip"]
+                    results[result.strip()] = server["ip"]
                 else:
-                    results[server["ip"]] = result
+                    results[server["ip"]] = result.strip()
             except Exception as e:
                 print(f"Error on {server['ip']}: {e}")
 
