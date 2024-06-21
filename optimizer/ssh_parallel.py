@@ -1,4 +1,5 @@
 import os
+import sys
 from enum import Enum
 
 import paramiko
@@ -8,13 +9,9 @@ import warnings
 warnings.filterwarnings("ignore")
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
-
-servers = [
-
-    {"ip": "192.168.0.66", "username": "root", "password": "1314520"},
-    {"ip": "192.168.0.6", "username": "root", "password": "1314520"}
-    # Add more servers as needed
-]
+project_root = os.path.abspath(os.path.join(script_dir, '..'))
+sys.path.append(project_root)
+from optimizer.cluster_info import ServerInfo, servers
 
 
 class ParallelCommandType(Enum):
@@ -35,10 +32,10 @@ def graph_command_builder(command_type: ParallelCommandType, model_type: str) ->
     return command
 
 
-def execute_command_on_server(server, command: str, timeout: int):
+def execute_command_on_server(server: ServerInfo, command: str, timeout: int):
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(server["ip"], username=server["username"], password=server["password"])
+    ssh.connect(server.ip, username=server.username, password=server.password)
 
     stdin, stdout, stderr = ssh.exec_command(command)
     stdout.channel.settimeout(timeout)
@@ -51,7 +48,7 @@ def execute_command_on_server(server, command: str, timeout: int):
     if output:
         return output
 
-    return f"Error from {server['ip']}: {error}"
+    return f"Error from {server.ip}: {error}"
 
 
 def execute_commands_on_server(server, commands: list, timeout: int):
