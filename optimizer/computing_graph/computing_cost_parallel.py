@@ -74,4 +74,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if 'vgg' in args.model:
         model = VGG16_tf()
-    get_computation_graph(model=model_mapping.get(args.model))
+    get_computation_graph(model=model)
