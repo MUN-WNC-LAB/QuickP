@@ -10,8 +10,8 @@ def get_device_topo_ssh():
     if len(host_ip_mapping) <= 0:
         raise ValueError("No available nodes in Slurm to run the job.")
 
-    output_intra = execute_parallel(ParallelCommandType.INTRA_NODE)
-    output_intel = execute_parallel(ParallelCommandType.INTER_NODE)
+    output_intra = execute_parallel([], ParallelCommandType.INTRA_NODE)
+    output_intel = execute_parallel([], ParallelCommandType.INTER_NODE)
     if output_intra:
         graph_list_intra = ssh_intra_2_DiGraphs(output_intra)
         dict_list_intel = ssh_intel_2_dict(output_intel)
