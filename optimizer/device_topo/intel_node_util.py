@@ -94,26 +94,6 @@ def start_iperf_server(hostname, username, password):
         client.close()
 
 
-def slurm_output_intel_2_dict(slurm_output: str) -> list[dict]:
-    def check_slurm_row_pattern(row: str):
-        pattern = re.compile(r"Result:\s+(\{.*\})")
-        match = pattern.match(row)
-        if match:
-            # ast.literal_eval convert string to dict
-            bandwidths = ast.literal_eval(match.group(1))
-            return bandwidths
-        else:
-            return None
-
-    graph_list = []
-    lines = slurm_output.splitlines()
-    for line in lines:
-        bandwidths_part = check_slurm_row_pattern(line)
-        if bandwidths_part:
-            graph_list.append(bandwidths_part)
-    return graph_list
-
-
 def ssh_intel_2_dict(slurm_output: dict) -> list[dict]:
     def check_ssh_row_pattern(row: str):
         pattern = re.compile(r"Result:\s+(\{.*\})")
