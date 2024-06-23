@@ -1,5 +1,6 @@
 import argparse
 import os
+import socket
 import sys
 import torch
 import keras
@@ -58,7 +59,7 @@ def get_computation_graph(model: Sequential, optimizer=keras.optimizers.Adam(3e-
     mem_data = parse_tensorboard(plane_pb_file, Conf_TB(CONF.MEM))
     op_dict = process_op_df(dataframe)
     mem_dict = process_mem_dict(mem_data)
-    update_graph_with_prof(graph, op_dict, mem_dict)
+    update_graph_with_prof(graph, op_dict, mem_dict, socket.gethostname())
     print(graph.nodes)
 
 
