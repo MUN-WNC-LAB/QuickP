@@ -1,13 +1,13 @@
+from optimizer.cluster_info import servers
 from optimizer.device_topo.intel_node_util import update_intra_graph_with_intel, \
     ssh_intel_2_dict
 from optimizer.device_topo.intra_node_util import ssh_intra_2_DiGraphs
-from optimizer.host_ip import host_ip_mapping
 from optimizer.model.graph import DeviceGraph, combine_graphs, visualize_graph
 from optimizer.ssh_parallel import execute_parallel, ParallelCommandType
 
 
 def get_device_topo_ssh():
-    if len(host_ip_mapping) <= 0:
+    if len(servers) <= 0:
         raise ValueError("No available nodes in Slurm to run the job.")
 
     output_intra = execute_parallel([], ParallelCommandType.INTRA_NODE)
