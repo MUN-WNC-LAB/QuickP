@@ -50,7 +50,7 @@ class ParallelCommandType(Enum):
     IP_ADD_MAPPING = {"time": 30}
 
 
-def graph_command_builder(command_type: ParallelCommandType, model_type: str, server_list: list[ServerInfo]) -> str:
+def graph_command_builder(command_type: ParallelCommandType, model_type: str, server_list: list[ServerInfo] = None) -> str:
     if command_type == ParallelCommandType.IP_ADD_MAPPING:
         return "python3 -c 'import socket; print(socket.gethostname())'"
     global script_dir
@@ -111,7 +111,7 @@ def execute_parallel(server_list, command_type: ParallelCommandType, model_type:
         raise ValueError("model_type should not be None if getting COMPUTING_COST")
     results = {}
     with ThreadPoolExecutor(max_workers=len(server_list)) as executor:
-        exe_command = graph_command_builder(command_type, model_type)
+        exe_command = graph_command_builder(command_type, model_type, server_list)
         time_out = command_type.value['time']
         futures = {executor.submit(execute_command_on_server, server, exe_command, time_out): server for server in
                    server_list}
