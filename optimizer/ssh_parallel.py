@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 from enum import Enum
@@ -14,14 +15,32 @@ sys.path.append(project_root)
 
 
 class ServerInfo:
-    def __init__(self, ip, username, password):
+    def __init__(self, ip, username, password, hostname=None):
         self.ip = ip
         self.username = username
         self.password = password
-        self.hostname = None
+        self.hostname = hostname
 
     def __repr__(self):
         return f"Server(ip='{self.ip}', hostname='{self.hostname}', username='{self.username}', password='{self.password}')"
+
+    def to_json(self):
+        # Convert the instance to a dictionary
+        data = {
+            'ip': self.ip,
+            'username': self.username,
+            'password': self.password,
+            'hostname': self.hostname
+        }
+        # Serialize the dictionary to a JSON string
+        return json.dumps(data)
+
+    @classmethod
+    def from_json(cls, json_str):
+        # Parse the JSON string to a dictionary
+        data = json.loads(json_str)
+        # Create an instance of ServerInfo using the parsed data
+        return cls(ip=data['ip'], username=data['username'], password=data['password'], hostname=data.get('hostname'))
 
 
 class ParallelCommandType(Enum):
@@ -31,7 +50,7 @@ class ParallelCommandType(Enum):
     IP_ADD_MAPPING = {"time": 30}
 
 
-def graph_command_builder(command_type: ParallelCommandType, model_type: str) -> str:
+def graph_command_builder(command_type: ParallelCommandType, model_type: str, server_list: list[ServerInfo]) -> str:
     if command_type == ParallelCommandType.IP_ADD_MAPPING:
         return "python3 -c 'import socket; print(socket.gethostname())'"
     global script_dir
@@ -39,6 +58,10 @@ def graph_command_builder(command_type: ParallelCommandType, model_type: str) ->
     command = f"python3 {path}"
     if command_type == ParallelCommandType.COMPUTING_COST:
         command += f" --model {model_type}"
+    elif command_type == ParallelCommandType.INTER_NODE:
+        server_list_dicts = [server.__dict__ for server in server_list]
+        server_list_json = json.dumps(server_list_dicts)
+        command += f" --server_list '{server_list_json}'"
     return command
 
 

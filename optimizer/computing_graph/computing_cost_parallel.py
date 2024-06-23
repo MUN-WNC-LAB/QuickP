@@ -16,7 +16,6 @@ project_root = os.path.abspath(os.path.join(script_dir, '..', '..'))
 sys.path.append(project_root)
 from DNN_model_tf.vgg_tf import VGG16_tf
 from optimizer.computing_graph.tool import Conf_TB, CONF
-from optimizer.model.graph import CompGraph
 from optimizer.computing_graph.op_graph_util import compile_model, train_loss, train_accuracy, parse_to_comp_graph, \
     process_op_df, update_graph_with_prof, profile_train, get_cifar_data_loader, parse_tensorboard, \
     find_specific_pb_file, process_mem_dict
