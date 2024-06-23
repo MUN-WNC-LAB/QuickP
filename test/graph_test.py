@@ -1,18 +1,6 @@
-import tensorflow as tf
-import torch
-# https://discuss.tensorflow.org/t/tensorflow-operator-computational-graph/3759
-model = tf.keras.models.Sequential([
-    tf.keras.layers.Dense(2, activation='softmax', input_shape=(1,))
-])
+from DNN_model_tf.vgg_tf import VGG16_tf
+from optimizer.computing_graph.computing_graph import get_computation_graph
 
-model.compile(optimizer='rmsprop', loss='categorical_crossentropy')
-
-xs = tf.constant([[1.0]])
-ys = tf.constant([[0.2, 0.8]])
-
-model.train_on_batch(xs, ys)
-
-graph = model.train_function.get_concrete_function(iter([(xs, ys)])).graph  # The concrete function takes an iterator
-isinstance(graph, tf.Graph)  # True
-
-print(len(graph.get_operations()))
+model = VGG16_tf()
+comp_graph = get_computation_graph(model=model)
+comp_graph.generata_random_cost(50)
