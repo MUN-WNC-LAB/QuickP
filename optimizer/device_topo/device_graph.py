@@ -17,6 +17,5 @@ def get_device_topo_ssh(server_list: list[ServerInfo]):
         dict_list_intel = ssh_intel_2_dict(output_intel)
         graph_combined = combine_graphs(graph_list_intra)
         update_intra_graph_with_intel(graph_combined, dict_list_intel)
-        visualize_graph(graph_combined)
     else:
         raise ValueError("No available nodes in Slurm to run the job.")
