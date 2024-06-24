@@ -81,7 +81,7 @@ def ssh_intra_2_DiGraphs(ssh_output: dict) -> [DiGraph]:
         if bandwidths_part and devices_part:
             G = DeviceGraph()
             for (name, attributes) in devices_part.items():
-                G.add_new_node(name, attributes["memory_limit"])
+                G.add_new_fully_connected_node(name, attributes["memory_limit"])
             for (direction, band) in bandwidths_part.items():
                 if direction == "H2D":
                     from_device = get_key_including_substring(G.nodes, "CPU:0")
