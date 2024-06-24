@@ -6,7 +6,7 @@ from optimizer.model.graph import DeviceGraph, combine_graphs, visualize_graph
 from optimizer.ssh_parallel import execute_parallel, ParallelCommandType, ServerInfo
 
 
-def get_device_topo_ssh(server_list: list[ServerInfo]):
+def get_device_topo_ssh(server_list: list[ServerInfo]) -> DeviceGraph:
     if len(servers) <= 0:
         raise ValueError("No available nodes in Slurm to run the job.")
 
@@ -19,3 +19,4 @@ def get_device_topo_ssh(server_list: list[ServerInfo]):
         update_intra_graph_with_intel(graph_combined, dict_list_intel)
     else:
         raise ValueError("No available nodes in Slurm to run the job.")
+    return graph_combined
