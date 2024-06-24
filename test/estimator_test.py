@@ -32,8 +32,8 @@ model.setParam("MIPFocus", 1)
 model.setParam("IntFeasTol", 1e-6)
 
 # Define variables
-x = {}  # key will be (node_id, machine_id), value will be 1 or 0
-d = {}  # key will be (node_id_1, node_id_2), value will be 1 or 0
+x = {}  # key will be (operator_id, machine_id), value will be 1 or 0; x[3, 1] = 1 means operator 3 get allocated to device 1
+d = {}  # key will be (operator_id_1, operator_id_2), value will be 1 or 0; d[3, 7] = 1 means operator 3 and 7 are placed on different device
 x1 = model.addVar(vtype=GRB.BINARY, name="w1")
 x2 = model.addVar(vtype=GRB.BINARY, name="w2")
 for node_id in comp_graph.getOperatorIDs():
