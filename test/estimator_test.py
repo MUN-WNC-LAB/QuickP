@@ -91,7 +91,7 @@ for node_id in list(comp_graph.getOperatorIDs()):
 for edge_id_tuple in list(comp_graph.getEdgeIDs()):
     sourceID = edge_id_tuple[0]
     destID = edge_id_tuple[1]
-    tensor_size = tensor_shape_to_bits()
+    tensor_size = tensor_shape_to_bits(comp_graph.getOperator(sourceID)["output_size"], dtype=tf.float32)
     source_placement = model.addVar(vtype=GRB.INTEGER, name="w1")
     dest_placement = model.addVar(vtype=GRB.INTEGER, name="w1")
     # https://support.gurobi.com/hc/en-us/articles/360039628832-Constraint-has-no-bool-value-are-you-trying-lb-expr-ub

@@ -9,9 +9,6 @@ def test_generata_fat_tree_topo():
     visualize_graph(G, show_node_labels=False)
 
 
-test_generata_fat_tree_topo()
-
-
 def test_generata_random_cost():
     model = VGG16_tf()
     comp_graph = get_computation_graph(model=model)
@@ -19,4 +16,6 @@ def test_generata_random_cost():
     print(comp_graph.getAllOperators())
 
 
-test_generata_random_cost()
+def test_computation_graph():
+    G = CompGraph()
+    G.add_new_node(1, '', Ten)
