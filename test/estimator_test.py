@@ -3,6 +3,8 @@ import json
 
 from gurobipy import *
 
+from py_util import tensor_shape_to_bits
+
 script_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(script_dir, '..'))
 sys.path.append(project_root)
@@ -16,8 +18,8 @@ comp_graph = get_computation_graph(model=model)
 deviceTopo = get_device_topo_ssh(servers)
 
 # init fake data
-comp_graph.generata_random_cost(100)
-deviceTopo.generata_fat_tree_topo(100, 30, 20, 5)
+comp_graph.generata_random_cost(30)
+deviceTopo.generata_fat_tree_topo(30, 30, 20, 5)
 
 # Init solver
 model = Model("minimize_maxload")
@@ -89,6 +91,7 @@ for node_id in list(comp_graph.getOperatorIDs()):
 for edge_id_tuple in list(comp_graph.getEdgeIDs()):
     sourceID = edge_id_tuple[0]
     destID = edge_id_tuple[1]
+    tensor_size = tensor_shape_to_bits()
     source_placement = model.addVar(vtype=GRB.INTEGER, name="w1")
     dest_placement = model.addVar(vtype=GRB.INTEGER, name="w1")
     # https://support.gurobi.com/hc/en-us/articles/360039628832-Constraint-has-no-bool-value-are-you-trying-lb-expr-ub
@@ -96,9 +99,8 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
     for device_id in deviceTopo.getDeviceIDs():
         model.addConstr((x[sourceID, device_id] == 1) >> (source_placement == device_id))
         model.addConstr((x[destID, device_id] == 1) >> (dest_placement == device_id))
-    # model.update()
-    # path = nx.shortest_path(deviceTopo, source=source_placement, target=dest_placement)
-    # communication_cost = deviceTopo.calculateCommunicationCost(standard_tensor_size, path_list=path)
+    communication_cost = deviceTopo.calculateCommunicationCost(tensor_size, source_placement, dest_placement)
+    # if op2 depends on op1, the starting time of op2 will be the ending time of op1 + communication delay if these two ops are not placed on the same device
     model.addConstr(start[destID] >= finish[sourceID] + d[sourceID, destID] * 0, "data dependency between source and destination nodes")
 
 # TotalLatency that we are minimizing
