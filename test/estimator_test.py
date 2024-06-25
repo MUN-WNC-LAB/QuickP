@@ -81,7 +81,7 @@ for node_id in list(comp_graph.getOperatorIDs()):
 
 # Add constraint that if op2 depends on op1, the starting time of op2 will be the ending time of op1 + communication delay if these two ops are not placed on the same device
 # since device id are str, map them to integers
-device_id_mapping = {device_id: idx for idx, device_id in enumerate(deviceTopo.getDeviceIDs())}
+device_id_mapping: dict[str, int] = {device_id: idx for idx, device_id in enumerate(deviceTopo.getDeviceIDs())}
 for edge_id_tuple in list(comp_graph.getEdgeIDs()):
     sourceID = edge_id_tuple[0]
     destID = edge_id_tuple[1]
@@ -91,11 +91,25 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
     # https://support.gurobi.com/hc/en-us/articles/360039628832-Constraint-has-no-bool-value-are-you-trying-lb-expr-ub
     # https://support.gurobi.com/hc/en-us/community/posts/360077951791-if-statement-in-constraint
     for device_id, device_id_int in device_id_mapping.items():
-        print(device_id, device_id_int)
         model.addConstr((x[sourceID, device_id] == 1) >> (source_placement == device_id_int))
         model.addConstr((x[destID, device_id] == 1) >> (dest_placement == device_id_int))
-    communication_cost = deviceTopo.calculateCommunicationCost(tensor_size, source_placement, dest_placement, device_id_mapping)
-    model.addConstr(start[destID] >= finish[sourceID] + communication_cost, "data dependency between source and destination nodes")
+    # Add auxiliary variables for communication costs
+    communication_costs = {}
+    for device_id_src, idx_src in device_id_mapping.items():
+        for device_id_dest, idx_dest in device_id_mapping.items():
+            comm_cost = deviceTopo.calculateCommunicationCost(tensor_size, idx_src, idx_dest, device_id_mapping)
+            communication_costs[(idx_src, idx_dest)] = comm_cost
+
+    # Add constraints to link communication costs to source and destination placements
+    comm_cost = model.addVar(vtype=GRB.CONTINUOUS, name=f"comm_cost_{sourceID}_{destID}")
+
+    for idx_src in device_id_mapping.values():
+        for idx_dest in device_id_mapping.values():
+            model.addConstr((source_placement == idx_src) & (dest_placement == idx_dest) >> (
+                        comm_cost == communication_costs[(idx_src, idx_dest)]))
+
+    # Add the data dependency constraint with communication cost
+    model.addConstr(start[destID] >= finish[sourceID] + comm_cost, f"data_dependency_{sourceID}_{destID}")
 
 # TotalLatency that we are minimizing
 TotalLatency = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0)
