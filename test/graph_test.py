@@ -1,6 +1,7 @@
 from DNN_model_tf.vgg_tf import VGG16_tf
 from optimizer.computing_graph.computing_graph import get_computation_graph
 from optimizer.model.graph import DeviceGraph, visualize_graph, CompGraph
+import tensorflow as tf
 
 
 def test_generata_fat_tree_topo():
@@ -18,4 +19,9 @@ def test_generata_random_cost():
 
 def test_computation_graph():
     G = CompGraph()
-    G.add_new_node(1, '', Ten)
+    G.add_new_node(1, '', tf.TensorShape([2, 300]))
+    G.add_new_node(2, '', tf.TensorShape([]))
+    G.add_new_edge(1, 2)
+    print(G.getEdgeIDs())
+    for edge_id_tuple in list(G.getEdgeIDs()):
+        print(type(edge_id_tuple))
