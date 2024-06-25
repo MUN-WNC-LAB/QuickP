@@ -2,7 +2,8 @@
 import json
 
 from gurobipy import *
-
+import torch
+import tensorflow as tf
 from py_util import tensor_shape_to_bits
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
