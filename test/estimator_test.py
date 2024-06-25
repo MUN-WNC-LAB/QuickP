@@ -13,10 +13,12 @@ from optimizer.computing_graph.computing_graph import get_computation_graph
 from optimizer.device_topo.device_graph import get_device_topo_ssh
 from optimizer.cluster_info import servers
 from py_util import tensor_shape_to_bits
+from optimizer.model.graph import DeviceGraph
+
 
 model = VGG16_tf()
 comp_graph = get_computation_graph(model=model)
-deviceTopo = get_device_topo_ssh(servers)
+deviceTopo = DeviceGraph()
 
 # init fake data
 comp_graph.generata_random_cost(4)
@@ -36,23 +38,11 @@ model.setParam("IntFeasTol", 1e-6)
 
 # Define variables
 x = {}  # key will be (operator_id, machine_id), value will be 1 or 0; x[3, 1] = 1 means operator 3 get allocated to device 1
-d = {}  # key will be (operator_id_1, operator_id_2), value will be 1 or 0; d[3, 7] = 1 means operator 3 and 7 are placed on different device
 x1 = model.addVar(vtype=GRB.BINARY, name="w1")
 x2 = model.addVar(vtype=GRB.BINARY, name="w2")
 for node_id in comp_graph.getOperatorIDs():
     for machine_id in deviceTopo.getDeviceIDs():
         x[node_id, machine_id] = model.addVar(vtype=GRB.BINARY)
-for source_id in comp_graph.getOperatorIDs():
-    for dest_id in comp_graph.getOperatorIDs():
-        d[source_id, dest_id] = model.addVar(vtype=GRB.BINARY)
-        # If two nodes do not have dependency relationship
-        if (source_id, dest_id) not in comp_graph.getEdgeIDs():
-            model.addConstr(d[source_id, dest_id] == 0)
-        else:
-            for device_id in deviceTopo.getDeviceIDs():
-                model.addConstr((x[source_id, device_id] == 1) >> (x1 == 1), "source node is placed on the device")
-                model.addConstr((x[dest_id, device_id] == 1) >> (x2 == 1), "dest node is placed on the device")
-                model.addGenConstrAnd(d[source_id, dest_id], [x1, x2], "andconstr")
 
 # Add constraints that schedule every node on exactly one machine
 for node_id in comp_graph.getOperatorIDs():
@@ -102,7 +92,7 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
         model.addConstr((x[destID, device_id] == 1) >> (dest_placement == device_id))
     communication_cost = deviceTopo.calculateCommunicationCost(tensor_size, source_placement, dest_placement)
     # if op2 depends on op1, the starting time of op2 will be the ending time of op1 + communication delay if these two ops are not placed on the same device
-    model.addConstr(start[destID] >= finish[sourceID] + d[sourceID, destID] * 0, "data dependency between source and destination nodes")
+    model.addConstr(start[destID] >= finish[sourceID] + communication_cost, "data dependency between source and destination nodes")
 
 # TotalLatency that we are minimizing
 TotalLatency = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0)
