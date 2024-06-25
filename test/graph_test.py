@@ -25,3 +25,14 @@ def test_computation_graph():
     print(G.getEdgeIDs())
     for edge_id_tuple in list(G.getEdgeIDs()):
         print(type(edge_id_tuple))
+
+
+def test_device_mapping():
+    # Create mapping for devices to integers
+    G = DeviceGraph()
+    G.generata_fat_tree_topo(6, 50, 20, 2)
+    device_id_mapping = {device_id: idx for idx, device_id in enumerate(G.getDeviceIDs())}
+    print(device_id_mapping)
+
+
+test_device_mapping()

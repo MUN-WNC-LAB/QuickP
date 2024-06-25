@@ -79,6 +79,9 @@ for node_id in list(comp_graph.getOperatorIDs()):
         comp_cost += x[node_id, device_id] * comp_graph.getOperator(node_id)["comp_cost"][device_id]
     model.addConstr(finish[node_id] == start[node_id] + comp_cost, "finish == start + process")
 
+# Add constraint that if op2 depends on op1, the starting time of op2 will be the ending time of op1 + communication delay if these two ops are not placed on the same device
+# since device id are str, map them to integers
+device_id_mapping = {device_id: idx for idx, device_id in enumerate(deviceTopo.getDeviceIDs())}
 for edge_id_tuple in list(comp_graph.getEdgeIDs()):
     sourceID = edge_id_tuple[0]
     destID = edge_id_tuple[1]
@@ -87,11 +90,11 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
     dest_placement = model.addVar(vtype=GRB.INTEGER, name="w1")
     # https://support.gurobi.com/hc/en-us/articles/360039628832-Constraint-has-no-bool-value-are-you-trying-lb-expr-ub
     # https://support.gurobi.com/hc/en-us/community/posts/360077951791-if-statement-in-constraint
-    for device_id in deviceTopo.getDeviceIDs():
-        model.addConstr((x[sourceID, device_id] == 1) >> (source_placement == device_id))
-        model.addConstr((x[destID, device_id] == 1) >> (dest_placement == device_id))
-    communication_cost = deviceTopo.calculateCommunicationCost(tensor_size, source_placement, dest_placement)
-    # if op2 depends on op1, the starting time of op2 will be the ending time of op1 + communication delay if these two ops are not placed on the same device
+    for device_id, device_id_int in device_id_mapping.items():
+        print(device_id, device_id_int)
+        model.addConstr((x[sourceID, device_id] == 1) >> (source_placement == device_id_int))
+        model.addConstr((x[destID, device_id] == 1) >> (dest_placement == device_id_int))
+    communication_cost = deviceTopo.calculateCommunicationCost(tensor_size, source_placement, dest_placement, device_id_mapping)
     model.addConstr(start[destID] >= finish[sourceID] + communication_cost, "data dependency between source and destination nodes")
 
 # TotalLatency that we are minimizing
