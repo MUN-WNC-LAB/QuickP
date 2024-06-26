@@ -90,9 +90,10 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
     dest_placement = model.addVar(vtype=GRB.INTEGER, name="w1")
     # https://support.gurobi.com/hc/en-us/articles/360039628832-Constraint-has-no-bool-value-are-you-trying-lb-expr-ub
     # https://support.gurobi.com/hc/en-us/community/posts/360077951791-if-statement-in-constraint
-    for device_id, device_id_int in device_id_mapping.items():
-        model.addConstr((x[sourceID, device_id] == 1) >> (source_placement == device_id_int))
-        model.addConstr((x[destID, device_id] == 1) >> (dest_placement == device_id_int))
+    # Enforce that source_placement and dest_placement match the binary variables
+    for device_id, device_idx in device_id_mapping.items():
+        model.addGenConstrIndicator(x[sourceID, device_id], True, source_placement == device_idx)
+        model.addGenConstrIndicator(x[destID, device_id], True, dest_placement == device_idx)
     # Add auxiliary variables for communication costs
     communication_costs = {}
     for device_id_src, idx_src in device_id_mapping.items():
@@ -100,13 +101,20 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
             comm_cost = deviceTopo.calculateCommunicationCost(tensor_size, idx_src, idx_dest, device_id_mapping)
             communication_costs[(idx_src, idx_dest)] = comm_cost
 
+    # Create a big-M constraint to enforce the communication cost based on placements
+    M = 1e6  # A large constant for the big-M constraint
     # Add constraints to link communication costs to source and destination placements
     comm_cost = model.addVar(vtype=GRB.CONTINUOUS, name=f"comm_cost_{sourceID}_{destID}")
 
     for idx_src in device_id_mapping.values():
         for idx_dest in device_id_mapping.values():
-            model.addConstr((source_placement == idx_src) & (dest_placement == idx_dest) >> (
-                        comm_cost == communication_costs[(idx_src, idx_dest)]))
+            is_active = model.addVar(vtype=GRB.BINARY, name=f"is_active_{sourceID}_{destID}_{idx_src}_{idx_dest}")
+            model.addGenConstrIndicator(is_active, True, source_placement == idx_src)
+            model.addGenConstrIndicator(is_active, True, dest_placement == idx_dest)
+
+            # Link the communication cost using big-M method
+            model.addConstr(comm_cost <= M * (1 - is_active) + communication_costs[(idx_src, idx_dest)])
+            model.addConstr(comm_cost >= communication_costs[(idx_src, idx_dest)] - M * (1 - is_active))
 
     # Add the data dependency constraint with communication cost
     model.addConstr(start[destID] >= finish[sourceID] + comm_cost, f"data_dependency_{sourceID}_{destID}")
