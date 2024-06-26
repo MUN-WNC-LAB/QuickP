@@ -99,12 +99,11 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
         #     source_placement == device_idx: This is the linear constraint that should hold when x[sourceID, device_id] is 1. Here, it means that the integer variable source_placement should be equal to the integer value device_idx.
         model.addGenConstrIndicator(x[sourceID, device_id], True, source_placement == device_idx)
         model.addGenConstrIndicator(x[destID, device_id], True, dest_placement == device_idx)
-    # Add auxiliary variables for communication costs
+    # communication_costs[idx_src, idx_dest] means the com cost from device with int id idx_src to another with int id idx_dest
     communication_costs = {}
     for device_id_src, idx_src in device_id_mapping.items():
         for device_id_dest, idx_dest in device_id_mapping.items():
-            comm_cost = deviceTopo.calculateCommunicationCost(tensor_size, device_id_src, device_id_dest)
-            communication_costs[(idx_src, idx_dest)] = comm_cost
+            communication_costs[idx_src, idx_dest] = deviceTopo.calculateCommunicationCost(tensor_size, device_id_src, device_id_dest)
 
     # Create a big-M constraint to enforce the communication cost based on placements
     M = 1e6  # A large constant for the big-M constraint
@@ -118,8 +117,8 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
             model.addGenConstrIndicator(is_active, True, dest_placement == idx_dest)
 
             # Link the communication cost using big-M method
-            model.addConstr(comm_cost <= M * (1 - is_active) + communication_costs[(idx_src, idx_dest)])
-            model.addConstr(comm_cost >= communication_costs[(idx_src, idx_dest)] - M * (1 - is_active))
+            model.addConstr(comm_cost <= M * (1 - is_active) + communication_costs[idx_src, idx_dest])
+            model.addConstr(comm_cost >= communication_costs[idx_src, idx_dest] - M * (1 - is_active))
 
     # Add the data dependency constraint with communication cost
     model.addConstr(start[destID] >= finish[sourceID] + comm_cost, f"data_dependency_{sourceID}_{destID}")
