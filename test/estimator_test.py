@@ -114,13 +114,16 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
 
     for idx_src in device_id_mapping.values():
         for idx_dest in device_id_mapping.values():
-            is_active = model.addVar(vtype=GRB.BINARY, name=f"is_active_{sourceID}_{destID}_{idx_src}_{idx_dest}")
-            model.addGenConstrIndicator(is_active, True, source_placement == idx_src)
-            model.addGenConstrIndicator(is_active, True, dest_placement == idx_dest)
-
-            # Link the communication cost using big-M method
-            model.addConstr(comm_cost <= M * (1 - is_active) + communication_costs[idx_src, idx_dest])
-            model.addConstr(comm_cost >= communication_costs[idx_src, idx_dest] - M * (1 - is_active))
+            # Create auxiliary binary variables for the conditions
+            source_cond = model.addVar(vtype=GRB.BINARY, name=f"source_cond_{sourceID}_{idx_src}")
+            dest_cond = model.addVar(vtype=GRB.BINARY, name=f"dest_cond_{destID}_{idx_dest}")
+            # Add constraints to enforce these conditions
+            model.addGenConstrIndicator(source_cond, True, source_placement == idx_src)
+            model.addGenConstrIndicator(dest_cond, True, dest_placement == idx_dest)
+            # # Create the AND variable
+            and_var = model.addVar(vtype=GRB.BINARY, name=f"and_{sourceID}_{destID}_{idx_src}_{idx_dest}")
+            model.addGenConstrAnd(and_var, [source_cond, dest_cond])
+            model.addGenConstrIndicator(and_var, True, comm_cost == communication_costs[idx_src, idx_dest])
 
     # Add the data dependency constraint with communication cost
     model.addConstr(start[destID] >= finish[sourceID] + comm_cost, f"data_dependency_{sourceID}_{destID}")
