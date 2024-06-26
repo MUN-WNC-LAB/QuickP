@@ -92,13 +92,18 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
     # https://support.gurobi.com/hc/en-us/community/posts/360077951791-if-statement-in-constraint
     # Enforce that source_placement and dest_placement match the binary variables
     for device_id, device_idx in device_id_mapping.items():
+        # Explanation of model.addGenConstrIndicator(x[sourceID, device_id], True, source_placement == device_idx)
+        #
+        #     x[sourceID, device_id]: This is a binary variable indicating whether the source node (operation) sourceID is placed on the device device_id.
+        #     True: This specifies that the constraint should be activated when x[sourceID, device_id] is equal to 1 (True).
+        #     source_placement == device_idx: This is the linear constraint that should hold when x[sourceID, device_id] is 1. Here, it means that the integer variable source_placement should be equal to the integer value device_idx.
         model.addGenConstrIndicator(x[sourceID, device_id], True, source_placement == device_idx)
         model.addGenConstrIndicator(x[destID, device_id], True, dest_placement == device_idx)
     # Add auxiliary variables for communication costs
     communication_costs = {}
     for device_id_src, idx_src in device_id_mapping.items():
         for device_id_dest, idx_dest in device_id_mapping.items():
-            comm_cost = deviceTopo.calculateCommunicationCost(tensor_size, idx_src, idx_dest, device_id_mapping)
+            comm_cost = deviceTopo.calculateCommunicationCost(tensor_size, device_id_src, device_id_dest)
             communication_costs[(idx_src, idx_dest)] = comm_cost
 
     # Create a big-M constraint to enforce the communication cost based on placements
