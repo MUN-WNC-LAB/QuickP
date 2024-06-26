@@ -97,6 +97,8 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
         #     x[sourceID, device_id]: This is a binary variable indicating whether the source node (operation) sourceID is placed on the device device_id.
         #     True: This specifies that the constraint should be activated when x[sourceID, device_id] is equal to 1 (True).
         #     source_placement == device_idx: This is the linear constraint that should hold when x[sourceID, device_id] is 1. Here, it means that the integer variable source_placement should be equal to the integer value device_idx.
+        # if-then old version: model.addConstr((x[sourceID, device_id] == 1) >> (source_placement == device_id_int))
+        # if-then old version: model.addConstr((x[destID, device_id] == 1) >> (dest_placement == device_id_int))
         model.addGenConstrIndicator(x[sourceID, device_id], True, source_placement == device_idx)
         model.addGenConstrIndicator(x[destID, device_id], True, dest_placement == device_idx)
     # communication_costs[idx_src, idx_dest] means the com cost from device with int id idx_src to another with int id idx_dest
