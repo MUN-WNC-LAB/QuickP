@@ -21,8 +21,8 @@ comp_graph = get_computation_graph(model=model)
 deviceTopo = DeviceGraph()
 
 # init fake data
-comp_graph.generata_random_cost(4)
-deviceTopo.generata_fat_tree_topo(4, 30, 20, 2)
+comp_graph.generata_random_cost(100)
+deviceTopo.generata_fat_tree_topo(100, 30, 20, 5)
 
 # Init solver
 model = Model("minimize_maxload")
@@ -97,8 +97,6 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
         for device_id_dest, idx_dest in device_id_mapping.items():
             communication_costs[idx_src, idx_dest] = deviceTopo.calculateCommunicationCost(tensor_size, device_id_src, device_id_dest)
 
-    # Create a big-M constraint to enforce the communication cost based on placements
-    M = 1e6  # A large constant for the big-M constraint
     # Add constraints to link communication costs to source and destination placements
     comm_cost = model.addVar(vtype=GRB.CONTINUOUS, name=f"comm_cost_{sourceID}_{destID}")
 
@@ -108,10 +106,13 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
             source_cond = model.addVar(vtype=GRB.BINARY, name=f"source_cond_{sourceID}_{idx_src}")
             dest_cond = model.addVar(vtype=GRB.BINARY, name=f"dest_cond_{destID}_{idx_dest}")
             # Add constraints to enforce these conditions
+            # When source_cond == True(1), source_placement == int id of source device
             model.addGenConstrIndicator(source_cond, True, source_placement == idx_src)
+            # When dest_cond == True(1), dest_placement == int id of destination device
             model.addGenConstrIndicator(dest_cond, True, dest_placement == idx_dest)
-            # # Create the AND variable
+            # Create the AND variable
             and_var = model.addVar(vtype=GRB.BINARY, name=f"and_{sourceID}_{destID}_{idx_src}_{idx_dest}")
+            # When source_cond == 1 and dest_cond == 1, and_var == 1
             model.addGenConstrAnd(and_var, [source_cond, dest_cond])
             model.addGenConstrIndicator(and_var, True, comm_cost == communication_costs[idx_src, idx_dest])
 
