@@ -21,8 +21,8 @@ comp_graph = get_computation_graph(model=model)
 deviceTopo = DeviceGraph()
 
 # init fake data
-comp_graph.generata_random_cost(2)
-deviceTopo.generata_fat_tree_topo(2, 30, 20, 1)
+comp_graph.generata_random_cost(4)
+deviceTopo.generata_fat_tree_topo(4, 30, 20, 2)
 
 # Init solver
 model = Model("minimize_maxload")
@@ -31,8 +31,6 @@ model.setParam("LogFile", "gurobi.log")
 model.setParam("MIPGap", 0.01)
 model.setParam("TimeLimit", 1200)
 model.setParam("MIPFocus", 1)
-model.setParam(GRB.Param.Threads, 12)  # Use a single thread
-model.setParam(GRB.Param.MemLimit, 4096)  # Limit memory usage to 1GB
 
 # if this is too large, then the reformulated
 # ex-quadratic constraints can behave funky

@@ -11,7 +11,7 @@ def test_addGenConstrIndicator():
     x2 = model.addVar(vtype=GRB.BINARY, name="x2")
 
     # Add continuous variable
-    y = model.addVar(vtype=GRB.CONTINUOUS, name="y", ub=500)
+    y = model.addVar(vtype=GRB.CONTINUOUS, name="y", lb=10, ub=500)
 
     # Set objective (for demonstration purposes, let's maximize y)
     model.setObjective(y, GRB.MAXIMIZE)
@@ -24,7 +24,7 @@ def test_addGenConstrIndicator():
 
     # When x2 is 1, y should be <= 20
     model.addGenConstrIndicator(x2, True, y <= 20)
-    model.addGenConstrIndicator(x2, False, y >= 200)
+    model.addGenConstrIndicator(x2, False, y <= 200)
 
     # Also add a constraint to link x1 and x2 (for demonstration purposes)
     model.addConstr(x1 + x2 <= 1, "linking_constraint")
@@ -48,7 +48,21 @@ def test_addGenConstrIndicator():
 # model.addConstr(x5 == and_([x1, x3, x4]), "andconstr")
 # model.addConstr(x5 == and_(x1, x3, x4), "andconstr")
 
-dict1 = {}
-dict1[1,3] = "999"
-print(dict1[1,3])
-print(dict1[(1,3)])
+def test_if_else():
+    model = gp.Model("test_addGenConstrIndicator")
+    x = model.addVar(ub=10, vtype=GRB.CONTINUOUS, name="x")
+    y = model.addVar(ub=5, vtype=GRB.CONTINUOUS, name="y")
+    b = model.addVar(vtype=GRB.BINARY, name="b")
+    w1 = model.addVar(vtype=GRB.CONTINUOUS, name="w1", lb=999, ub=1000)
+    w2 = model.addVar(vtype=GRB.CONTINUOUS, name="w2", lb=500, ub=2000)
+    z = model.addVar(vtype=GRB.CONTINUOUS, name="z")
+    # Add indicator constraints
+    model.addConstr((b == 1) >> (z == w1), name="indicator_constr1")
+    model.addConstr((b == 0) >> (z == w2), name="indicator_constr2")
+    model.setObjective(y, GRB.MAXIMIZE)
+    model.optimize()
+    # Print the results
+    if model.status == GRB.OPTIMAL:
+        print("Optimal solution found:")
+        for v in model.getVars():
+            print(f"{v.VarName} = {v.X}")
