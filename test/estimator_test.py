@@ -12,7 +12,7 @@ from DNN_model_tf.vgg_tf import VGG16_tf
 from optimizer.computing_graph.computing_graph import get_computation_graph
 from optimizer.device_topo.device_graph import get_device_topo_ssh
 from optimizer.cluster_info import servers
-from py_util import tensor_shape_to_bits
+from py_util import tensor_shape_to_bits, convert_time
 from optimizer.model.graph import DeviceGraph
 
 
@@ -95,7 +95,7 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
     communication_costs = {}
     for device_id_src, idx_src in device_id_mapping.items():
         for device_id_dest, idx_dest in device_id_mapping.items():
-            communication_costs[idx_src, idx_dest] = deviceTopo.calculateCommunicationCost(tensor_size, device_id_src, device_id_dest)
+            communication_costs[idx_src, idx_dest] = deviceTopo.calculateCommunicationCostInUS(tensor_size, device_id_src, device_id_dest)
 
     # Add constraints to link communication costs to source and destination placements
     comm_cost = model.addVar(vtype=GRB.CONTINUOUS, name=f"comm_cost_{sourceID}_{destID}")
@@ -119,7 +119,7 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
     # Add the data dependency constraint with communication cost
     model.addConstr(start[destID] >= finish[sourceID] + comm_cost, f"data_dependency_{sourceID}_{destID}")
 
-# Add constraint to ensure each device processes only one operator at a time
+# Add constraint to ensure each device processes only one operator at a time. This is a SCHEDULING problem
 for device in deviceTopo.getDeviceIDs():
     for op1 in comp_graph.getOperatorIDs():
         for op2 in comp_graph.getOperatorIDs():
@@ -162,7 +162,7 @@ else:
 
 print('Runtime = ', "%.2f" % model.Runtime, 's', sep='')
 #populate the result dict
-result = {'totalLatency': TotalLatency.X, 'Assignment': {}}
+result = {'totalLatency': convert_time(TotalLatency.X, 'us', 'min'), 'Assignment': {}}
 for key, value in x.items():
     # key[1] is the device id
     if key[1] not in result['Assignment']:
