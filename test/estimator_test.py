@@ -119,6 +119,28 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
     # Add the data dependency constraint with communication cost
     model.addConstr(start[destID] >= finish[sourceID] + comm_cost, f"data_dependency_{sourceID}_{destID}")
 
+    # Add constraint to ensure each device processes only one operator at a time
+    for device in deviceTopo.getDeviceIDs():
+        for op1 in comp_graph.getOperatorIDs():
+            for op2 in comp_graph.getOperatorIDs():
+                if op1 != op2:
+                    # Add AND constraint to check if both ops are on the same device
+                    same_device = model.addVar(vtype=GRB.BINARY, name=f"same_device_{device}_{op1}_{op2}")
+                    model.addGenConstrAnd(same_device, [x[op1, device], x[op2, device]])
+
+                    # Create auxiliary binary variables
+                    y1 = model.addVar(vtype=GRB.BINARY, name=f"y1_{device}_{op1}_{op2}")
+                    y2 = model.addVar(vtype=GRB.BINARY, name=f"y2_{device}_{op1}_{op2}")
+                    not_overlap = model.addVar(vtype=GRB.BINARY, name=f"not_both_{device}_{op1}_{op2}")
+                    model.addGenConstrIndicator(y1, True, finish[op1] <= start[op2])
+                    model.addGenConstrIndicator(y2, True, finish[op2] <= start[op1])
+                    # not_both will be true when finish[op1] <= start[op2] OR finish[op2] <= start[op1]
+                    model.addGenConstrOr(not_overlap, [y1, y2])
+
+                    # If on the same device, ensure that the operators do not overlap
+                    model.addGenConstrIndicator(same_device, True, not_overlap == 1)
+
+
 # TotalLatency that we are minimizing
 TotalLatency = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0)
 for op_end in finish.values():
