@@ -3,6 +3,8 @@ from optimizer.computing_graph.computing_graph import get_computation_graph
 from optimizer.model.graph import DeviceGraph, visualize_graph, CompGraph
 import tensorflow as tf
 
+from py_util import convert_data_size, convert_time
+
 
 def test_generata_fat_tree_topo():
     G = DeviceGraph()
@@ -36,4 +38,8 @@ def test_device_mapping():
     print(device_id_mapping)
 
 
-test_generata_fat_tree_topo()
+def test_conversion():
+    print(convert_data_size(1, 'GB', 'bit'))
+    print(convert_time(1, 's', 'us'))
+
+test_conversion()
