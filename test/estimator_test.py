@@ -38,11 +38,13 @@ model.setParam("IntFeasTol", 1e-6)
 
 # Define variables
 x = {}  # key will be (operator_id, machine_id), value will be 1 or 0; x[3, 1] = 1 means operator 3 get allocated to device 1
-x1 = model.addVar(vtype=GRB.BINARY, name="w1")
-x2 = model.addVar(vtype=GRB.BINARY, name="w2")
+start = {}
+finish = {}
 for node_id in comp_graph.getOperatorIDs():
     for machine_id in deviceTopo.getDeviceIDs():
         x[node_id, machine_id] = model.addVar(vtype=GRB.BINARY)
+    start[node_id] = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0)
+    finish[node_id] = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0)
 
 # Add constraints that schedule every node on exactly one machine
 for node_id in comp_graph.getOperatorIDs():
@@ -66,11 +68,6 @@ for machine_id in deviceTopo.getDeviceIDs():
     model.addConstr(op_count >= 1, "each device should have at least one op")
 
 # Add constraints that later operator cannot begin before all previous ones finish computing and transmission
-start = {}
-finish = {}
-for node_id in list(comp_graph.getOperatorIDs()):
-    start[node_id] = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0)
-    finish[node_id] = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0)
 for node_id in list(comp_graph.getOperatorIDs()):
     comp_cost = LinExpr()
     # since there is one placement, only one x[node_id, device_id] will be 1
