@@ -42,6 +42,8 @@ model.setParam("Threads", 4)        # Example: Use 4 threads
 x = {}  # key will be (operator_id, machine_id), value will be 1 or 0; x[3, 1] = 1 means operator 3 get allocated to device 1
 start = {}
 finish = {}
+M = 1e9  # A sufficiently large number
+
 for node_id in comp_graph.getOperatorIDs():
     for machine_id in deviceTopo.getDeviceIDs():
         x[node_id, machine_id] = model.addVar(vtype=GRB.BINARY)
@@ -123,22 +125,11 @@ for device in deviceTopo.getDeviceIDs():
     for op1 in comp_graph.getOperatorIDs():
         for op2 in comp_graph.getOperatorIDs():
             if op1 != op2:
-                # Add AND constraint to check if both ops are on the same device
-                same_device = model.addVar(vtype=GRB.BINARY, name=f"same_device_{device}_{op1}_{op2}")
-                model.addGenConstrAnd(same_device, [x[op1, device], x[op2, device]])
-
-                # Create auxiliary binary variables
-                y1 = model.addVar(vtype=GRB.BINARY, name=f"y1_{device}_{op1}_{op2}")
-                y2 = model.addVar(vtype=GRB.BINARY, name=f"y2_{device}_{op1}_{op2}")
-                not_overlap = model.addVar(vtype=GRB.BINARY, name=f"not_both_{device}_{op1}_{op2}")
-                model.addGenConstrIndicator(y1, True, finish[op1] <= start[op2])
-                model.addGenConstrIndicator(y2, True, finish[op2] <= start[op1])
-                # not_both will be true when finish[op1] <= start[op2] OR finish[op2] <= start[op1]
-                model.addGenConstrOr(not_overlap, [y1, y2])
-
-                # If on the same device, ensure that the operators do not overlap
-                model.addGenConstrIndicator(same_device, True, not_overlap == 1)
-
+                # M * (1 - x[op1, device] * x[op2, device]) == 0 when op1 and op2 are on the same device
+                # When either operator is not on this device, x[op1, device] = 0 OR x[op2, device] = 0, time overlapping is allowed
+                # Big-M constraints to enforce non-overlap
+                model.addConstr(start[op2] >= finish[op1] - M * (1 - x[op1, device] * x[op2, device]),
+                                name=f"non_overlap_1_{device}_{op1}_{op2}")
 
 # TotalLatency that we are minimizing
 TotalLatency = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0)
