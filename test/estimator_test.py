@@ -14,15 +14,15 @@ from optimizer.device_topo.device_graph import get_device_topo_ssh
 from optimizer.cluster_info import servers
 from py_util import tensor_shape_to_bits, convert_time
 from optimizer.model.graph import DeviceGraph
+from DNN_model_tf.small import small_tf
 
-
-model = VGG16_tf()
+model = small_tf()
 comp_graph = get_computation_graph(model=model)
 deviceTopo = DeviceGraph()
 
 # init fake data
-comp_graph.generata_random_cost(4)
-deviceTopo.generata_fat_tree_topo(4, 30, 20, 2)
+comp_graph.generata_random_cost(2)
+deviceTopo.generata_fat_tree_topo(2, 30, 20, 1)
 
 # Init solver
 model = Model("minimize_maxload")
