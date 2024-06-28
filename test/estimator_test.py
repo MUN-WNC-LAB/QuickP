@@ -28,13 +28,15 @@ deviceTopo.generata_fat_tree_topo(2, 30, 20, 1)
 model = Model("minimize_maxload")
 model.setParam("LogToConsole", 0)
 model.setParam("LogFile", "gurobi.log")
-model.setParam("MIPGap", 0.01)
+model.setParam("MIPGap", 0.50)
 model.setParam("TimeLimit", 1200)
 model.setParam("MIPFocus", 1)
 
 # if this is too large, then the reformulated
 # ex-quadratic constraints can behave funky
 model.setParam("IntFeasTol", 1e-6)
+model.setParam("MemLimit", 4096)    # Example: Limit memory usage to 4 GB
+model.setParam("Threads", 4)        # Example: Use 4 threads
 
 # Define variables
 x = {}  # key will be (operator_id, machine_id), value will be 1 or 0; x[3, 1] = 1 means operator 3 get allocated to device 1
