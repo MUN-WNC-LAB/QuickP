@@ -150,24 +150,35 @@ model.setObjective(TotalLatency, GRB.MINIMIZE)
 sys.stdout.flush()
 model.optimize()
 
-if model.Status == GRB.Status.INFEASIBLE:
-    raise "infeasible"
-elif model.Status == GRB.Status.OPTIMAL:
-    print("Value is:", TotalLatency.X)
+# Check optimization status
+if model.status == GRB.INFEASIBLE:
+    print("Model is infeasible. Computing IIS...")
+    model.computeIIS()
+    model.write("model.ilp")
+    print("IIS written to model.ilp")
+
+    # Print the constraints that are in the IIS
+    print("\nThe following constraints are in the IIS:")
+    for constr in model.getConstrs():
+        if constr.IISConstr:
+            print(f"{constr.ConstrName}")
+elif model.status == GRB.UNBOUNDED:
+    print("Model is unbounded.")
+elif model.status == GRB.OPTIMAL:
+    print('Runtime = ', "%.2f" % model.Runtime, 's', sep='')
+    # populate the result dict
+    result = {'totalLatency': convert_time(TotalLatency.X, 'us', 'min'), 'Assignment': {}}
+    for key, value in x.items():
+        # key[1] is the device id
+        if key[1] not in result['Assignment']:
+            result['Assignment'][key[1]] = []
+        # key[0] is the operator id. Put id into the list assigned to the device
+        if value.X > 0.99:
+            result['Assignment'][key[1]].append(key[0])
+
+    del model
+    disposeDefaultEnv()
+    print(json.dumps(result))
 else:
-    raise "Wrong status code"
+    print(f"Optimization ended with status {model.status}")
 
-print('Runtime = ', "%.2f" % model.Runtime, 's', sep='')
-#populate the result dict
-result = {'totalLatency': convert_time(TotalLatency.X, 'us', 'min'), 'Assignment': {}}
-for key, value in x.items():
-    # key[1] is the device id
-    if key[1] not in result['Assignment']:
-        result['Assignment'][key[1]] = []
-    # key[0] is the operator id. Put id into the list assigned to the device
-    if value.X > 0.99:
-        result['Assignment'][key[1]].append(key[0])
-
-del model
-disposeDefaultEnv()
-print(json.dumps(result))
