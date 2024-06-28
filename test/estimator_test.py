@@ -173,16 +173,26 @@ elif model.status == GRB.UNBOUNDED:
     print("Model is unbounded.")
 elif model.status == GRB.OPTIMAL:
     print('Runtime = ', "%.2f" % model.Runtime, 's', sep='')
-    # populate the result dict
-    result = {'totalLatency': convert_time(TotalLatency.X, 'us', 'min'), 'Assignment': {}}
+    # Assuming `start` and `finish` are dictionaries holding start and end times for each operator
+    result = {'totalLatency': model.ObjVal, 'Assignment': {}}
+
     for key, value in x.items():
         # key[1] is the device id
         if key[1] not in result['Assignment']:
             result['Assignment'][key[1]] = []
         # key[0] is the operator id. Put id into the list assigned to the device
         if value.X > 0.99:
-            result['Assignment'][key[1]].append(key[0])
+            result['Assignment'][key[1]].append((key[0], start[key[0]].X, finish[key[0]].X))
 
+    # Sort operators by their start times for each device
+    for device, ops in result['Assignment'].items():
+        result['Assignment'][device] = sorted(ops, key=lambda x: x[1])
+
+    # You can also format the output to display start and finish times more clearly
+    for device, ops in result['Assignment'].items():
+        print(f"Device: {device}")
+        for op in ops:
+            print(f"  Operator: {op[0]}, Start: {op[1]}, Finish: {op[2]}")
     del model
     disposeDefaultEnv()
     print(json.dumps(result))
