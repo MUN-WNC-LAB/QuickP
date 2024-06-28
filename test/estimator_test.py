@@ -67,7 +67,7 @@ for machine_id in deviceTopo.getDeviceIDs():
         op_count += x[node_id, machine_id]
     model.addConstr(op_count >= 1, "each device should have at least one op")
 
-# Add constraints that later operator cannot begin before all previous ones finish computing and transmission
+# Add constraints that each op's ending time = starting time + its computing time
 for node_id in list(comp_graph.getOperatorIDs()):
     comp_cost = LinExpr()
     # since there is one placement, only one x[node_id, device_id] will be 1
