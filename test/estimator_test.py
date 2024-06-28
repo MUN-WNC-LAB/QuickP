@@ -28,7 +28,7 @@ deviceTopo.generata_fat_tree_topo(2, 30, 20, 1)
 model = Model("minimize_maxload")
 model.setParam("LogToConsole", 0)
 model.setParam("LogFile", "gurobi.log")
-model.setParam("MIPGap", 0.95)
+model.setParam("MIPGap", 0.50)
 model.setParam("TimeLimit", 2400)
 model.setParam("MIPFocus", 1)
 
@@ -122,14 +122,28 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
 
 # Add constraint to ensure each device processes only one operator at a time. This is a SCHEDULING problem
 for device in deviceTopo.getDeviceIDs():
-    for op1 in comp_graph.getOperatorIDs():
-        for op2 in comp_graph.getOperatorIDs():
-            if op1 != op2:
-                # M * (1 - x[op1, device] * x[op2, device]) == 0 when op1 and op2 are on the same device
-                # When either operator is not on this device, x[op1, device] = 0 OR x[op2, device] = 0, time overlapping is allowed
-                # Big-M constraints to enforce non-overlap
-                model.addConstr(start[op2] >= finish[op1] - M * (1 - x[op1, device] * x[op2, device]),
-                                name=f"non_overlap_1_{device}_{op1}_{op2}")
+    op_ids = comp_graph.getOperatorIDs()
+    # ensures that each pair of operations is only considered once
+    for i in range(len(op_ids)):
+        for j in range(i + 1, len(op_ids)):
+            op1 = op_ids[i]
+            op2 = op_ids[j]
+            # M * (1 - x[op1, device] * x[op2, device]) == 0 when op1 and op2 are on the same device
+            # When either operator is not on this device, x[op1, device] = 0 OR x[op2, device] = 0, time overlapping is allowed
+            # Binary variables to indicate which constraint is active
+            y1 = model.addVar(vtype=GRB.BINARY, name=f"y1_{device}_{op1}_{op2}")
+            y2 = model.addVar(vtype=GRB.BINARY, name=f"y2_{device}_{op1}_{op2}")
+
+            # Ensure at least one of the non-overlap constraints holds
+            model.addConstr(y1 + y2 >= 1, name=f"one_of_{device}_{op1}_{op2}")
+
+            # Big-M constraints to enforce non-overlap
+            model.addConstr(
+                start[op2] >= finish[op1] - M * (1 - x[op1, device] * x[op2, device]) - M * (1 - y1),
+                name=f"non_overlap_1_{device}_{op1}_{op2}")
+            model.addConstr(
+                start[op1] >= finish[op2] - M * (1 - x[op1, device] * x[op2, device]) - M * (1 - y2),
+                name=f"non_overlap_2_{device}_{op1}_{op2}")
 
 # TotalLatency that we are minimizing
 TotalLatency = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0)
