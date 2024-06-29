@@ -194,8 +194,10 @@ elif model.status == GRB.OPTIMAL:
         comm_cost_var = model.getVarByName(f"comm_cost_{sourceID}_{destID}")
         if comm_cost_var:
             comm_cost = comm_cost_var.X
+            tensor_size = tensor_shape_to_bits(comp_graph.getOperator(sourceID)["output_size"], dtype=tf.float32)
+            bandwidth = 1
             if comm_cost > 0:  # Only include non-zero communication costs
-                result['CommunicationCosts'].append((sourceID, destID, comm_cost))
+                result['CommunicationCosts'].append((sourceID, destID, comm_cost, tensor_size, bandwidth))
 
     # You can also format the output to display start and finish times more clearly
     for device, ops in result['Assignment'].items():
@@ -205,8 +207,8 @@ elif model.status == GRB.OPTIMAL:
 
     # Print communication costs
     print("Communication Costs:")
-    for sourceID, destID, comm_cost in result['CommunicationCosts']:
-        print(f"  From {sourceID} to {destID}, Cost: {comm_cost}")
+    for sourceID, destID, comm_cost, tensor_size, bandwidth in result['CommunicationCosts']:
+        print(f"  From {sourceID} to {destID}, Cost: {comm_cost}, Tensor size: {tensor_size}, Bandwidth: {bandwidth}")
 
     del model
     disposeDefaultEnv()
