@@ -174,7 +174,7 @@ elif model.status == GRB.OPTIMAL:
     print('Runtime = ', "%.2f" % model.Runtime, 's', sep='')
     print('Expected Traning time = ', TotalLatency.X, 's', sep='')
     # Assuming `start` and `finish` are dictionaries holding start and end times for each operator
-    result = {'totalLatency': model.ObjVal, 'Assignment': {}}
+    result = {'totalLatency': model.ObjVal, 'Assignment': {}, 'CommunicationCosts': []}
 
     for key, value in x.items():
         # key[1] is the device id
@@ -188,11 +188,26 @@ elif model.status == GRB.OPTIMAL:
     for device, ops in result['Assignment'].items():
         result['Assignment'][device] = sorted(ops, key=lambda x: x[1])
 
+    # Extract communication costs
+    for edge_id_tuple in list(comp_graph.getEdgeIDs()):
+        sourceID, destID = edge_id_tuple
+        comm_cost_var = model.getVarByName(f"comm_cost_{sourceID}_{destID}")
+        if comm_cost_var:
+            comm_cost = comm_cost_var.X
+            if comm_cost > 0:  # Only include non-zero communication costs
+                result['CommunicationCosts'].append((sourceID, destID, comm_cost))
+
     # You can also format the output to display start and finish times more clearly
     for device, ops in result['Assignment'].items():
         print(f"Device: {device}")
         for op in ops:
             print(f"  Operator: {op[0]}, Start: {op[1]}, Finish: {op[2]}")
+
+    # Print communication costs
+    print("Communication Costs:")
+    for sourceID, destID, comm_cost in result['CommunicationCosts']:
+        print(f"  From {sourceID} to {destID}, Cost: {comm_cost}")
+
     del model
     disposeDefaultEnv()
 else:
