@@ -35,13 +35,14 @@ model.setParam("MIPFocus", 1)
 # if this is too large, then the reformulated
 # ex-quadratic constraints can behave funky
 model.setParam("IntFeasTol", 1e-6)
-model.setParam("MemLimit", 4096)    # Example: Limit memory usage to 4 GB
-model.setParam("Threads", 4)        # Example: Use 4 threads
+model.setParam("MemLimit", 4096)  # Example: Limit memory usage to 4 GB
+model.setParam("Threads", 4)  # Example: Use 4 threads
 
 # Define variables
 x = {}  # key will be (operator_id, machine_id), value will be 1 or 0; x[3, 1] = 1 means operator 3 get allocated to device 1
-start = {}
-finish = {}
+start = {}  # start[node_id] represent the starting time of this node
+finish = {}  # finish[node_id] represent the finish time of this node
+comm_active = {}  # comm_active[sourceDeviceID, destDeviceID] represent the communicati
 M = 1e9  # A sufficiently large number
 
 for node_id in comp_graph.getOperatorIDs():
@@ -55,14 +56,15 @@ for node_id in comp_graph.getOperatorIDs():
     times_scheduled = LinExpr()
     for machine_id in deviceTopo.getDeviceIDs():
         times_scheduled += x[node_id, machine_id]
-    model.addConstr(times_scheduled == 1,"every node on exactly one machine")
+    model.addConstr(times_scheduled == 1, "every node on exactly one machine")
 
 # Add constraints that operators assigned cannot exceed the capacity
 for machine_id in deviceTopo.getDeviceIDs():
     mem_sum = LinExpr()
     for node_id in comp_graph.getOperatorIDs():
         mem_sum += x[node_id, machine_id] * comp_graph.getOperator(node_id)["mem"]
-    model.addConstr(mem_sum <= deviceTopo.getDevice(machine_id)["memory_capacity"], "satisfy each device's memory constraint")
+    model.addConstr(mem_sum <= deviceTopo.getDevice(machine_id)["memory_capacity"],
+                    "satisfy each device's memory constraint")
 
 # Add constraints that each device should have at least one operator assigned
 for machine_id in deviceTopo.getDeviceIDs():
@@ -111,8 +113,11 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
             # Create the AND variable
             and_var = model.addVar(vtype=GRB.BINARY, name=f"and_{sourceID}_{destID}_{idx_src}_{idx_dest}")
             # When source_cond == 1 and dest_cond == 1, and_var == 1
-            model.addGenConstrAnd(and_var, [source_cond, dest_cond])
-            model.addGenConstrIndicator(and_var, True, comm_cost == comm_cost_src_dest)
+            # Enforce the big-M constraints
+            model.addConstr(comm_cost >= comm_cost_src_dest - M * (1 - and_var),
+                            name=f"comm_cost_lb_{sourceID}_{destID}_{idx_src}_{idx_dest}")
+            model.addConstr(comm_cost <= comm_cost_src_dest + M * (1 - and_var),
+                            name=f"comm_cost_ub_{sourceID}_{destID}_{idx_src}_{idx_dest}")
 
     # Add the data dependency constraint with communication cost
     model.addConstr(start[destID] >= finish[sourceID] + comm_cost, f"data_dependency_{sourceID}_{destID}")
@@ -195,4 +200,3 @@ elif model.status == GRB.OPTIMAL:
     disposeDefaultEnv()
 else:
     print(f"Optimization ended with status {model.status}")
-
