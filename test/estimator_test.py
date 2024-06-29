@@ -28,7 +28,7 @@ deviceTopo.generata_fat_tree_topo(2, 30, 20, 1)
 model = Model("minimize_maxload")
 model.setParam("LogToConsole", 0)
 model.setParam("LogFile", "gurobi.log")
-model.setParam("MIPGap", 0.90)
+model.setParam("MIPGap", 0.95)
 model.setParam("TimeLimit", 2400)
 model.setParam("MIPFocus", 1)
 
@@ -173,6 +173,7 @@ elif model.status == GRB.UNBOUNDED:
     print("Model is unbounded.")
 elif model.status == GRB.OPTIMAL:
     print('Runtime = ', "%.2f" % model.Runtime, 's', sep='')
+    print('Expected Traning time = ', TotalLatency.X, 's', sep='')
     # Assuming `start` and `finish` are dictionaries holding start and end times for each operator
     result = {'totalLatency': model.ObjVal, 'Assignment': {}}
 
