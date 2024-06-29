@@ -88,21 +88,18 @@ for device_id_src, idx_src in device_id_mapping.items():
     for device_id_dest, idx_dest in device_id_mapping.items():
         unit_comm_costs[idx_src, idx_dest] = deviceTopo.calUnitCommCostInUS(device_id_src, device_id_dest)
 for edge_id_tuple in list(comp_graph.getEdgeIDs()):
-    sourceID = edge_id_tuple[0]
-    destID = edge_id_tuple[1]
+    # https://support.gurobi.com/hc/en-us/articles/360039628832-Constraint-has-no-bool-value-are-you-trying-lb-expr-ub
+    # https://support.gurobi.com/hc/en-us/community/posts/360077951791-if-statement-in-constraint
+    sourceID, destID = edge_id_tuple
     tensor_size = tensor_shape_to_bits(comp_graph.getOperator(sourceID)["output_size"], dtype=tf.float32)
     source_placement = model.addVar(vtype=GRB.INTEGER, name="w1")
     dest_placement = model.addVar(vtype=GRB.INTEGER, name="w1")
-    # https://support.gurobi.com/hc/en-us/articles/360039628832-Constraint-has-no-bool-value-are-you-trying-lb-expr-ub
-    # https://support.gurobi.com/hc/en-us/community/posts/360077951791-if-statement-in-constraint
-    # Enforce that source_placement and dest_placement match the binary variables
     # communication_costs[idx_src, idx_dest] means the com cost from device with int id idx_src to another with int id idx_dest
-
-    # Add constraints to link communication costs to source and destination placements
     comm_cost = model.addVar(vtype=GRB.CONTINUOUS, name=f"comm_cost_{sourceID}_{destID}")
 
     for idx_src in device_id_mapping.values():
         for idx_dest in device_id_mapping.values():
+            comm_cost_src_dest = unit_comm_costs[idx_src, idx_dest] * tensor_size
             # Create auxiliary binary variables for the conditions
             source_cond = model.addVar(vtype=GRB.BINARY, name=f"source_cond_{sourceID}_{idx_src}")
             dest_cond = model.addVar(vtype=GRB.BINARY, name=f"dest_cond_{destID}_{idx_dest}")
@@ -115,7 +112,7 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
             and_var = model.addVar(vtype=GRB.BINARY, name=f"and_{sourceID}_{destID}_{idx_src}_{idx_dest}")
             # When source_cond == 1 and dest_cond == 1, and_var == 1
             model.addGenConstrAnd(and_var, [source_cond, dest_cond])
-            model.addGenConstrIndicator(and_var, True, comm_cost == unit_comm_costs[idx_src, idx_dest] * tensor_size)
+            model.addGenConstrIndicator(and_var, True, comm_cost == comm_cost_src_dest)
 
     # Add the data dependency constraint with communication cost
     model.addConstr(start[destID] >= finish[sourceID] + comm_cost, f"data_dependency_{sourceID}_{destID}")
