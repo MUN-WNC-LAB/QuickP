@@ -113,11 +113,8 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
             # Create the AND variable
             and_var = model.addVar(vtype=GRB.BINARY, name=f"and_{sourceID}_{destID}_{idx_src}_{idx_dest}")
             # When source_cond == 1 and dest_cond == 1, and_var == 1
-            # Enforce the big-M constraints
-            model.addConstr(comm_cost >= comm_cost_src_dest - M * (1 - and_var),
-                            name=f"comm_cost_lb_{sourceID}_{destID}_{idx_src}_{idx_dest}")
-            model.addConstr(comm_cost <= comm_cost_src_dest + M * (1 - and_var),
-                            name=f"comm_cost_ub_{sourceID}_{destID}_{idx_src}_{idx_dest}")
+            model.addGenConstrAnd(and_var, [source_cond, dest_cond])
+            model.addGenConstrIndicator(and_var, True, comm_cost == comm_cost_src_dest)
 
     # Add the data dependency constraint with communication cost
     model.addConstr(start[destID] >= finish[sourceID] + comm_cost, f"data_dependency_{sourceID}_{destID}")
