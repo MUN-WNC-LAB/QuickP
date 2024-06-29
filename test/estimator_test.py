@@ -28,7 +28,7 @@ deviceTopo.generata_fat_tree_topo(2, 30, 20, 1)
 model = Model("minimize_maxload")
 model.setParam("LogToConsole", 0)
 model.setParam("LogFile", "gurobi.log")
-model.setParam("MIPGap", 0.50)
+model.setParam("MIPGap", 0.90)
 model.setParam("TimeLimit", 2400)
 model.setParam("MIPFocus", 1)
 
@@ -195,7 +195,6 @@ elif model.status == GRB.OPTIMAL:
             print(f"  Operator: {op[0]}, Start: {op[1]}, Finish: {op[2]}")
     del model
     disposeDefaultEnv()
-    print(json.dumps(result))
 else:
     print(f"Optimization ended with status {model.status}")
 
