@@ -39,11 +39,14 @@ x = {}  # key will be (operator_id, machine_id), value will be 1 or 0; x[3, 1] =
 start = {}  # start[node_id] represent the starting time of this node
 finish = {}  # finish[node_id] represent the finish time of this node
 comm_active = {}  # comm_active[sourceDeviceID, destDeviceID] represent the communicati
+order = {}
 M = 1e9  # A sufficiently large number
 
+# init all variables
 for node_id in comp_graph.getOperatorIDs():
     for machine_id in deviceTopo.getDeviceIDs():
         x[node_id, machine_id] = model.addVar(vtype=GRB.BINARY)
+        order[node_id, machine_id] = model.addVar(vtype=GRB.INTEGER, name=f"order_{node_id}_{machine_id}")
     start[node_id] = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0)
     finish[node_id] = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0)
 
