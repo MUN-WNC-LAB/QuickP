@@ -1,5 +1,4 @@
-# python3 estimator.py
-import json
+# python3 estimator_test.py
 
 from gurobipy import *
 import torch
@@ -8,10 +7,7 @@ import tensorflow as tf
 script_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(script_dir, '..'))
 sys.path.append(project_root)
-from DNN_model_tf.vgg_tf import VGG16_tf
 from optimizer.computing_graph.computing_graph import get_computation_graph
-from optimizer.device_topo.device_graph import get_device_topo_ssh
-from optimizer.cluster_info import servers
 from py_util import tensor_shape_to_bits, convert_time
 from optimizer.model.graph import DeviceGraph
 from DNN_model_tf.small import small_tf
