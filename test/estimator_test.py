@@ -130,22 +130,20 @@ for device in deviceTopo.getDeviceIDs():
         for j in range(i + 1, len(op_ids)):
             op1 = op_ids[i]
             op2 = op_ids[j]
-            # M * (1 - x[op1, device] * x[op2, device]) == 0 when op1 and op2 are on the same device
-            # When either operator is not on this device, x[op1, device] = 0 OR x[op2, device] = 0, time overlapping is allowed
-            # Binary variables to indicate which constraint is active
-            y1 = model.addVar(vtype=GRB.BINARY, name=f"y1_{device}_{op1}_{op2}")
-            y2 = model.addVar(vtype=GRB.BINARY, name=f"y2_{device}_{op1}_{op2}")
+            if op1 != op2:
+                # Add AND constraint to check if both ops are on the same device
+                same_device = model.addVar(vtype=GRB.BINARY, name=f"same_device_{device}_{op1}_{op2}")
+                model.addGenConstrAnd(same_device, [x[op1, device], x[op2, device]])
 
-            # Ensure at least one of the non-overlap constraints holds
-            model.addConstr(y1 + y2 >= 1, name=f"one_of_{device}_{op1}_{op2}")
+                # Create auxiliary binary variables
+                y1 = model.addVar(vtype=GRB.BINARY, name=f"y1_{device}_{op1}_{op2}")
+                y2 = model.addVar(vtype=GRB.BINARY, name=f"y2_{device}_{op1}_{op2}")
+                not_overlap = model.addVar(vtype=GRB.BINARY, name=f"not_both_{device}_{op1}_{op2}")
+                model.addGenConstrIndicator(y1, True, finish[op1] <= start[op2])
+                model.addGenConstrIndicator(y2, True, finish[op2] <= start[op1])
 
-            # Big-M constraints to enforce non-overlap
-            model.addConstr(
-                start[op2] >= finish[op1] - M * (1 - x[op1, device] * x[op2, device]) - M * (1 - y1),
-                name=f"non_overlap_1_{device}_{op1}_{op2}")
-            model.addConstr(
-                start[op1] >= finish[op2] - M * (1 - x[op1, device] * x[op2, device]) - M * (1 - y2),
-                name=f"non_overlap_2_{device}_{op1}_{op2}")
+                # If on the same device, ensure that the operators do not overlap
+                model.addGenConstrIndicator(same_device, True, y1 + y2 == 1)
 
 # TotalLatency that we are minimizing
 TotalLatency = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0)
