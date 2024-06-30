@@ -5,19 +5,16 @@ from gurobipy import GRB
 def test_addGenConstrIndicator():
     """
     if op1 != op2:
-        # Add AND constraint to check if both ops are on the same device
-        same_device = model.addVar(vtype=GRB.BINARY, name=f"same_device_{device}_{op1}_{op2}")
-        model.addGenConstrAnd(same_device, [x[op1, device], x[op2, device]])
+         # Create binary variables to enforce the relative order
+        y1 = model.addVar(vtype=GRB.BINARY, name=f"y1_{op1}_{op2}_{d}")
+        y2 = model.addVar(vtype=GRB.BINARY, name=f"y2_{op2}_{op1}_{d}")
 
-        # Create auxiliary binary variables
-        y1 = model.addVar(vtype=GRB.BINARY, name=f"y1_{device}_{op1}_{op2}")
-        y2 = model.addVar(vtype=GRB.BINARY, name=f"y2_{device}_{op1}_{op2}")
-        not_overlap = model.addVar(vtype=GRB.BINARY, name=f"not_both_{device}_{op1}_{op2}")
-        model.addGenConstrIndicator(y1, True, finish[op1] <= start[op2])
+        # Ensure non-overlapping based on the order using indicator constraints
+        model.addGenConstrIndicator(y1, True, start[op2] >= finish[op1])
         model.addGenConstrIndicator(y2, True, finish[op2] <= start[op1])
 
-        # If on the same device, ensure that the operators do not overlap
-        model.addGenConstrIndicator(same_device, True, y1 + y2 == 1)
+        # Ensure that one of the orderings holds
+        model.addConstr(y1 + y2 == x[op1, d] * x[op2, d], name=f"order_{op1}_{op2}_{d}")
     """
     # Create a new Gurobi model
     model = gp.Model("test_addGenConstrIndicator")

@@ -138,12 +138,11 @@ for device in deviceTopo.getDeviceIDs():
                 # Create auxiliary binary variables
                 y1 = model.addVar(vtype=GRB.BINARY, name=f"y1_{device}_{op1}_{op2}")
                 y2 = model.addVar(vtype=GRB.BINARY, name=f"y2_{device}_{op1}_{op2}")
-                not_overlap = model.addVar(vtype=GRB.BINARY, name=f"not_both_{device}_{op1}_{op2}")
                 model.addGenConstrIndicator(y1, True, finish[op1] <= start[op2])
                 model.addGenConstrIndicator(y2, True, finish[op2] <= start[op1])
 
                 # If on the same device, ensure that the operators do not overlap
-                model.addGenConstrIndicator(same_device, True, y1 + y2 == 1)
+                model.addConstr((same_device == 1) >> (y1 + y2 == 1))
 
 # TotalLatency that we are minimizing
 TotalLatency = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0)
