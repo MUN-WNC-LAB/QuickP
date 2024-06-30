@@ -24,7 +24,7 @@ deviceTopo.generata_fat_tree_topo(2, 30, 20, 1)
 model = Model("minimize_maxload")
 model.setParam("LogToConsole", 0)
 model.setParam("LogFile", "gurobi.log")
-model.setParam("MIPGap", 0.95)
+model.setParam("MIPGap", 0.05)
 model.setParam("TimeLimit", 2400)
 model.setParam("MIPFocus", 1)
 
@@ -97,7 +97,11 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
 
     for idx_src in device_id_mapping.values():
         for idx_dest in device_id_mapping.values():
-            comm_cost_src_dest = unit_comm_costs[idx_src, idx_dest] * tensor_size
+            # if source device is the same as the dest device, the communication cost
+            if idx_src == idx_dest:
+                comm_cost_src_dest = 0
+            else:
+                comm_cost_src_dest = unit_comm_costs[idx_src, idx_dest] * tensor_size
             # Create auxiliary binary variables for the conditions
             source_cond = model.addVar(vtype=GRB.BINARY, name=f"source_cond_{sourceID}_{idx_src}")
             dest_cond = model.addVar(vtype=GRB.BINARY, name=f"dest_cond_{destID}_{idx_dest}")
