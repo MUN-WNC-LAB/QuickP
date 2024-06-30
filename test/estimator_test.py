@@ -187,11 +187,23 @@ elif model.status == GRB.OPTIMAL:
     # Extract communication costs
     for edge_id_tuple in list(comp_graph.getEdgeIDs()):
         sourceID, destID = edge_id_tuple
+        s_placement = None
+        d_placement = None
         comm_cost_var = model.getVarByName(f"comm_cost_{sourceID}_{destID}")
         if comm_cost_var:
             comm_cost = comm_cost_var.X
             tensor_size = tensor_shape_to_bits(comp_graph.getOperator(sourceID)["output_size"], dtype=tf.float32)
-            bandwidth = 1
+            for device, ops in result['Assignment'].items():
+                if sourceID in [op[0] for op in ops]:
+                    s_placement = device
+                if destID in [op[0] for op in ops]:
+                    d_placement = device
+                if s_placement and d_placement:
+                    break
+            if s_placement == d_placement:
+                bandwidth = 999
+            else:
+                bandwidth = deviceTopo.get_link_bandwidth(s_placement, d_placement)
             if comm_cost > 0:  # Only include non-zero communication costs
                 result['CommunicationCosts'].append((sourceID, destID, comm_cost, tensor_size, bandwidth))
 
@@ -204,7 +216,7 @@ elif model.status == GRB.OPTIMAL:
     # Print communication costs
     print("Communication Costs:")
     for sourceID, destID, comm_cost, tensor_size, bandwidth in result['CommunicationCosts']:
-        print(f"  From {sourceID} to {destID}, Cost: {comm_cost}, Tensor size: {tensor_size}, Bandwidth: {bandwidth}")
+        print(f"  From {sourceID} to {destID}, Cost: {comm_cost}, Tensor size: {tensor_size}, Bandwidth: {bandwidth} GB/s")
 
     del model
     disposeDefaultEnv()
