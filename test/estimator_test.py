@@ -89,7 +89,7 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
     # https://support.gurobi.com/hc/en-us/articles/360039628832-Constraint-has-no-bool-value-are-you-trying-lb-expr-ub
     # https://support.gurobi.com/hc/en-us/community/posts/360077951791-if-statement-in-constraint
     sourceID, destID = edge_id_tuple
-    tensor_size = tensor_shape_to_bits(comp_graph.getOperator(sourceID)["output_size"], dtype=tf.float32)
+    tensor_size = tensor_shape_to_bits(comp_graph.getOperatorOutputSize(sourceID), dtype=tf.float32)
     source_placement = model.addVar(vtype=GRB.INTEGER, name="w1")
     dest_placement = model.addVar(vtype=GRB.INTEGER, name="w1")
     # communication_costs[idx_src, idx_dest] means the com cost from device with int id idx_src to another with int id idx_dest
@@ -192,7 +192,7 @@ elif model.status == GRB.OPTIMAL:
         comm_cost_var = model.getVarByName(f"comm_cost_{sourceID}_{destID}")
         if comm_cost_var:
             comm_cost = comm_cost_var.X
-            tensor_size = tensor_shape_to_bits(comp_graph.getOperator(sourceID)["output_size"], dtype=tf.float32)
+            tensor_size = tensor_shape_to_bits(comp_graph.getOperatorOutputSize(sourceID), dtype=tf.float32)
             for device, ops in result['Assignment'].items():
                 if sourceID in [op[0] for op in ops]:
                     s_placement = device
@@ -200,6 +200,7 @@ elif model.status == GRB.OPTIMAL:
                     d_placement = device
                 if s_placement and d_placement:
                     break
+            # if both ops are placed on the same device, use 999 to represent that
             if s_placement == d_placement:
                 bandwidth = 999
             else:
