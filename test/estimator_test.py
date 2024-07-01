@@ -82,32 +82,29 @@ for node_id in list(comp_graph.getOperatorIDs()):
     model.addConstr(finish[node_id] == start[node_id] + comp_cost, "finish == start + process")
 
 # Add constraint that if op2 depends on op1, the starting time of op2 will be the ending time of op1 + communication delay if these two ops are not placed on the same device
-# since device id are str, map them to integers
-device_id_mapping: dict[str, int] = {device_id: idx for idx, device_id in enumerate(deviceTopo.getDeviceIDs())}
 unit_comm_costs = {}
-for device_id_src, idx_src in device_id_mapping.items():
-    for device_id_dest, idx_dest in device_id_mapping.items():
-        unit_comm_costs[idx_src, idx_dest] = deviceTopo.calUnitCommCostInUS(device_id_src, device_id_dest)
+for device_id_src in deviceTopo.getDeviceIDs():
+    for device_id_dest in deviceTopo.getDeviceIDs():
+        if device_id_src != device_id_dest:
+            unit_comm_costs[device_id_src, device_id_dest] = deviceTopo.calUnitCommCostInUS(device_id_src, device_id_dest)
 for edge_id_tuple in list(comp_graph.getEdgeIDs()):
     # https://support.gurobi.com/hc/en-us/articles/360039628832-Constraint-has-no-bool-value-are-you-trying-lb-expr-ub
     # https://support.gurobi.com/hc/en-us/community/posts/360077951791-if-statement-in-constraint
-    sourceID, destID = edge_id_tuple
-    tensor_size = tensor_shape_to_bits(comp_graph.getOperatorOutputSize(sourceID), dtype=tf.float32)
-    source_placement = model.addVar(vtype=GRB.INTEGER, name="w1")
-    dest_placement = model.addVar(vtype=GRB.INTEGER, name="w1")
+    source_op_ID, dest_op_ID = edge_id_tuple
+    tensor_size = tensor_shape_to_bits(comp_graph.getOperatorOutputSize(source_op_ID), dtype=tf.float32)
     # communication_costs[idx_src, idx_dest] means the com cost from device with int id idx_src to another with int id idx_dest
-    comm_cost = model.addVar(vtype=GRB.CONTINUOUS, name=f"comm_cost_{sourceID}_{destID}")
+    comm_cost = model.addVar(vtype=GRB.CONTINUOUS, name=f"comm_cost_{source_op_ID}_{dest_op_ID}")
 
-    for device_source_id, idx_src in device_id_mapping.items():
-        for device_des_id, idx_dest in device_id_mapping.items():
+    for device_id_src in deviceTopo.getDeviceIDs():
+        for device_id_dest in deviceTopo.getDeviceIDs():
             # if source device is the same as the dest device, the communication cost
-            comm_cost_src_dest = unit_comm_costs[idx_src, idx_dest] * tensor_size if idx_src != idx_dest else 0
+            comm_cost_src_dest = unit_comm_costs[device_id_src, device_id_dest] * tensor_size if device_id_src != device_id_dest else 0
             pair_match = model.addVar(vtype=GRB.BINARY)
-            model.addConstr(pair_match == x[sourceID, device_source_id] * x[destID, device_des_id])
+            model.addConstr(pair_match == x[source_op_ID, device_id_src] * x[dest_op_ID, device_id_dest])
             model.addGenConstrIndicator(pair_match, True, comm_cost == comm_cost_src_dest)
 
     # Add the data dependency constraint with communication cost
-    model.addConstr(start[destID] >= finish[sourceID] + comm_cost, f"data_dependency_{sourceID}_{destID}")
+    model.addConstr(start[dest_op_ID] >= finish[source_op_ID] + comm_cost, f"data_dependency_{source_op_ID}_{dest_op_ID}")
 
 # Add constraint to ensure each device processes only one operator at a time. This is a SCHEDULING problem
 for device in deviceTopo.getDeviceIDs():
@@ -173,17 +170,17 @@ elif model.status == GRB.OPTIMAL:
 
     # Extract communication costs
     for edge_id_tuple in list(comp_graph.getEdgeIDs()):
-        sourceID, destID = edge_id_tuple
+        source_op_ID, dest_op_ID = edge_id_tuple
         s_placement = None
         d_placement = None
-        comm_cost_var = model.getVarByName(f"comm_cost_{sourceID}_{destID}")
+        comm_cost_var = model.getVarByName(f"comm_cost_{source_op_ID}_{dest_op_ID}")
         if comm_cost_var:
             comm_cost = comm_cost_var.X
-            tensor_size = tensor_shape_to_bits(comp_graph.getOperatorOutputSize(sourceID), dtype=tf.float32)
+            tensor_size = tensor_shape_to_bits(comp_graph.getOperatorOutputSize(source_op_ID), dtype=tf.float32)
             for device, ops in result['Assignment'].items():
-                if sourceID in [op[0] for op in ops]:
+                if source_op_ID in [op[0] for op in ops]:
                     s_placement = device
-                if destID in [op[0] for op in ops]:
+                if dest_op_ID in [op[0] for op in ops]:
                     d_placement = device
                 if s_placement and d_placement:
                     break
@@ -193,7 +190,7 @@ elif model.status == GRB.OPTIMAL:
             else:
                 bandwidth = deviceTopo.get_link_bandwidth(s_placement, d_placement)
             if comm_cost > 0:  # Only include non-zero communication costs
-                result['CommunicationCosts'].append((sourceID, destID, comm_cost, tensor_size, bandwidth))
+                result['CommunicationCosts'].append((source_op_ID, dest_op_ID, comm_cost, tensor_size, bandwidth))
 
     # You can also format the output to display start and finish times more clearly
     for device, ops in result['Assignment'].items():
@@ -203,8 +200,8 @@ elif model.status == GRB.OPTIMAL:
 
     # Print communication costs
     print("Communication Costs:")
-    for sourceID, destID, comm_cost, tensor_size, bandwidth in result['CommunicationCosts']:
-        print(f"  From {sourceID} to {destID}, Cost: {comm_cost}, Tensor size: {tensor_size}, Bandwidth: {bandwidth} GB/s")
+    for source_op_ID, dest_op_ID, comm_cost, tensor_size, bandwidth in result['CommunicationCosts']:
+        print(f"  From {source_op_ID} to {dest_op_ID}, Cost: {comm_cost}, Tensor size: {tensor_size}, Bandwidth: {bandwidth} GB/s")
 
     del model
     disposeDefaultEnv()
