@@ -98,26 +98,13 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
     # communication_costs[idx_src, idx_dest] means the com cost from device with int id idx_src to another with int id idx_dest
     comm_cost = model.addVar(vtype=GRB.CONTINUOUS, name=f"comm_cost_{sourceID}_{destID}")
 
-    for idx_src in device_id_mapping.values():
-        for idx_dest in device_id_mapping.values():
+    for device_source_id, idx_src in device_id_mapping.items():
+        for device_des_id, idx_dest in device_id_mapping.items():
             # if source device is the same as the dest device, the communication cost
-            if idx_src == idx_dest:
-                comm_cost_src_dest = 0
-            else:
-                comm_cost_src_dest = unit_comm_costs[idx_src, idx_dest] * tensor_size
-            # Create auxiliary binary variables for the conditions
-            source_cond = model.addVar(vtype=GRB.BINARY, name=f"source_cond_{sourceID}_{idx_src}")
-            dest_cond = model.addVar(vtype=GRB.BINARY, name=f"dest_cond_{destID}_{idx_dest}")
-            # Add constraints to enforce these conditions
-            # When source_cond == True(1), source_placement == int id of source device
-            model.addGenConstrIndicator(source_cond, True, source_placement == idx_src)
-            # When dest_cond == True(1), dest_placement == int id of destination device
-            model.addGenConstrIndicator(dest_cond, True, dest_placement == idx_dest)
-            # Create the AND variable
-            and_var = model.addVar(vtype=GRB.BINARY, name=f"and_{sourceID}_{destID}_{idx_src}_{idx_dest}")
-            # When source_cond == 1 and dest_cond == 1, and_var == 1
-            model.addGenConstrAnd(and_var, [source_cond, dest_cond])
-            model.addGenConstrIndicator(and_var, True, comm_cost == comm_cost_src_dest)
+            comm_cost_src_dest = unit_comm_costs[idx_src, idx_dest] * tensor_size if idx_src != idx_dest else 0
+            pair_match = model.addVar(vtype=GRB.BINARY)
+            model.addConstr(pair_match == x[sourceID, device_source_id] * x[destID, device_des_id])
+            model.addGenConstrIndicator(pair_match, True, comm_cost == comm_cost_src_dest)
 
     # Add the data dependency constraint with communication cost
     model.addConstr(start[destID] >= finish[sourceID] + comm_cost, f"data_dependency_{sourceID}_{destID}")
