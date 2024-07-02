@@ -91,7 +91,8 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
     # https://support.gurobi.com/hc/en-us/articles/360039628832-Constraint-has-no-bool-value-are-you-trying-lb-expr-ub
     # https://support.gurobi.com/hc/en-us/community/posts/360077951791-if-statement-in-constraint
     source_op_ID, dest_op_ID = edge_id_tuple
-    tensor_size = tensor_shape_to_bits(comp_graph.getOperatorOutputSize(source_op_ID), dtype=tf.float32)
+    shape, dtype = comp_graph.getOperatorOutputSizeAndType(source_op_ID)
+    tensor_size = tensor_shape_to_bits(shape, dtype=dtype)
     comm_cost = model.addVar(vtype=GRB.CONTINUOUS, name=f"comm_cost_{source_op_ID}_{dest_op_ID}")
 
     # Aggregate communication cost
@@ -178,7 +179,8 @@ elif model.status == GRB.OPTIMAL:
         comm_cost_var = model.getVarByName(f"comm_cost_{source_op_ID}_{dest_op_ID}")
         if comm_cost_var:
             comm_cost = comm_cost_var.X
-            tensor_size = tensor_shape_to_bits(comp_graph.getOperatorOutputSize(source_op_ID), dtype=tf.float32)
+            shape, dtype = comp_graph.getOperatorOutputSizeAndType(source_op_ID)
+            tensor_size = tensor_shape_to_bits(shape, dtype=dtype)
             for device, ops in result['Assignment'].items():
                 if source_op_ID in [op[0] for op in ops]:
                     s_placement = device
