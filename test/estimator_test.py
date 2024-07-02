@@ -24,7 +24,7 @@ deviceTopo.generata_fat_tree_topo(2, 30, 20, 1)
 model = Model("minimize_maxload")
 model.setParam("LogToConsole", 0)
 model.setParam("LogFile", "gurobi.log")
-model.setParam("MIPGap", 0.30)
+model.setParam("MIPGap", 0.10)
 model.setParam("TimeLimit", 2400)
 model.setParam("MIPFocus", 1)
 
@@ -93,10 +93,10 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
     source_op_ID, dest_op_ID = edge_id_tuple
     tensor_size = tensor_shape_to_bits(comp_graph.getOperatorOutputSize(source_op_ID), dtype=tf.float32)
     # communication_costs[idx_src, idx_dest] means the com cost from device with int id idx_src to another with int id idx_dest
-    comm_cost = model.addVar(vtype=GRB.CONTINUOUS)
+    comm_cost = model.addVar(vtype=GRB.CONTINUOUS, name=f"comm_cost_{source_op_ID}_{dest_op_ID}")
 
     # Aggregate communication cost
-    comm_cost_expr = gurobi.quicksum(
+    comm_cost_expr = quicksum(
         unit_comm_costs[device_id_src, device_id_dest] * tensor_size * x[source_op_ID, device_id_src] * x[
             dest_op_ID, device_id_dest]
         for device_id_src in deviceTopo.getDeviceIDs()
@@ -109,23 +109,7 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
     # Add the data dependency constraint with communication cost
     model.addConstr(start[dest_op_ID] >= finish[source_op_ID] + comm_cost, f"data_dependency_{source_op_ID}_{dest_op_ID}")
 
-# Add constraint to ensure each device processes only one operator at a time. This is a SCHEDULING problem
-for device in deviceTopo.getDeviceIDs():
-    op_ids = comp_graph.getOperatorIDs()
-    # ensures that each pair of operations is only considered once
-    for i in range(len(op_ids)):
-        for j in range(i + 1, len(op_ids)):
-            op1 = op_ids[i]
-            op2 = op_ids[j]
-            if op1 != op2:
-                # Create auxiliary binary variables
-                y1 = model.addVar(vtype=GRB.BINARY, name=f"y1_{device}_{op1}_{op2}")
-                y2 = model.addVar(vtype=GRB.BINARY, name=f"y2_{device}_{op1}_{op2}")
-                model.addGenConstrIndicator(y1, True, finish[op1] <= start[op2])
-                model.addGenConstrIndicator(y2, True, finish[op2] <= start[op1])
 
-                # If on the same device, ensure that the operators do not overlap
-                model.addConstr(y1 + y2 >= x[op1, device] + x[op2, device] - 1, name=f"non_overlap_{op1}_{op2}_{device}")
 
 # TotalLatency that we are minimizing
 TotalLatency = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0)
@@ -193,7 +177,7 @@ elif model.status == GRB.OPTIMAL:
             else:
                 bandwidth = deviceTopo.get_link_bandwidth(s_placement, d_placement)
             if comm_cost > 0:  # Only include non-zero communication costs
-                result['CommunicationCosts'].append((source_op_ID, dest_op_ID, comm_cost, tensor_size, bandwidth))
+                result['CommunicationCosts'].append((source_op_ID, s_placement, dest_op_ID, d_placement, comm_cost, tensor_size, bandwidth))
 
     # You can also format the output to display start and finish times more clearly
     for device, ops in result['Assignment'].items():
@@ -203,8 +187,8 @@ elif model.status == GRB.OPTIMAL:
 
     # Print communication costs
     print("Communication Costs:")
-    for source_op_ID, dest_op_ID, comm_cost, tensor_size, bandwidth in result['CommunicationCosts']:
-        print(f"  From {source_op_ID} to {dest_op_ID}, Cost: {comm_cost}, Tensor size: {tensor_size}, Bandwidth: {bandwidth} GB/s")
+    for source_op_ID, s_placement, dest_op_ID, d_placement, comm_cost, tensor_size, bandwidth in result['CommunicationCosts']:
+        print(f"  From {source_op_ID} with placement {s_placement} to {dest_op_ID} with placement {d_placement}, Cost: {comm_cost}, Tensor size: {tensor_size}, Bandwidth: {bandwidth} GB/s")
 
     del model
     disposeDefaultEnv()
