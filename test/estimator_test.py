@@ -93,15 +93,18 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
     source_op_ID, dest_op_ID = edge_id_tuple
     tensor_size = tensor_shape_to_bits(comp_graph.getOperatorOutputSize(source_op_ID), dtype=tf.float32)
     # communication_costs[idx_src, idx_dest] means the com cost from device with int id idx_src to another with int id idx_dest
-    comm_cost = model.addVar(vtype=GRB.CONTINUOUS, name=f"comm_cost_{source_op_ID}_{dest_op_ID}")
+    comm_cost = model.addVar(vtype=GRB.CONTINUOUS)
 
-    for device_id_src in deviceTopo.getDeviceIDs():
-        for device_id_dest in deviceTopo.getDeviceIDs():
-            # if source device is the same as the dest device, the communication cost
-            comm_cost_src_dest = unit_comm_costs[device_id_src, device_id_dest] * tensor_size if device_id_src != device_id_dest else 0
-            pair_match = model.addVar(vtype=GRB.BINARY)
-            model.addConstr(pair_match == x[source_op_ID, device_id_src] * x[dest_op_ID, device_id_dest])
-            model.addGenConstrIndicator(pair_match, True, comm_cost == comm_cost_src_dest)
+    # Aggregate communication cost
+    comm_cost_expr = gurobi.quicksum(
+        unit_comm_costs[device_id_src, device_id_dest] * tensor_size * x[source_op_ID, device_id_src] * x[
+            dest_op_ID, device_id_dest]
+        for device_id_src in deviceTopo.getDeviceIDs()
+        for device_id_dest in deviceTopo.getDeviceIDs()
+        if device_id_src != device_id_dest
+    )
+
+    model.addConstr(comm_cost == comm_cost_expr, f"comm_cost_{source_op_ID}_{dest_op_ID}")
 
     # Add the data dependency constraint with communication cost
     model.addConstr(start[dest_op_ID] >= finish[source_op_ID] + comm_cost, f"data_dependency_{source_op_ID}_{dest_op_ID}")
