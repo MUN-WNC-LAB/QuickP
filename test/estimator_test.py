@@ -82,6 +82,7 @@ for node_id in list(comp_graph.getOperatorIDs()):
     model.addConstr(finish[node_id] == start[node_id] + comp_cost, "finish == start + process")
 
 # Add constraint that if op2 depends on op1, the starting time of op2 will be the ending time of op1 + communication delay if these two ops are not placed on the same device
+# unit_comm_costs[device_id_src, device_id_dest] means the com cost per bit from device with source device to dest device
 unit_comm_costs = {}
 for device_id_src in deviceTopo.getDeviceIDs():
     for device_id_dest in deviceTopo.getDeviceIDs():
@@ -92,7 +93,6 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
     # https://support.gurobi.com/hc/en-us/community/posts/360077951791-if-statement-in-constraint
     source_op_ID, dest_op_ID = edge_id_tuple
     tensor_size = tensor_shape_to_bits(comp_graph.getOperatorOutputSize(source_op_ID), dtype=tf.float32)
-    # communication_costs[idx_src, idx_dest] means the com cost from device with int id idx_src to another with int id idx_dest
     comm_cost = model.addVar(vtype=GRB.CONTINUOUS, name=f"comm_cost_{source_op_ID}_{dest_op_ID}")
 
     # Aggregate communication cost
