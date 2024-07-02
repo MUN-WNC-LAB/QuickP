@@ -86,8 +86,7 @@ for node_id in list(comp_graph.getOperatorIDs()):
 unit_comm_costs = {}
 for device_id_src in deviceTopo.getDeviceIDs():
     for device_id_dest in deviceTopo.getDeviceIDs():
-        if device_id_src != device_id_dest:
-            unit_comm_costs[device_id_src, device_id_dest] = deviceTopo.calUnitCommCostInUS(device_id_src, device_id_dest)
+        unit_comm_costs[device_id_src, device_id_dest] = deviceTopo.calUnitCommCostInUS(device_id_src, device_id_dest)
 for edge_id_tuple in list(comp_graph.getEdgeIDs()):
     # https://support.gurobi.com/hc/en-us/articles/360039628832-Constraint-has-no-bool-value-are-you-trying-lb-expr-ub
     # https://support.gurobi.com/hc/en-us/community/posts/360077951791-if-statement-in-constraint
@@ -126,7 +125,6 @@ for device in deviceTopo.getDeviceIDs():
 
                 # If on the same device, ensure that the operators do not overlap
                 model.addConstr(y1 + y2 >= x[op1, device] + x[op2, device] - 1, name=f"non_overlap_{op1}_{op2}_{device}")
-
 
 # TotalLatency that we are minimizing
 TotalLatency = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0)
@@ -193,7 +191,7 @@ elif model.status == GRB.OPTIMAL:
                 bandwidth = 999
             else:
                 bandwidth = deviceTopo.get_link_bandwidth(s_placement, d_placement)
-            if comm_cost > 0:  # Only include non-zero communication costs
+            if comm_cost >= 0:  # Only include all communication costs to verify
                 result['CommunicationCosts'].append((source_op_ID, s_placement, dest_op_ID, d_placement, comm_cost, tensor_size, bandwidth))
 
     # You can also format the output to display start and finish times more clearly
