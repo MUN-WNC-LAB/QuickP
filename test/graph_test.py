@@ -42,4 +42,23 @@ def test_conversion():
     print(convert_data_size(1, 'GB', 'bit'))
     print(convert_time(1, 's', 'us'))
 
-test_conversion()
+
+def test_graph_json_conversion():
+    # Create an example CompGraph
+    G = CompGraph()
+    G.add_node(1, label="A")
+    G.add_node(2, label="B")
+    G.add_edge(1, 2)
+
+    # Save CompGraph to a file
+    G.save_to_file('comp_graph.json')
+
+    # Load CompGraph from the file
+    loaded_graph = CompGraph.load_from_file('comp_graph.json')
+    if loaded_graph:
+        print("Loaded Graph:", loaded_graph.nodes(data=True), loaded_graph.edges(data=True))
+    else:
+        print("Failed to load graph.")
+
+
+test_graph_json_conversion()
