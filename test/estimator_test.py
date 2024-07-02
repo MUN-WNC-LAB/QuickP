@@ -204,8 +204,11 @@ elif model.status == GRB.OPTIMAL:
 
     # Print communication costs
     print("Communication Costs:")
+    sum_of_communication = 0
     for source_op_ID, s_placement, dest_op_ID, d_placement, comm_cost, tensor_size, bandwidth in result['CommunicationCosts']:
+        sum_of_communication += comm_cost
         print(f"  From {source_op_ID} with placement {s_placement} to {dest_op_ID} with placement {d_placement}, Cost: {comm_cost}, Tensor size: {tensor_size}, Bandwidth: {bandwidth} GB/s")
+    print(f"Total Communication Cost: {sum_of_communication}")
 
     del model
     disposeDefaultEnv()
