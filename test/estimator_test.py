@@ -28,7 +28,7 @@ deviceTopo.generata_fat_tree_topo(2, 30, 20, 1)
 model = Model("minimize_maxload")
 model.setParam("LogToConsole", 0)
 model.setParam("LogFile", "gurobi.log")
-model.setParam("MIPGap", 0.10)
+model.setParam("MIPGap", 0.01)
 model.setParam("TimeLimit", 2400)
 model.setParam("MIPFocus", 1)
 
