@@ -196,8 +196,9 @@ elif model.status == GRB.OPTIMAL:
     for device, ops in result['Assignment'].items():
         print(f"Device: {device}")
         for op in ops:
-            comp_cost = sum(x[op, device_id].X * comp_graph.getOperatorCompCostByDevice(op, device_id)
-                            for device_id in deviceTopo.getDeviceIDs())
+            comp_cost = 0  # Initialize computation cost for the current operator
+            for device_id in deviceTopo.getDeviceIDs():
+                comp_cost += x[op[0], device_id].X * comp_graph.getOperatorCompCostByDevice(op[0], device_id)
             print(f"  Operator: {op[0]}, Start: {op[1]}, Finish: {op[2]}, Comp Cost: {comp_cost}")
 
     # Print communication costs
