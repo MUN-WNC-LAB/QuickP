@@ -42,24 +42,19 @@ model.setParam("Threads", 4)  # Example: Use 4 threads
 x = {}  # key will be (operator_id, machine_id), value will be 1 or 0; x[3, 1] = 1 means operator 3 get allocated to device 1
 start = {}  # start[node_id] represent the starting time of this node
 finish = {}  # finish[node_id] represent the finish time of this node
-comm_active = {}  # comm_active[sourceDeviceID, destDeviceID] represent the communicati
-order = {}
+comm_active = {}  # comm_active[sourceDeviceID, destDeviceID] represent the communication
 M = 1e9  # A sufficiently large number
 
-# init all variables
+# Initialize all variables with names
 for node_id in comp_graph.getOperatorIDs():
     for machine_id in deviceTopo.getDeviceIDs():
-        x[node_id, machine_id] = model.addVar(vtype=GRB.BINARY)
-        order[node_id, machine_id] = model.addVar(vtype=GRB.INTEGER, name=f"order_{node_id}_{machine_id}")
-    start[node_id] = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0)
-    finish[node_id] = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0)
+        x[node_id, machine_id] = model.addVar(vtype=GRB.BINARY, name=f"x_{node_id}_{machine_id}")
+    start[node_id] = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0, name=f"start_{node_id}")
+    finish[node_id] = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0, name=f"finish_{node_id}")
 
 # Add constraints that schedule every node on exactly one machine
-for node_id in comp_graph.getOperatorIDs():
-    times_scheduled = LinExpr()
-    for machine_id in deviceTopo.getDeviceIDs():
-        times_scheduled += x[node_id, machine_id]
-    model.addConstr(times_scheduled == 1, "every node on exactly one machine")
+for op in comp_graph.getOperatorIDs():
+    model.addConstr(quicksum(x[op, device] for device in deviceTopo.getDeviceIDs()) == 1, name=f"one_device_{op}")
 
 # Add constraints that operators assigned cannot exceed the capacity
 for machine_id in deviceTopo.getDeviceIDs():
@@ -71,10 +66,7 @@ for machine_id in deviceTopo.getDeviceIDs():
 
 # Add constraints that each device should have at least one operator assigned
 for machine_id in deviceTopo.getDeviceIDs():
-    op_count = LinExpr()
-    for node_id in comp_graph.getOperatorIDs():
-        op_count += x[node_id, machine_id]
-    model.addConstr(op_count >= 1, "each device should have at least one op")
+    model.addConstr(quicksum(x[node_id, machine_id] for node_id in comp_graph.getOperatorIDs()) >= 1, name=f"at_least_one_op_{machine_id}")
 
 # Add constraints that each op's ending time = starting time + its computing time
 for node_id in list(comp_graph.getOperatorIDs()):
