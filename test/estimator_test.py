@@ -30,7 +30,7 @@ deviceTopo.generata_fat_tree_topo(2, 30, 20, 1)
 model = Model("minimize_maxload")
 model.setParam("LogToConsole", 0)
 model.setParam("LogFile", "gurobi.log")
-model.setParam("MIPGap", 0.01)
+model.setParam("MIPGap", 0.11)
 model.setParam("TimeLimit", 2400)
 model.setParam("MIPFocus", 1)
 
@@ -107,8 +107,8 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
                     f"data_dependency_{source_op_ID}_{dest_op_ID}")
 
 # Add constraint to ensure each device processes only one operator at a time. This is a SCHEDULING problem
+op_ids = comp_graph.getOperatorIDs()
 for device in deviceTopo.getDeviceIDs():
-    op_ids = comp_graph.getOperatorIDs()
     # ensures that each pair of operations is only considered once
     for i in range(len(op_ids)):
         for j in range(i + 1, len(op_ids)):
@@ -122,7 +122,7 @@ for device in deviceTopo.getDeviceIDs():
                 model.addGenConstrIndicator(y2, True, finish[op2] <= start[op1])
 
                 # If on the same device, ensure that the operators do not overlap
-                model.addConstr(y1 + y2 >= x[op1, device] + x[op2, device] - 1, name=f"non_overlap_{op1}_{op2}_{device}")
+                model.addConstr(y1 >= x[op1, device] + x[op2, device] - 1, name=f"non_overlap_{op1}_{op2}_{device}")
 
 # TotalLatency that we are minimizing
 TotalLatency = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0)
