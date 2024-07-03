@@ -66,16 +66,14 @@ for machine_id in deviceTopo.getDeviceIDs():
 
 # Add constraints that each device should have at least one operator assigned
 for machine_id in deviceTopo.getDeviceIDs():
-    model.addConstr(quicksum(x[node_id, machine_id] for node_id in comp_graph.getOperatorIDs()) >= 1, name=f"at_least_one_op_{machine_id}")
+    model.addConstr(quicksum(x[node_id, machine_id] for node_id in comp_graph.getOperatorIDs()) >= 1,
+                    name=f"at_least_one_op_{machine_id}")
 
 # Add constraints that each op's ending time = starting time + its computing time
-for node_id in list(comp_graph.getOperatorIDs()):
-    comp_cost = LinExpr()
-    # since there is one placement, only one x[node_id, device_id] will be 1
-    for device_id in deviceTopo.getDeviceIDs():
-        # consider the device heterogeneity
-        comp_cost += x[node_id, device_id] * comp_graph.getOperator(node_id)["comp_cost"][device_id]
-    model.addConstr(finish[node_id] == start[node_id] + comp_cost, "finish == start + process")
+for node_id in comp_graph.getOperatorIDs():
+    comp_cost = quicksum(x[node_id, device_id] * comp_graph.getOperatorCompCostByDevice(node_id, device_id)
+                         for device_id in deviceTopo.getDeviceIDs())
+    model.addConstr(finish[node_id] == start[node_id] + comp_cost, name=f"finish_start_{node_id}")
 
 # Add constraint that if op2 depends on op1, the starting time of op2 will be the ending time of op1 + communication delay if these two ops are not placed on the same device
 # unit_comm_costs[device_id_src, device_id_dest] means the com cost per bit from device with source device to dest device
@@ -103,7 +101,8 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
     model.addConstr(comm_cost == comm_cost_expr, f"comm_cost_{source_op_ID}_{dest_op_ID}")
 
     # Add the data dependency constraint with communication cost
-    model.addConstr(start[dest_op_ID] >= finish[source_op_ID] + comm_cost, f"data_dependency_{source_op_ID}_{dest_op_ID}")
+    model.addConstr(start[dest_op_ID] >= finish[source_op_ID] + comm_cost,
+                    f"data_dependency_{source_op_ID}_{dest_op_ID}")
 
 # Add constraint to ensure each device processes only one operator at a time. This is a SCHEDULING problem
 operator_ids = comp_graph.getOperatorIDs()
@@ -159,7 +158,8 @@ elif model.status == GRB.OPTIMAL:
         if key[1] not in result['Assignment']:
             result['Assignment'][key[1]] = []
         # key[0] is the operator id. Put id into the list assigned to the device
-        if value.X > 0.99:
+        if value.X > 0.5:
+            # Assignment: {device: [(op1, start[op1], finish[op1]), (...)]}
             result['Assignment'][key[1]].append((key[0], start[key[0]].X, finish[key[0]].X))
 
     # Sort operators by their start times for each device
@@ -189,20 +189,24 @@ elif model.status == GRB.OPTIMAL:
             else:
                 bandwidth = deviceTopo.get_link_bandwidth(s_placement, d_placement)
             if comm_cost >= 0:  # Only include all communication costs to verify
-                result['CommunicationCosts'].append((source_op_ID, s_placement, dest_op_ID, d_placement, comm_cost, tensor_size, bandwidth))
+                result['CommunicationCosts'].append(
+                    (source_op_ID, s_placement, dest_op_ID, d_placement, comm_cost, tensor_size, bandwidth))
 
     # You can also format the output to display start and finish times more clearly
     for device, ops in result['Assignment'].items():
         print(f"Device: {device}")
         for op in ops:
-            print(f"  Operator: {op[0]}, Start: {op[1]}, Finish: {op[2]}")
+            comp_cost = sum(x[op, device_id].X * comp_graph.getOperatorCompCostByDevice(op, device_id)
+                            for device_id in deviceTopo.getDeviceIDs())
+            print(f"  Operator: {op[0]}, Start: {op[1]}, Finish: {op[2]}, Comp Cost: {comp_cost}")
 
     # Print communication costs
     print("Communication Costs:")
     sum_of_communication = 0
     for source_op_ID, s_placement, dest_op_ID, d_placement, comm_cost, tensor_size, bandwidth in result['CommunicationCosts']:
         sum_of_communication += comm_cost
-        print(f"  From {source_op_ID} with placement {s_placement} to {dest_op_ID} with placement {d_placement}, Cost: {comm_cost}, Tensor size: {tensor_size}, Bandwidth: {bandwidth} GB/s")
+        print(
+            f"  From {source_op_ID} with placement {s_placement} to {dest_op_ID} with placement {d_placement}, Cost: {comm_cost}, Tensor size: {tensor_size}, Bandwidth: {bandwidth} GB/s")
     print(f"Total Communication Cost: {sum_of_communication}")
 
     del model
