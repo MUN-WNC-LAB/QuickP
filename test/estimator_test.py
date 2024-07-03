@@ -103,7 +103,8 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
     # Add the data dependency constraint with communication cost
     model.addConstr(start[dest_op_ID] >= finish[source_op_ID] + comm_cost,
                     f"data_dependency_{source_op_ID}_{dest_op_ID}")
-
+y1 = {}
+y2 = {}
 # Add constraint to ensure each device processes only one operator at a time. This is a SCHEDULING problem
 operator_ids = comp_graph.getOperatorIDs()
 for device in deviceTopo.getDeviceIDs():
@@ -113,13 +114,19 @@ for device in deviceTopo.getDeviceIDs():
             op1 = operator_ids[i]
             op2 = operator_ids[j]
             # Create auxiliary binary variables
-            y1 = model.addVar(vtype=GRB.BINARY, name=f"y1_{device}_{op1}_{op2}")
-            y2 = model.addVar(vtype=GRB.BINARY, name=f"y2_{device}_{op1}_{op2}")
-            model.addGenConstrIndicator(y1, True, finish[op1] <= start[op2])
-            model.addGenConstrIndicator(y2, True, finish[op2] <= start[op1])
+            y1[(device, op1, op2)] = model.addVar(vtype=GRB.BINARY, name=f"y1_{device}_{op1}_{op2}")
+            y2[(device, op1, op2)] = model.addVar(vtype=GRB.BINARY, name=f"y2_{device}_{op1}_{op2}")
+
+            # Indicator constraints
+            model.addGenConstrIndicator(y1[(device, op1, op2)], True, finish[op1] <= start[op2])
+            model.addGenConstrIndicator(y2[(device, op1, op2)], True, finish[op2] <= start[op1])
+
+            # Ensure y1 or y2 are 0 if either op1 or op2 are not on this device
+            model.addConstr(y1[(device, op1, op2)] <= x[op1, device] * x[op2, device], name=f"y1_op1_{op1}_{op2}_{device}")
+            model.addConstr(y2[(device, op1, op2)] <= x[op1, device] * x[op2, device], name=f"y2_op1_{op1}_{op2}_{device}")
 
             # If on the same device, ensure that the operators do not overlap
-            model.addConstr(y1 + y2 >= x[op1, device] + x[op2, device] - 1, name=f"non_overlap_{op1}_{op2}_{device}")
+            model.addConstr(y1[(device, op1, op2)] + y2[(device, op1, op2)] == 1, name=f"non_overlap_{op1}_{op2}_{device}")
 
 # TotalLatency that we are minimizing
 TotalLatency = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0)
