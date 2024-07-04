@@ -115,16 +115,16 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
 
     model.addConstr(comm_cost[source_op_ID, dest_op_ID] == comm_cost_expr, f"comm_cost_{source_op_ID}_{dest_op_ID}")
 
-    # Bind finish[source_op_ID] to comm_start[source_op_ID, dest_op_ID]
+    # Ensures the communication starts only after the source operation finishes.
     model.addConstr(comm_start[source_op_ID, dest_op_ID] >= finish[source_op_ID],
                     f"bind_finish_to_comm_start_{source_op_ID}_{dest_op_ID}")
 
-    # Bind start[dest_op_ID] to comm_end[source_op_ID, dest_op_ID]
+    # Ensures the communication ends before the destination operation starts.
     model.addConstr(comm_end[source_op_ID, dest_op_ID] <= start[dest_op_ID],
                     f"bind_comm_end_to_start_{source_op_ID}_{dest_op_ID}")
 
-    # Add the data dependency constraint with communication cost
-    model.addConstr(start[dest_op_ID] >= finish[source_op_ID] + comm_cost[source_op_ID, dest_op_ID],
+    # Ensures the communication duration covers the communication cost.
+    model.addConstr(comm_end[source_op_ID, dest_op_ID] >= comm_start[source_op_ID, dest_op_ID] + comm_cost[source_op_ID, dest_op_ID],
                     f"data_dependency_{source_op_ID}_{dest_op_ID}")
 
     '''
