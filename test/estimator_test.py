@@ -124,7 +124,7 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
                     f"bind_comm_end_to_start_{source_op_ID}_{dest_op_ID}")
 
     # Ensures the communication duration covers the communication cost.
-    model.addConstr(comm_end[source_op_ID, dest_op_ID] >= comm_start[source_op_ID, dest_op_ID] + comm_cost[source_op_ID, dest_op_ID],
+    model.addConstr(comm_end[source_op_ID, dest_op_ID] == comm_start[source_op_ID, dest_op_ID] + comm_cost[source_op_ID, dest_op_ID],
                     f"data_dependency_{source_op_ID}_{dest_op_ID}")
 
     '''
@@ -232,7 +232,7 @@ elif model.status == GRB.OPTIMAL:
             result['CommunicationCosts'].append(
                 (source_op_ID, s_placement, dest_op_ID, d_placement, comm_cost, tensor_size, bandwidth))
             result['CommunicationTimeLine'].append(
-                (source_op_ID, dest_op_ID, comm_start_time, comm_end_time)
+                (source_op_ID, dest_op_ID, comm_start_time, comm_end_time, comm_cost)
                 )
     # Sort the communication timeline based on the starting time
     result['CommunicationTimeLine'] = sorted(result['CommunicationTimeLine'], key=lambda x: x[2])
@@ -257,9 +257,9 @@ elif model.status == GRB.OPTIMAL:
 
     # Print communication timeline
     print("Communication Timeline:")
-    for source_op_ID, dest_op_ID, comm_start_time, comm_end_time in result['CommunicationTimeLine']:
+    for source_op_ID, dest_op_ID, comm_start_time, comm_end_time, cost in result['CommunicationTimeLine']:
         print(
-            f"  Communication from {source_op_ID} to {dest_op_ID} starts at {comm_start_time} and ends at {comm_end_time}")
+            f"  Communication from {source_op_ID} to {dest_op_ID} starts at {comm_start_time} and ends at {comm_end_time} with cost: {cost}")
 
     del model
     disposeDefaultEnv()
