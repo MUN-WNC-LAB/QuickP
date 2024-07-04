@@ -9,7 +9,8 @@ project_root = os.path.abspath(os.path.join(script_dir, '..'))
 sys.path.append(project_root)
 from optimizer.computing_graph.computing_graph import get_computation_graph
 from py_util import tensor_shape_to_bits
-from optimizer.model.graph import DeviceGraph, CompGraph, has_more_than_one_component, keep_largest_component
+from optimizer.model.graph import DeviceGraph, CompGraph, has_more_than_one_component, keep_largest_component, \
+    determine_node_order
 from DNN_model_tf.small import small_tf
 
 # init fake data
@@ -112,17 +113,20 @@ for device in deviceTopo.getDeviceIDs():
     # ensures that each pair of operations is only considered once
     for i in range(len(op_ids)):
         for j in range(i + 1, len(op_ids)):
-            op1 = op_ids[i]
-            op2 = op_ids[j]
-            if op1 != op2:
-                # Create auxiliary binary variables
+            op1, op2 = op_ids[i], op_ids[j]
+            if determine_node_order(comp_graph, op1, op2) == 1:
+                print("preceeding")
                 y1 = model.addVar(vtype=GRB.BINARY, name=f"y1_{device}_{op1}_{op2}")
-                y2 = model.addVar(vtype=GRB.BINARY, name=f"y2_{device}_{op1}_{op2}")
                 model.addGenConstrIndicator(y1, True, finish[op1] <= start[op2])
-                model.addGenConstrIndicator(y2, True, finish[op2] <= start[op1])
-
                 # If on the same device, ensure that the operators do not overlap
                 model.addConstr(y1 >= x[op1, device] + x[op2, device] - 1, name=f"non_overlap_{op1}_{op2}_{device}")
+            elif determine_node_order(comp_graph, op1, op2) == 2:
+                print("later")
+                y2 = model.addVar(vtype=GRB.BINARY, name=f"y2_{device}_{op1}_{op2}")
+                model.addGenConstrIndicator(y2, True, finish[op2] <= start[op1])
+                model.addConstr(y2 >= x[op1, device] + x[op2, device] - 1, name=f"non_overlap_{op1}_{op2}_{device}")
+            else:
+                raise ValueError("node not existing")
 
 # TotalLatency that we are minimizing
 TotalLatency = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0)
