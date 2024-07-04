@@ -48,6 +48,7 @@ finish = {}  # finish[node_id] represent the finish time of this node
 comm_start = {}  # comm_start[source_op, dest_op] represent the communication
 comm_end = {}
 comm_cost = {}
+comm_active = {}  # Communication active indicator for each pair of devices
 
 # Initialize all variables with names
 for node_id in comp_graph.getOperatorIDs():
@@ -56,12 +57,17 @@ for node_id in comp_graph.getOperatorIDs():
     start[node_id] = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0, name=f"start_{node_id}")
     finish[node_id] = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0, name=f"finish_{node_id}")
 
-# Initialize communication variables for each edge
 for edge_id_tuple in comp_graph.getEdgeIDs():
     source_op_ID, dest_op_ID = edge_id_tuple
     comm_start[source_op_ID, dest_op_ID] = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0, name=f"comm_start_{source_op_ID}_{dest_op_ID}")
     comm_end[source_op_ID, dest_op_ID] = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0, name=f"comm_end_{source_op_ID}_{dest_op_ID}")
     comm_cost[source_op_ID, dest_op_ID] = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0, name=f"comm_cost_{source_op_ID}_{dest_op_ID}")
+
+for device_id_src in deviceTopo.getDeviceIDs():
+    for device_id_dest in deviceTopo.getDeviceIDs():
+        if device_id_src != device_id_dest:
+            comm_active[device_id_src, device_id_dest] = model.addVar(vtype=GRB.BINARY, name=f"comm_active_{device_id_src}_{device_id_dest}")
+
 
 # Add constraints that schedule every node on exactly one machine
 for op in comp_graph.getOperatorIDs():
@@ -69,11 +75,10 @@ for op in comp_graph.getOperatorIDs():
 
 # Add constraints that operators assigned cannot exceed the capacity
 for machine_id in deviceTopo.getDeviceIDs():
-    mem_sum = LinExpr()
-    for node_id in comp_graph.getOperatorIDs():
-        mem_sum += x[node_id, machine_id] * comp_graph.getOperator(node_id)["mem"]
-    model.addConstr(mem_sum <= deviceTopo.getDevice(machine_id)["memory_capacity"],
-                    "satisfy each device's memory constraint")
+    mem_sum = quicksum(x[node_id, machine_id] * comp_graph.getOperator(node_id)["mem"]
+                       for node_id in comp_graph.getOperatorIDs())
+    model.addConstr(mem_sum <= deviceTopo.getDeviceMaxMem(machine_id),
+                    f"satisfy_memory_constraint_{machine_id}")
 
 # Add constraints that each device should have at least one operator assigned
 for machine_id in deviceTopo.getDeviceIDs():
@@ -110,9 +115,29 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
 
     model.addConstr(comm_cost[source_op_ID, dest_op_ID] == comm_cost_expr, f"comm_cost_{source_op_ID}_{dest_op_ID}")
 
+    # Bind finish[source_op_ID] to comm_start[source_op_ID, dest_op_ID]
+    model.addConstr(comm_start[source_op_ID, dest_op_ID] >= finish[source_op_ID],
+                    f"bind_finish_to_comm_start_{source_op_ID}_{dest_op_ID}")
+
+    # Bind start[dest_op_ID] to comm_end[source_op_ID, dest_op_ID]
+    model.addConstr(comm_end[source_op_ID, dest_op_ID] <= start[dest_op_ID],
+                    f"bind_comm_end_to_start_{source_op_ID}_{dest_op_ID}")
+
     # Add the data dependency constraint with communication cost
     model.addConstr(start[dest_op_ID] >= finish[source_op_ID] + comm_cost[source_op_ID, dest_op_ID],
                     f"data_dependency_{source_op_ID}_{dest_op_ID}")
+
+    '''
+    # Ensure comm_active variables link with x variables
+    for device_id_src in deviceTopo.getDeviceIDs():
+        for device_id_dest in deviceTopo.getDeviceIDs():
+            if device_id_src != device_id_dest:
+                model.addConstr(
+                    comm_active[device_id_src, device_id_dest] >= x[source_op_ID, device_id_src] * x[
+                        dest_op_ID, device_id_dest],
+                    f"link_comm_active_{source_op_ID}_{dest_op_ID}_{device_id_src}_{device_id_dest}"
+                )
+    '''
 
 # Add constraint to ensure each device processes only one operator at a time. This is a SCHEDULING problem
 op_ids = comp_graph.getOperatorIDs()
