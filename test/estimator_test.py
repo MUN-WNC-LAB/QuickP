@@ -45,8 +45,9 @@ model.setParam("Threads", 4)  # Example: Use 4 threads
 x = {}  # key will be (operator_id, machine_id), value will be 1 or 0; x[3, 1] = 1 means operator 3 get allocated to device 1
 start = {}  # start[node_id] represent the starting time of this node
 finish = {}  # finish[node_id] represent the finish time of this node
-comm_active = {}  # comm_active[sourceDeviceID, destDeviceID] represent the communication
-M = 1e9  # A sufficiently large number
+comm_start = {}  # comm_start[source_op, dest_op] represent the communication
+comm_end = {}
+comm_cost = {}
 
 # Initialize all variables with names
 for node_id in comp_graph.getOperatorIDs():
@@ -54,6 +55,13 @@ for node_id in comp_graph.getOperatorIDs():
         x[node_id, machine_id] = model.addVar(vtype=GRB.BINARY, name=f"x_{node_id}_{machine_id}")
     start[node_id] = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0, name=f"start_{node_id}")
     finish[node_id] = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0, name=f"finish_{node_id}")
+
+# Initialize communication variables for each edge
+for edge_id_tuple in comp_graph.getEdgeIDs():
+    source_op_ID, dest_op_ID = edge_id_tuple
+    comm_start[source_op_ID, dest_op_ID] = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0, name=f"comm_start_{source_op_ID}_{dest_op_ID}")
+    comm_end[source_op_ID, dest_op_ID] = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0, name=f"comm_end_{source_op_ID}_{dest_op_ID}")
+    comm_cost[source_op_ID, dest_op_ID] = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0, name=f"comm_cost_{source_op_ID}_{dest_op_ID}")
 
 # Add constraints that schedule every node on exactly one machine
 for op in comp_graph.getOperatorIDs():
@@ -90,7 +98,6 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
     source_op_ID, dest_op_ID = edge_id_tuple
     shape, dtype = comp_graph.getOperatorOutputSizeAndType(source_op_ID)
     tensor_size = tensor_shape_to_bits(shape, dtype=dtype)
-    comm_cost = model.addVar(vtype=GRB.CONTINUOUS, name=f"comm_cost_{source_op_ID}_{dest_op_ID}")
 
     # Aggregate communication cost
     comm_cost_expr = quicksum(
@@ -101,10 +108,10 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
         if device_id_src != device_id_dest
     )
 
-    model.addConstr(comm_cost == comm_cost_expr, f"comm_cost_{source_op_ID}_{dest_op_ID}")
+    model.addConstr(comm_cost[source_op_ID, dest_op_ID] == comm_cost_expr, f"comm_cost_{source_op_ID}_{dest_op_ID}")
 
     # Add the data dependency constraint with communication cost
-    model.addConstr(start[dest_op_ID] >= finish[source_op_ID] + comm_cost,
+    model.addConstr(start[dest_op_ID] >= finish[source_op_ID] + comm_cost[source_op_ID, dest_op_ID],
                     f"data_dependency_{source_op_ID}_{dest_op_ID}")
 
 # Add constraint to ensure each device processes only one operator at a time. This is a SCHEDULING problem
