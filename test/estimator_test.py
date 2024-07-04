@@ -115,13 +115,11 @@ for device in deviceTopo.getDeviceIDs():
         for j in range(i + 1, len(op_ids)):
             op1, op2 = op_ids[i], op_ids[j]
             if determine_node_order(comp_graph, op1, op2) == 1:
-                print("preceeding")
                 y1 = model.addVar(vtype=GRB.BINARY, name=f"y1_{device}_{op1}_{op2}")
                 model.addGenConstrIndicator(y1, True, finish[op1] <= start[op2])
                 # If on the same device, ensure that the operators do not overlap
                 model.addConstr(y1 >= x[op1, device] + x[op2, device] - 1, name=f"non_overlap_{op1}_{op2}_{device}")
             elif determine_node_order(comp_graph, op1, op2) == 2:
-                print("later")
                 y2 = model.addVar(vtype=GRB.BINARY, name=f"y2_{device}_{op1}_{op2}")
                 model.addGenConstrIndicator(y2, True, finish[op2] <= start[op1])
                 model.addConstr(y2 >= x[op1, device] + x[op2, device] - 1, name=f"non_overlap_{op1}_{op2}_{device}")
