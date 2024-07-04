@@ -187,9 +187,10 @@ elif model.status == GRB.UNBOUNDED:
 elif model.status == GRB.OPTIMAL:
     print('Runtime = ', "%.2f" % model.Runtime, 's', sep='')
     print('Expected Traning time = ', TotalLatency.X, 's', sep='')
-    # Assuming `start` and `finish` are dictionaries holding start and end times for each operator
-    result = {'totalLatency': model.ObjVal, 'Assignment': {}, 'CommunicationCosts': []}
+    # init result dict
+    result = {'totalLatency': model.ObjVal, 'Assignment': {}, 'CommunicationCosts': [], "CommunicationTimeLine": []}
 
+    # populate result['Assignment']
     for key, value in x.items():
         # key[1] is the device id
         if key[1] not in result['Assignment']:
@@ -198,19 +199,22 @@ elif model.status == GRB.OPTIMAL:
         if value.X > 0.5:
             # Assignment: {device: [(op1, start[op1], finish[op1]), (...)]}
             result['Assignment'][key[1]].append((key[0], start[key[0]].X, finish[key[0]].X))
-
     # Sort operators by their start times for each device
     for device, ops in result['Assignment'].items():
         result['Assignment'][device] = sorted(ops, key=lambda x: x[1])
 
-    # Extract communication costs
+    # populate result['CommunicationCosts'] and result['CommunicationTimeLine']
     for edge_id_tuple in list(comp_graph.getEdgeIDs()):
         source_op_ID, dest_op_ID = edge_id_tuple
         s_placement = None
         d_placement = None
         comm_cost_var = model.getVarByName(f"comm_cost_{source_op_ID}_{dest_op_ID}")
-        if comm_cost_var:
+        comm_start_var = model.getVarByName(f"comm_start_{source_op_ID}_{dest_op_ID}")
+        comm_end_var = model.getVarByName(f"comm_end_{source_op_ID}_{dest_op_ID}")
+        if comm_cost_var and comm_start_var and comm_end_var:
             comm_cost = comm_cost_var.X
+            comm_start_time = comm_start_var.X
+            comm_end_time = comm_end_var.X
             shape, dtype = comp_graph.getOperatorOutputSizeAndType(source_op_ID)
             tensor_size = tensor_shape_to_bits(shape, dtype=dtype)
             for device, ops in result['Assignment'].items():
@@ -225,11 +229,15 @@ elif model.status == GRB.OPTIMAL:
                 bandwidth = 999
             else:
                 bandwidth = deviceTopo.get_link_bandwidth(s_placement, d_placement)
-            if comm_cost >= 0:  # Only include all communication costs to verify
-                result['CommunicationCosts'].append(
-                    (source_op_ID, s_placement, dest_op_ID, d_placement, comm_cost, tensor_size, bandwidth))
+            result['CommunicationCosts'].append(
+                (source_op_ID, s_placement, dest_op_ID, d_placement, comm_cost, tensor_size, bandwidth))
+            result['CommunicationTimeLine'].append(
+                (source_op_ID, dest_op_ID, comm_start_time, comm_end_time)
+                )
+    # Sort the communication timeline based on the starting time
+    result['CommunicationTimeLine'] = sorted(result['CommunicationTimeLine'], key=lambda x: x[2])
 
-    # You can also format the output to display start and finish times more clearly
+    # Print operator placement
     for device, ops in result['Assignment'].items():
         print(f"Device: {device}")
         for op in ops:
@@ -246,6 +254,12 @@ elif model.status == GRB.OPTIMAL:
         print(
             f"  From {source_op_ID} with placement {s_placement} to {dest_op_ID} with placement {d_placement}, Cost: {comm_cost}, Tensor size: {tensor_size}, Bandwidth: {bandwidth} GB/s")
     print(f"Total Communication Cost: {sum_of_communication}")
+
+    # Print communication timeline
+    print("Communication Timeline:")
+    for source_op_ID, dest_op_ID, comm_start_time, comm_end_time in result['CommunicationTimeLine']:
+        print(
+            f"  Communication from {source_op_ID} to {dest_op_ID} starts at {comm_start_time} and ends at {comm_end_time}")
 
     del model
     disposeDefaultEnv()
