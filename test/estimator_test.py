@@ -166,7 +166,7 @@ elif model.status == GRB.OPTIMAL:
     print('Runtime = ', "%.2f" % model.Runtime, 's', sep='')
     print('Expected Traning time = ', TotalLatency.X, 's', sep='')
     # init result dict
-    result = {'totalLatency': model.ObjVal, 'Assignment': {}, 'CommunicationCosts': [], "CommunicationTimeLine": []}
+    result = {'totalLatency': model.ObjVal, 'Assignment': {}, 'CommunicationCosts': [], "CommunicationTimeLine": {}}
 
     # populate result['Assignment']
     for key, value in x.items():
@@ -211,11 +211,19 @@ elif model.status == GRB.OPTIMAL:
                 bandwidth = deviceTopo.get_link_bandwidth(s_placement, d_placement)
             result['CommunicationCosts'].append(
                 (source_op_ID, s_placement, dest_op_ID, d_placement, comm_cost, tensor_size, bandwidth))
-            result['CommunicationTimeLine'].append(
-                (source_op_ID, dest_op_ID, comm_start_time, comm_end_time, comm_cost)
-                )
+            # Populate the communication timeline divided by device
+            if s_placement not in result['CommunicationTimeLine']:
+                result['CommunicationTimeLine'][s_placement] = []
+            if d_placement not in result['CommunicationTimeLine']:
+                result['CommunicationTimeLine'][d_placement] = []
+
+            result['CommunicationTimeLine'][s_placement].append(
+                (source_op_ID, dest_op_ID, comm_start_time, comm_end_time, comm_cost))
+            result['CommunicationTimeLine'][d_placement].append(
+                (source_op_ID, dest_op_ID, comm_start_time, comm_end_time, comm_cost))
     # Sort the communication timeline based on the starting time
-    result['CommunicationTimeLine'] = sorted(result['CommunicationTimeLine'], key=lambda x: x[2])
+    for device, timeline in result['CommunicationTimeLine'].items():
+        result['CommunicationTimeLine'][device] = sorted(timeline, key=lambda x: x[2])
 
     # Print operator placement
     for device, ops in result['Assignment'].items():
@@ -235,12 +243,13 @@ elif model.status == GRB.OPTIMAL:
             f"  From {source_op_ID} with placement {s_placement} to {dest_op_ID} with placement {d_placement}, Cost: {comm_cost}, Tensor size: {tensor_size}, Bandwidth: {bandwidth} GB/s")
     print(f"Total Communication Cost: {sum_of_communication}")
 
-    # Print communication timeline
+    # Print communication timeline divided by device
     print("Communication Timeline:")
-    for source_op_ID, dest_op_ID, comm_start_time, comm_end_time, cost in result['CommunicationTimeLine']:
-        print(
-            f"  Communication from {source_op_ID} to {dest_op_ID} starts at {comm_start_time} and ends at {comm_end_time} with cost: {cost}")
-
+    for device, timeline in result['CommunicationTimeLine'].items():
+        print(f"Device: {device}")
+        for source_op_ID, dest_op_ID, comm_start_time, comm_end_time, cost in timeline:
+            print(
+                f"  Communication from {source_op_ID} to {dest_op_ID} starts at {comm_start_time} and ends at {comm_end_time} with cost: {cost}")
     del model
     disposeDefaultEnv()
 else:
