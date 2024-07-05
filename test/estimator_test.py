@@ -58,9 +58,12 @@ for node_id in comp_graph.getOperatorIDs():
 
 for edge_id_tuple in comp_graph.getEdgeIDs():
     source_op_ID, dest_op_ID = edge_id_tuple
-    comm_start[source_op_ID, dest_op_ID] = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0, name=f"comm_start_{source_op_ID}_{dest_op_ID}")
-    comm_end[source_op_ID, dest_op_ID] = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0, name=f"comm_end_{source_op_ID}_{dest_op_ID}")
-    comm_cost[source_op_ID, dest_op_ID] = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0, name=f"comm_cost_{source_op_ID}_{dest_op_ID}")
+    comm_start[source_op_ID, dest_op_ID] = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0,
+                                                        name=f"comm_start_{source_op_ID}_{dest_op_ID}")
+    comm_end[source_op_ID, dest_op_ID] = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0,
+                                                      name=f"comm_end_{source_op_ID}_{dest_op_ID}")
+    comm_cost[source_op_ID, dest_op_ID] = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0,
+                                                       name=f"comm_cost_{source_op_ID}_{dest_op_ID}")
 
 # Add constraints that schedule every node on exactly one machine
 for op in comp_graph.getOperatorIDs():
@@ -117,7 +120,8 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
                     f"bind_comm_end_to_start_{source_op_ID}_{dest_op_ID}")
 
     # Ensures the communication duration covers the communication cost.
-    model.addConstr(comm_end[source_op_ID, dest_op_ID] == comm_start[source_op_ID, dest_op_ID] + comm_cost[source_op_ID, dest_op_ID],
+    model.addConstr(comm_end[source_op_ID, dest_op_ID] == comm_start[source_op_ID, dest_op_ID] + comm_cost[
+        source_op_ID, dest_op_ID],
                     f"data_dependency_{source_op_ID}_{dest_op_ID}")
 
 # Add constraint to ensure each device processes only one operator at a time. This is a SCHEDULING problem
@@ -135,6 +139,25 @@ for device in deviceTopo.getDeviceIDs():
             model.addConstr(y2 >= x[op1, device] + x[op2, device] - 1, name=f"non_overlap_{op1}_{op2}_{device}")
         else:
             raise ValueError("node not existing")
+
+# Add constraint to ensure each device can only send or receive from one link
+# Iterate over all pairs of communication edges
+for (source_op_ID1, dest_op_ID1), (source_op_ID2, dest_op_ID2) in itertools.combinations(comp_graph.getEdgeIDs(), 2):
+    for device_id_src, device_id_dest in itertools.combinations(deviceTopo.getDeviceIDs(), 2):
+        # Binary variables to indicate the non-overlapping constraints
+        no_overlap1 = model.addVar(vtype=GRB.BINARY)
+        no_overlap2 = model.addVar(vtype=GRB.BINARY)
+
+        # Enforce non-overlapping constraints using indicator constraints
+        model.addGenConstrIndicator(no_overlap1, True,
+                                    comm_start[source_op_ID1, dest_op_ID1] >= comm_end[source_op_ID2, dest_op_ID2])
+        model.addGenConstrIndicator(no_overlap2, True,
+                                    comm_start[source_op_ID2, dest_op_ID2] >= comm_end[source_op_ID1, dest_op_ID1])
+
+        # Ensure that if communications are on the same link, one of the non-overlapping conditions must hold
+        model.addConstr(
+            no_overlap1 >= x[source_op_ID1, device_id_src] + x[dest_op_ID1, device_id_dest] + x[
+                source_op_ID2, device_id_src] + x[dest_op_ID2, device_id_dest] - 3)
 
 # TotalLatency that we are minimizing
 TotalLatency = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0)
@@ -239,7 +262,8 @@ elif model.status == GRB.OPTIMAL:
     # Print communication costs
     print("Communication Costs:")
     sum_of_communication = 0
-    for source_op_ID, s_placement, dest_op_ID, d_placement, comm_cost, tensor_size, bandwidth in result['CommunicationCosts']:
+    for source_op_ID, s_placement, dest_op_ID, d_placement, comm_cost, tensor_size, bandwidth in result[
+        'CommunicationCosts']:
         sum_of_communication += comm_cost
         print(
             f"  From {source_op_ID} with placement {s_placement} to {dest_op_ID} with placement {d_placement}, Cost: {comm_cost}, Tensor size: {tensor_size}, Bandwidth: {bandwidth} GB/s")
