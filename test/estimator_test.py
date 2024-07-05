@@ -232,6 +232,8 @@ elif model.status == GRB.OPTIMAL:
             comp_cost = 0  # Initialize computation cost for the current operator
             for device_id in deviceTopo.getDeviceIDs():
                 comp_cost += x[op[0], device_id].X * comp_graph.getOperatorCompCostByDevice(op[0], device_id)
+            if comp_cost == 0:
+                continue
             print(f"  Operator: {op[0]}, Start: {op[1]}, Finish: {op[2]}, Comp Cost: {comp_cost}")
 
     # Print communication costs
