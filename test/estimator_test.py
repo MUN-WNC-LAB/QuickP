@@ -48,7 +48,6 @@ finish = {}  # finish[node_id] represent the finish time of this node
 comm_start = {}  # comm_start[source_op, dest_op] represent the communication
 comm_end = {}
 comm_cost = {}
-comm_active = {}  # Communication active indicator for each pair of devices
 
 # Initialize all variables with names
 for node_id in comp_graph.getOperatorIDs():
@@ -62,12 +61,6 @@ for edge_id_tuple in comp_graph.getEdgeIDs():
     comm_start[source_op_ID, dest_op_ID] = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0, name=f"comm_start_{source_op_ID}_{dest_op_ID}")
     comm_end[source_op_ID, dest_op_ID] = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0, name=f"comm_end_{source_op_ID}_{dest_op_ID}")
     comm_cost[source_op_ID, dest_op_ID] = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0, name=f"comm_cost_{source_op_ID}_{dest_op_ID}")
-
-for device_id_src in deviceTopo.getDeviceIDs():
-    for device_id_dest in deviceTopo.getDeviceIDs():
-        if device_id_src != device_id_dest:
-            comm_active[device_id_src, device_id_dest] = model.addVar(vtype=GRB.BINARY, name=f"comm_active_{device_id_src}_{device_id_dest}")
-
 
 # Add constraints that schedule every node on exactly one machine
 for op in comp_graph.getOperatorIDs():
@@ -127,36 +120,21 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
     model.addConstr(comm_end[source_op_ID, dest_op_ID] == comm_start[source_op_ID, dest_op_ID] + comm_cost[source_op_ID, dest_op_ID],
                     f"data_dependency_{source_op_ID}_{dest_op_ID}")
 
-    '''
-    # Ensure comm_active variables link with x variables
-    for device_id_src in deviceTopo.getDeviceIDs():
-        for device_id_dest in deviceTopo.getDeviceIDs():
-            if device_id_src != device_id_dest:
-                model.addConstr(
-                    comm_active[device_id_src, device_id_dest] >= x[source_op_ID, device_id_src] * x[
-                        dest_op_ID, device_id_dest],
-                    f"link_comm_active_{source_op_ID}_{dest_op_ID}_{device_id_src}_{device_id_dest}"
-                )
-    '''
-
 # Add constraint to ensure each device processes only one operator at a time. This is a SCHEDULING problem
-op_ids = comp_graph.getOperatorIDs()
 for device in deviceTopo.getDeviceIDs():
     # ensures that each pair of operations is only considered once
-    for i in range(len(op_ids)):
-        for j in range(i + 1, len(op_ids)):
-            op1, op2 = op_ids[i], op_ids[j]
-            if determine_node_order(comp_graph, op1, op2) == 1:
-                y1 = model.addVar(vtype=GRB.BINARY, name=f"y1_{device}_{op1}_{op2}")
-                model.addGenConstrIndicator(y1, True, finish[op1] <= start[op2])
-                # If on the same device, ensure that the operators do not overlap
-                model.addConstr(y1 >= x[op1, device] + x[op2, device] - 1, name=f"non_overlap_{op1}_{op2}_{device}")
-            elif determine_node_order(comp_graph, op1, op2) == 2:
-                y2 = model.addVar(vtype=GRB.BINARY, name=f"y2_{device}_{op1}_{op2}")
-                model.addGenConstrIndicator(y2, True, finish[op2] <= start[op1])
-                model.addConstr(y2 >= x[op1, device] + x[op2, device] - 1, name=f"non_overlap_{op1}_{op2}_{device}")
-            else:
-                raise ValueError("node not existing")
+    for op1, op2 in itertools.combinations(comp_graph.getOperatorIDs(), 2):
+        if determine_node_order(comp_graph, op1, op2) == 1:
+            y1 = model.addVar(vtype=GRB.BINARY, name=f"y1_{device}_{op1}_{op2}")
+            model.addGenConstrIndicator(y1, True, finish[op1] <= start[op2])
+            # If on the same device, ensure that the operators do not overlap
+            model.addConstr(y1 >= x[op1, device] + x[op2, device] - 1, name=f"non_overlap_{op1}_{op2}_{device}")
+        elif determine_node_order(comp_graph, op1, op2) == 2:
+            y2 = model.addVar(vtype=GRB.BINARY, name=f"y2_{device}_{op1}_{op2}")
+            model.addGenConstrIndicator(y2, True, finish[op2] <= start[op1])
+            model.addConstr(y2 >= x[op1, device] + x[op2, device] - 1, name=f"non_overlap_{op1}_{op2}_{device}")
+        else:
+            raise ValueError("node not existing")
 
 # TotalLatency that we are minimizing
 TotalLatency = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0)
@@ -215,6 +193,8 @@ elif model.status == GRB.OPTIMAL:
             comm_cost = comm_cost_var.X
             comm_start_time = comm_start_var.X
             comm_end_time = comm_end_var.X
+            if comm_cost == 0:
+                continue
             shape, dtype = comp_graph.getOperatorOutputSizeAndType(source_op_ID)
             tensor_size = tensor_shape_to_bits(shape, dtype=dtype)
             for device, ops in result['Assignment'].items():
