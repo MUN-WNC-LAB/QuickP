@@ -151,15 +151,13 @@ for (source_op_ID1, dest_op_ID1), (source_op_ID2, dest_op_ID2) in itertools.comb
             # Enforce non-overlapping constraints using indicator constraints
             model.addGenConstrIndicator(no_overlap1, True, comm_end[source_op_ID1, dest_op_ID1] <= comm_start[source_op_ID2, dest_op_ID2])
             model.addConstr(
-                no_overlap1 >= x[source_op_ID1, device_id_src] + x[dest_op_ID1, device_id_dest] + x[
-                    source_op_ID2, device_id_src] + x[dest_op_ID2, device_id_dest] - 3)
+                no_overlap1 >= x[source_op_ID1, device_id_src] + x[dest_op_ID1, device_id_dest] + x[source_op_ID2, device_id_src] + x[dest_op_ID2, device_id_dest] + x[source_op_ID1, device_id_dest] + x[dest_op_ID1, device_id_src] + x[source_op_ID2, device_id_dest] + x[dest_op_ID2, device_id_src] - 3)
 
         elif determine_node_order(comp_graph, source_op_ID1, source_op_ID2) == 2:
             no_overlap2 = model.addVar(vtype=GRB.BINARY)
             model.addGenConstrIndicator(no_overlap2, True, comm_end[source_op_ID2, dest_op_ID2] <= comm_start[source_op_ID1, dest_op_ID1])
             model.addConstr(
-                no_overlap2 >= x[source_op_ID1, device_id_src] + x[dest_op_ID1, device_id_dest] + x[
-                    source_op_ID2, device_id_src] + x[dest_op_ID2, device_id_dest] - 3)
+                no_overlap2 >= x[source_op_ID1, device_id_src] + x[dest_op_ID1, device_id_dest] + x[source_op_ID2, device_id_src] + x[dest_op_ID2, device_id_dest] + x[source_op_ID1, device_id_dest] + x[dest_op_ID1, device_id_src] + x[source_op_ID2, device_id_dest] + x[dest_op_ID2, device_id_src] - 3)
 
 # TotalLatency that we are minimizing
 TotalLatency = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0)
