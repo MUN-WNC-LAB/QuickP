@@ -144,21 +144,22 @@ for device in deviceTopo.getDeviceIDs():
 # Iterate over all pairs of communication edges
 for (source_op_ID1, dest_op_ID1), (source_op_ID2, dest_op_ID2) in itertools.combinations(comp_graph.getEdgeIDs(), 2):
     for device_id_src, device_id_dest in itertools.combinations(deviceTopo.getDeviceIDs(), 2):
-        # Binary variables to indicate the non-overlapping constraints
-        no_overlap1 = model.addVar(vtype=GRB.BINARY)
-        no_overlap2 = model.addVar(vtype=GRB.BINARY)
-
-        # Enforce non-overlapping constraints using indicator constraints
-        model.addGenConstrIndicator(no_overlap1, True,
-                                    comm_start[source_op_ID1, dest_op_ID1] >= comm_end[source_op_ID2, dest_op_ID2])
-        model.addGenConstrIndicator(no_overlap2, True,
-                                    comm_start[source_op_ID2, dest_op_ID2] >= comm_end[source_op_ID1, dest_op_ID1])
-
         # if two communications are using the same link. device a -> device b and device b -> device a are considered the same link,
         # these two communications cannot overlap
-        model.addConstr(
-            no_overlap1 >= x[source_op_ID1, device_id_src] + x[dest_op_ID1, device_id_dest] + x[
-                source_op_ID2, device_id_src] + x[dest_op_ID2, device_id_dest] - 3)
+        if determine_node_order(comp_graph, source_op_ID1, source_op_ID2) == 1:
+            no_overlap1 = model.addVar(vtype=GRB.BINARY)
+            # Enforce non-overlapping constraints using indicator constraints
+            model.addGenConstrIndicator(no_overlap1, True, comm_end[source_op_ID1, dest_op_ID1] <= comm_start[source_op_ID2, dest_op_ID2])
+            model.addConstr(
+                no_overlap1 >= x[source_op_ID1, device_id_src] + x[dest_op_ID1, device_id_dest] + x[
+                    source_op_ID2, device_id_src] + x[dest_op_ID2, device_id_dest] - 3)
+
+        elif determine_node_order(comp_graph, source_op_ID1, source_op_ID2) == 2:
+            no_overlap2 = model.addVar(vtype=GRB.BINARY)
+            model.addGenConstrIndicator(no_overlap2, True, comm_end[source_op_ID2, dest_op_ID2] <= comm_start[source_op_ID1, dest_op_ID1])
+            model.addConstr(
+                no_overlap2 >= x[source_op_ID1, device_id_src] + x[dest_op_ID1, device_id_dest] + x[
+                    source_op_ID2, device_id_src] + x[dest_op_ID2, device_id_dest] - 3)
 
 # TotalLatency that we are minimizing
 TotalLatency = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0)
