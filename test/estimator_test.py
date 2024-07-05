@@ -154,7 +154,8 @@ for (source_op_ID1, dest_op_ID1), (source_op_ID2, dest_op_ID2) in itertools.comb
         model.addGenConstrIndicator(no_overlap2, True,
                                     comm_start[source_op_ID2, dest_op_ID2] >= comm_end[source_op_ID1, dest_op_ID1])
 
-        # Ensure that if communications are on the same link, one of the non-overlapping conditions must hold
+        # if two communications are using the same link. device a -> device b and device b -> device a are considered the same link,
+        # these two communications cannot overlap
         model.addConstr(
             no_overlap1 >= x[source_op_ID1, device_id_src] + x[dest_op_ID1, device_id_dest] + x[
                 source_op_ID2, device_id_src] + x[dest_op_ID2, device_id_dest] - 3)
