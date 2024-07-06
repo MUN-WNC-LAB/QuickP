@@ -94,8 +94,6 @@ for device_id_src in deviceTopo.getDeviceIDs():
     for device_id_dest in deviceTopo.getDeviceIDs():
         unit_comm_costs[device_id_src, device_id_dest] = deviceTopo.calUnitCommCostInUS(device_id_src, device_id_dest)
 for edge_id_tuple in list(comp_graph.getEdgeIDs()):
-    # https://support.gurobi.com/hc/en-us/articles/360039628832-Constraint-has-no-bool-value-are-you-trying-lb-expr-ub
-    # https://support.gurobi.com/hc/en-us/community/posts/360077951791-if-statement-in-constraint
     source_op_ID, dest_op_ID = edge_id_tuple
     shape, dtype = comp_graph.getOperatorOutputSizeAndType(source_op_ID)
     tensor_size = tensor_shape_to_bits(shape, dtype=dtype)
