@@ -124,40 +124,49 @@ for edge_id_tuple in list(comp_graph.getEdgeIDs()):
         source_op_ID, dest_op_ID],
                     f"data_dependency_{source_op_ID}_{dest_op_ID}")
 
-# Add constraint to ensure each device processes only one operator at a time. This is a SCHEDULING problem
+# Add constraint to ensure each device processes only one operator at a time. This is a SCHEDULING problem.
 for device in deviceTopo.getDeviceIDs():
     # ensures that each pair of operations is only considered once
     for op1, op2 in itertools.combinations(comp_graph.getOperatorIDs(), 2):
-        if determine_node_order(comp_graph, op1, op2) == 1:
-            y1 = model.addVar(vtype=GRB.BINARY, name=f"y1_{device}_{op1}_{op2}")
-            model.addGenConstrIndicator(y1, True, finish[op1] <= start[op2])
-            # If on the same device, ensure that the operators do not overlap
-            model.addConstr(y1 >= x[op1, device] + x[op2, device] - 1, name=f"non_overlap_{op1}_{op2}_{device}")
-        elif determine_node_order(comp_graph, op1, op2) == 2:
-            y2 = model.addVar(vtype=GRB.BINARY, name=f"y2_{device}_{op1}_{op2}")
-            model.addGenConstrIndicator(y2, True, finish[op2] <= start[op1])
-            model.addConstr(y2 >= x[op1, device] + x[op2, device] - 1, name=f"non_overlap_{op1}_{op2}_{device}")
+        node_order = determine_node_order(comp_graph, op1, op2)
+        if node_order == 1:
+            y = model.addVar(vtype=GRB.BINARY)
+            model.addGenConstrIndicator(y, True, finish[op1] <= start[op2])
+        elif node_order == 2:
+            y = model.addVar(vtype=GRB.BINARY)
+            model.addGenConstrIndicator(y, True, finish[op2] <= start[op1])
         else:
-            raise ValueError("node not existing")
+            raise ValueError("Invalid node order")
 
-# Add constraint to ensure each device can only send or receive from one link
-# Iterate over all pairs of communication edges
+        # If on the same device, ensure that the operators do not overlap
+        model.addConstr(y >= x[op1, device] + x[op2, device] - 1)
+
+# Add constraint to ensure each device can only send or receive from one link at a time. This is communication scheduling
 for (source_op_ID1, dest_op_ID1), (source_op_ID2, dest_op_ID2) in itertools.combinations(comp_graph.getEdgeIDs(), 2):
     for device_id_src, device_id_dest in itertools.combinations(deviceTopo.getDeviceIDs(), 2):
-        # if two communications are using the same link. device a -> device b and device b -> device a are considered the same link,
-        # these two communications cannot overlap
-        if determine_node_order(comp_graph, source_op_ID1, source_op_ID2) == 1:
-            no_overlap1 = model.addVar(vtype=GRB.BINARY)
-            # Enforce non-overlapping constraints using indicator constraints
-            model.addGenConstrIndicator(no_overlap1, True, comm_end[source_op_ID1, dest_op_ID1] <= comm_start[source_op_ID2, dest_op_ID2])
-            model.addConstr(
-                no_overlap1 >= x[source_op_ID1, device_id_src] + x[dest_op_ID1, device_id_dest] + x[source_op_ID2, device_id_src] + x[dest_op_ID2, device_id_dest] + x[source_op_ID1, device_id_dest] + x[dest_op_ID1, device_id_src] + x[source_op_ID2, device_id_dest] + x[dest_op_ID2, device_id_src] - 3)
+        # For any two communication, determine the topo order between the source nodes of these two links
+        node_order = determine_node_order(comp_graph, source_op_ID1, source_op_ID2)
+        if not node_order:
+            raise ValueError("order not existing")
+        # Select the appropriate non-overlapping variable and communication ends and starts based on node order
+        no_overlap = model.addVar(vtype=GRB.BINARY)
+        comm_end_1, comm_start_2 = (comm_end[source_op_ID1, dest_op_ID1], comm_start[source_op_ID2, dest_op_ID2]) \
+            if node_order == 1 \
+            else (comm_end[source_op_ID2, dest_op_ID2], comm_start[source_op_ID1, dest_op_ID1])
 
-        elif determine_node_order(comp_graph, source_op_ID1, source_op_ID2) == 2:
-            no_overlap2 = model.addVar(vtype=GRB.BINARY)
-            model.addGenConstrIndicator(no_overlap2, True, comm_end[source_op_ID2, dest_op_ID2] <= comm_start[source_op_ID1, dest_op_ID1])
-            model.addConstr(
-                no_overlap2 >= x[source_op_ID1, device_id_src] + x[dest_op_ID1, device_id_dest] + x[source_op_ID2, device_id_src] + x[dest_op_ID2, device_id_dest] + x[source_op_ID1, device_id_dest] + x[dest_op_ID1, device_id_src] + x[source_op_ID2, device_id_dest] + x[dest_op_ID2, device_id_src] - 3)
+        # Enforce non-overlapping constraints using indicator constraints
+        model.addGenConstrIndicator(no_overlap, True, comm_end_1 <= comm_start_2)
+
+        # if using the same link,
+        # either x[source_op_ID1, device_id_src] + x[dest_op_ID1, device_id_dest] + x[source_op_ID2, device_id_src] + x[dest_op_ID2, device_id_dest]
+        # or x[source_op_ID1, device_id_dest] + x[dest_op_ID1, device_id_src] + x[source_op_ID2, device_id_dest] + x[dest_op_ID2, device_id_src]
+        # will be 4
+        model.addConstr(
+            no_overlap >= (
+                x[source_op_ID1, device_id_src] + x[dest_op_ID1, device_id_dest] + x[source_op_ID2, device_id_src] + x[dest_op_ID2, device_id_dest] +
+                x[source_op_ID1, device_id_dest] + x[dest_op_ID1, device_id_src] + x[source_op_ID2, device_id_dest] + x[dest_op_ID2, device_id_src] - 3
+            )
+        )
 
 # TotalLatency that we are minimizing
 TotalLatency = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0)
