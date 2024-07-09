@@ -78,7 +78,8 @@ def get_computation_graph(model: keras.Model, optimizer=keras.optimizers.Adam(3e
     concrete_function = training_step.get_concrete_function(*inputs_spec)
 
     graph = parse_to_comp_graph(concrete_function)
-    visualize_graph(graph)
+    data_loader_func = get_cifar_data_loader if isinstance(model, keras.Sequential) else get_gpt_data_loader
+    parent_directory = profile_train(concrete_function, data_loader_func(batch_size, True), num_prof_step=20)
 
 
 get_computation_graph(model=model, optimizer=optimizer, tokenizer=tokenizer)
