@@ -30,7 +30,8 @@ def test_gpt_data_loader():
 
 
 def get_computation_graph(model: keras.Model, optimizer=keras.optimizers.Adam(3e-4),
-                          loss_fn=keras.losses.SparseCategoricalCrossentropy(), batch_size=200, max_len=128) -> CompGraph:
+                          loss_fn=keras.losses.SparseCategoricalCrossentropy(),
+                          batch_size=200, max_len=128) -> CompGraph:
     compile_model(model, optimizer, loss_fn)
 
     # tf.function is a decorator that tells TensorFlow to create a graph from the Python function
@@ -59,12 +60,10 @@ def get_computation_graph(model: keras.Model, optimizer=keras.optimizers.Adam(3e
     inputs_spec = get_input_spec(model, batch_size, max_len)
     concrete_function = training_step.get_concrete_function(*inputs_spec)
 
-    graph = parse_to_comp_graph(concrete_function)
-    visualize_graph(graph, show_node_labels=False, show_edge_labels=False)
-    # data_loader_func = get_cifar_data_loader if isinstance(model, keras.Sequential) else get_gpt_data_loader
-    # if_llm = True if isinstance(model, TFGPT2LMHeadModel) else False
-    # parent_directory = profile_train(concrete_function, data_loader_func(batch_size, True), num_prof_step=20,
-    #                                  if_LLM=if_llm, max_len=max_len)
+    data_loader_func = get_cifar_data_loader if isinstance(model, keras.Sequential) else get_gpt_data_loader
+    if_llm = True if isinstance(model, TFGPT2LMHeadModel) else False
+    parent_directory = profile_train(concrete_function, data_loader_func(batch_size, True), num_prof_step=20,
+                                     if_LLM=if_llm, max_len=max_len)
 
 
 get_computation_graph(model=model, optimizer=optimizer)
