@@ -91,11 +91,15 @@ def generate_linear_dag(n):
     return G
 
 
-def test_if_create_cycle():
+def test_linear_DAG():
     G = generate_linear_dag(5)
-    subgraph = G.subgraph(G.nodes())
+    print(list(G.successors(3)))
+    print(list(G.predecessors(3)))
 
 
-G = generate_linear_dag(5)
-print(list(G.successors(3)))
-print(list(G.predecessors(3)))
+def test_if_create_cycle():
+    G_DAG = generate_linear_dag(5)
+    subG_DAG = generate_linear_dag(3)
+
+
+    #
