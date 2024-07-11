@@ -5,6 +5,7 @@ from optimizer.computing_graph.computing_graph import get_computation_graph
 from optimizer.model.graph import DeviceGraph, visualize_graph, CompGraph, is_subgraph
 import tensorflow as tf
 
+from optimizer.model.model_split_min_communication import creates_cycle
 from py_util import convert_data_size, convert_time
 
 
@@ -77,12 +78,12 @@ def generate_linear_dag(n):
     G = nx.DiGraph()
 
     # Add nodes to the graph
-    G.add_nodes_from(range(n))
+    G.add_nodes_from(range(1, n+1))
 
     # Create a fixed pattern of edges
     # Example: Layered structure where each node connects to a few nodes in the next "layer"
-    for i in range(n):
-        for j in range(i + 1, min(n, i + 2)):  # Each node connects to the next 1 nodes
+    for i in range(1, n+1):
+        for j in range(i + 1, min(n+1, i+2)):  # Each node connects to the next 1 node
             G.add_edge(i, j)
 
     # Check if the generated graph is a DAG
@@ -100,12 +101,12 @@ def test_linear_DAG():
 def test_if_create_cycle():
     G_DAG = generate_linear_dag(5)
     subG_DAG = generate_linear_dag(2)
-    print()
-
-    # make a cycle
+    # Make a cycle
     cycle = G_DAG.copy()
     cycle.add_edge(3, 1)
     print("cycle is DAG", nx.is_directed_acyclic_graph(cycle))
+
+    print("should create cycle ", creates_cycle(subG_DAG, 3, cycle))
 
 
 def test_if_subgraph():
