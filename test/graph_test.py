@@ -105,14 +105,21 @@ def test_if_create_cycle():
     # make a cycle
     cycle = G_DAG.copy()
     cycle.add_edge(3, 1)
-    visualize_graph(cycle)
     print("cycle is DAG", nx.is_directed_acyclic_graph(cycle))
 
 
 def test_if_subgraph():
     G_DAG = generate_linear_dag(5)
-    subG_DAG = generate_linear_dag(2)
-    print(is_subgraph(subG_DAG, G_DAG))
+
+    cycle = G_DAG.copy()
+    cycle.add_edge(3, 1)
+
+    subG_DAG = generate_linear_dag(3)
+    # 1 → 2 → 3 is a subgraph of the larger graph 1 → 2 → 3 → 1.
+    print(is_subgraph(subG_DAG, cycle))
+
+    subG_DAG.add_edge(3, 2)
+    print(is_subgraph(subG_DAG, cycle))
 
 
-test_if_subgraph()
+test_if_create_cycle()
