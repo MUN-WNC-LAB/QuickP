@@ -71,7 +71,8 @@ def generate_linear_dag(n):
     n (int): Number of nodes in the graph.
 
     Returns:
-    G (nx.DiGraph): A fixed DAG with n nodes.
+    G (nx.DiGraph): A fixed DAG with n nodes. 1->2->3->4->5->...>n
+    For example, list(G.successors(3)) => 4; G.predecessors(3) => 2
     """
     G = nx.DiGraph()
 
@@ -90,4 +91,11 @@ def generate_linear_dag(n):
     return G
 
 
-visualize_graph(generate_linear_dag(5))
+def test_if_create_cycle():
+    G = generate_linear_dag(5)
+    subgraph = G.subgraph(G.nodes())
+
+
+G = generate_linear_dag(5)
+print(list(G.successors(3)))
+print(list(G.predecessors(3)))
