@@ -2,7 +2,7 @@ import networkx as nx
 
 from DNN_model_tf.vgg_tf import VGG16_tf
 from optimizer.computing_graph.computing_graph import get_computation_graph
-from optimizer.model.graph import DeviceGraph, visualize_graph, CompGraph
+from optimizer.model.graph import DeviceGraph, visualize_graph, CompGraph, is_subgraph
 import tensorflow as tf
 
 from py_util import convert_data_size, convert_time
@@ -99,7 +99,20 @@ def test_linear_DAG():
 
 def test_if_create_cycle():
     G_DAG = generate_linear_dag(5)
-    subG_DAG = generate_linear_dag(3)
+    subG_DAG = generate_linear_dag(2)
+    print()
+
+    # make a cycle
+    cycle = G_DAG.copy()
+    cycle.add_edge(3, 1)
+    visualize_graph(cycle)
+    print("cycle is DAG", nx.is_directed_acyclic_graph(cycle))
 
 
-    #
+def test_if_subgraph():
+    G_DAG = generate_linear_dag(5)
+    subG_DAG = generate_linear_dag(2)
+    print(is_subgraph(subG_DAG, G_DAG))
+
+
+test_if_subgraph()
