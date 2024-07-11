@@ -1,3 +1,5 @@
+import networkx as nx
+
 from DNN_model_tf.vgg_tf import VGG16_tf
 from optimizer.computing_graph.computing_graph import get_computation_graph
 from optimizer.model.graph import DeviceGraph, visualize_graph, CompGraph
@@ -61,4 +63,31 @@ def test_graph_json_conversion():
         print("Failed to load graph.")
 
 
-test_graph_json_conversion()
+def generate_linear_dag(n):
+    """
+    Generate a fixed Directed Acyclic Graph (DAG) with n nodes.
+
+    Parameters:
+    n (int): Number of nodes in the graph.
+
+    Returns:
+    G (nx.DiGraph): A fixed DAG with n nodes.
+    """
+    G = nx.DiGraph()
+
+    # Add nodes to the graph
+    G.add_nodes_from(range(n))
+
+    # Create a fixed pattern of edges
+    # Example: Layered structure where each node connects to a few nodes in the next "layer"
+    for i in range(n):
+        for j in range(i + 1, min(n, i + 2)):  # Each node connects to the next 1 nodes
+            G.add_edge(i, j)
+
+    # Check if the generated graph is a DAG
+    assert nx.is_directed_acyclic_graph(G), "The generated graph is not a DAG"
+
+    return G
+
+
+visualize_graph(generate_linear_dag(5))
