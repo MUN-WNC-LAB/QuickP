@@ -124,12 +124,19 @@ def test_if_subgraph():
     print(is_subgraph(subG_DAG, cycle))
 
 
-def test_if_subgraph_cycle():
-    G_DAG = generate_linear_dag(5)
+def test_graph_split():
+    G_DAG = generate_linear_dag(15)
+    G_DAG.add_edge(3, 8)
+    G_DAG.add_edge(2, 19)
+    G_DAG.add_edge(2, 20)
+    G_DAG.add_edge(2, 21)
+    G_DAG.add_edge(21, 22)
+    G_DAG.add_edge(22, 23)
+    visualize_graph(G_DAG)
     subgraphs = split_DAG_min_inter_subgraph_edges(G_DAG, 2)
     for subgraph in subgraphs:
+        print(subgraph.nodes)
         visualize_graph(subgraph)
 
 
-test_if_create_cycle()
-test_if_subgraph()
+test_graph_split()
