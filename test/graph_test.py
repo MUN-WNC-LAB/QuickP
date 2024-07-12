@@ -104,6 +104,7 @@ def test_if_create_cycle():
     # Make a cycle
     cycle = G_DAG.copy()
     cycle.add_edge(3, 1)
+    cycle.add_edge(6, 3)
     print("cycle is DAG", nx.is_directed_acyclic_graph(cycle))
 
     print("should create cycle ", creates_cycle(subG_DAG, 3, cycle))
@@ -131,3 +132,4 @@ def test_if_subgraph_cycle():
 
 
 test_if_create_cycle()
+test_if_subgraph()
