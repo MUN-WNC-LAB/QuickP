@@ -130,4 +130,4 @@ def test_if_subgraph_cycle():
         visualize_graph(subgraph)
 
 
-test_if_subgraph_cycle()
+test_if_create_cycle()
