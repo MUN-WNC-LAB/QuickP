@@ -5,7 +5,7 @@ from optimizer.computing_graph.computing_graph import get_computation_graph
 from optimizer.model.graph import DeviceGraph, visualize_graph, CompGraph, is_subgraph
 import tensorflow as tf
 
-from optimizer.model.model_split_min_communication import creates_cycle, split_DAG_min_inter_subgraph_edges
+from optimizer.graph_partitioner.model_split_min_communication import creates_cycle, split_DAG_min_inter_subgraph_edges
 from py_util import convert_data_size, convert_time
 
 
