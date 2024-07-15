@@ -2,6 +2,7 @@ import networkx as nx
 
 from DNN_model_tf.vgg_tf import VGG16_tf
 from optimizer.computing_graph.computing_graph import get_computation_graph
+from optimizer.graph_partitioner.metis_partition import metis_partition
 from optimizer.model.graph import DeviceGraph, visualize_graph, CompGraph, is_subgraph
 import tensorflow as tf
 
@@ -139,4 +140,9 @@ def test_graph_split():
         visualize_graph(subgraph)
 
 
-test_graph_split()
+def test_metis_partition():
+    comp_graph = CompGraph.load_from_file('../optimizer/comp_graph.json')
+    metis_partition(comp_graph)
+
+
+test_metis_partition()
