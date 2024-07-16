@@ -2,12 +2,12 @@ import networkx as nx
 
 from DNN_model_tf.vgg_tf import VGG16_tf
 from optimizer.computing_graph.computing_graph import get_computation_graph
-from optimizer.graph_partitioner.metis_partition import metis_partition, construct_sub_graph
+from optimizer.graph_partitioner.metis_partition import metis_partition
 from optimizer.model.graph import DeviceGraph, visualize_graph, CompGraph, is_subgraph, keep_largest_component
 import tensorflow as tf
 
 from optimizer.graph_partitioner.model_split_min_communication import split_DAG_min_inter_subgraph_edges
-from optimizer.graph_partitioner.subgraph_util import creates_cycle
+from optimizer.graph_partitioner.subgraph_util import creates_cycle, construct_sub_graph
 from py_util import convert_data_size, convert_time
 
 
@@ -148,7 +148,7 @@ def test_metis_partition():
 
 def test_metis_partition_subgraph_construction():
     comp_graph = CompGraph.load_from_file('../optimizer/comp_graph.json')
-    comp_graph = keep_largest_component(comp_graph)
+    # comp_graph = keep_largest_component(comp_graph)
     print('how many ops in total', len(comp_graph.nodes))
     partition_dict = metis_partition(comp_graph)
     subgraph_list = construct_sub_graph(comp_graph, partition_dict)
