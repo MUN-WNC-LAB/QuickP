@@ -6,7 +6,8 @@ from optimizer.graph_partitioner.metis_partition import metis_partition
 from optimizer.model.graph import DeviceGraph, visualize_graph, CompGraph, is_subgraph
 import tensorflow as tf
 
-from optimizer.graph_partitioner.model_split_min_communication import creates_cycle, split_DAG_min_inter_subgraph_edges
+from optimizer.graph_partitioner.model_split_min_communication import split_DAG_min_inter_subgraph_edges
+from optimizer.graph_partitioner.subgraph_util import creates_cycle
 from py_util import convert_data_size, convert_time
 
 
@@ -145,4 +146,5 @@ def test_metis_partition():
     metis_partition(comp_graph)
 
 
-test_metis_partition()
+def test_metis_partition_subgraph_construction():
+    pass
