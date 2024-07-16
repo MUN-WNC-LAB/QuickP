@@ -152,7 +152,7 @@ def test_metis_partition_subgraph_construction():
     print('how many ops in total', len(comp_graph.nodes))
     partition_dict = metis_partition(comp_graph)
     subgraph_list = construct_sub_graph(comp_graph, partition_dict)
-    for digraph in subgraph_list:
+    for digraph in subgraph_list.values():
         print("after partitioning", len(digraph.nodes))
         visualize_graph(digraph, show_edge_labels=False, show_node_labels=False)
 
