@@ -150,7 +150,7 @@ def test_metis_partition_subgraph_construction():
     comp_graph = CompGraph.load_from_file('../optimizer/comp_graph.json')
     # comp_graph = keep_largest_component(comp_graph)
     print('how many ops in total', len(comp_graph.nodes))
-    partition_dict, edge_cut_list = metis_partition(comp_graph)
+    partition_dict, edge_cut_list = metis_partition(comp_graph, num_partitions=3, visualization=True)
     subgraph_list = construct_sub_graph(comp_graph, partition_dict)
     for digraph in subgraph_list.values():
         print("after partitioning", len(digraph.nodes))
