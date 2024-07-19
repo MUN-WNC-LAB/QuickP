@@ -6,7 +6,6 @@ from optimizer.graph_partitioner.metis_partition import metis_partition
 from optimizer.model.graph import DeviceGraph, visualize_graph, CompGraph, is_subgraph, keep_largest_component
 import tensorflow as tf
 
-from optimizer.graph_partitioner.model_split_min_communication import split_DAG_min_inter_subgraph_edges
 from optimizer.graph_partitioner.subgraph_util import creates_cycle, construct_sub_graph
 from py_util import convert_data_size, convert_time
 
@@ -126,28 +125,13 @@ def test_if_subgraph():
     print(is_subgraph(subG_DAG, cycle))
 
 
-def test_graph_split():
-    G_DAG = generate_linear_dag(15)
-    G_DAG.add_edge(2, 19)
-    G_DAG.add_edge(2, 20)
-    G_DAG.add_edge(22, 19)
-    G_DAG.add_edge(2, 21)
-    G_DAG.add_edge(21, 22)
-    G_DAG.add_edge(22, 23)
-    visualize_graph(G_DAG)
-    subgraphs = split_DAG_min_inter_subgraph_edges(G_DAG, 5)
-    for subgraph in subgraphs:
-        print(subgraph.nodes)
-        visualize_graph(subgraph)
-
-
 def test_metis_partition():
     comp_graph = CompGraph.load_from_file('../optimizer/comp_graph.json')
-    metis_partition(comp_graph)
+    metis_partition(comp_graph, num_partitions=3)
 
 
 def test_metis_partition_subgraph_construction():
-    comp_graph = CompGraph.load_from_file('../optimizer/comp_graph.json')
+    comp_graph = CompGraph.load_from_file('comp_graph.json')
     # comp_graph = keep_largest_component(comp_graph)
     print('how many ops in total', len(comp_graph.nodes))
     partition_dict, edge_cut_list = metis_partition(comp_graph, num_partitions=3, visualization=True)
