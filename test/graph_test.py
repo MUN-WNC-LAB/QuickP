@@ -3,7 +3,8 @@ import networkx as nx
 from DNN_model_tf.vgg_tf import VGG16_tf
 from optimizer.computing_graph.computing_graph import get_computation_graph
 from optimizer.graph_partitioner.metis_partition import metis_partition
-from optimizer.model.graph import DeviceGraph, visualize_graph, CompGraph, is_subgraph, keep_largest_component
+from optimizer.model.graph import DeviceGraph, visualize_graph, CompGraph, is_subgraph, keep_largest_component, \
+    topo_order_until_node
 import tensorflow as tf
 
 from optimizer.graph_partitioner.subgraph_util import creates_cycle, construct_sub_graph
@@ -141,4 +142,10 @@ def test_metis_partition_subgraph_construction():
         visualize_graph(digraph, show_edge_labels=False, show_node_labels=False)
 
 
-test_metis_partition_subgraph_construction()
+def test_topo_order_sequence():
+    comp_graph = CompGraph.load_from_file('comp_graph.json')
+    result = list(topo_order_until_node(comp_graph, 'gradient_tape/sequential_1/dense_1/Add/Shape'))
+    print(result)
+
+
+test_topo_order_sequence()
