@@ -59,11 +59,13 @@ def get_computation_graph(model: keras.Model, optimizer=keras.optimizers.Adam(3e
 
     inputs_spec = get_input_spec(model, batch_size, max_len)
     concrete_function = training_step.get_concrete_function(*inputs_spec)
-
-    data_loader_func = get_cifar_data_loader if isinstance(model, keras.Sequential) else get_gpt_data_loader
-    if_llm = True if isinstance(model, TFGPT2LMHeadModel) else False
-    parent_directory = profile_train(concrete_function, data_loader_func(batch_size, True), num_prof_step=20,
-                                     if_LLM=if_llm, max_len=max_len)
+    graph = parse_to_comp_graph(concrete_function)
+    # 5027 operator
+    print("number of operators in GPT2", len(graph))
+    # data_loader_func = get_cifar_data_loader if isinstance(model, keras.Sequential) else get_gpt_data_loader
+    # if_llm = True if isinstance(model, TFGPT2LMHeadModel) else False
+    # parent_directory = profile_train(concrete_function, data_loader_func(batch_size, True), num_prof_step=20,
+    #                                  if_LLM=if_llm, max_len=max_len)
 
 
 get_computation_graph(model=model, optimizer=optimizer)
