@@ -9,7 +9,7 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=12    #accelerate Pytorch data loader
 #SBATCH --output=%N-%j.out
-#SBATCH --mem=10               #A memory size specification of zero is treated as a special case and grants the job access to all of the memory on each node.
+#SBATCH --mem=0               #A memory size specification of zero is treated as a special case and grants the job access to all of the memory on each node.
 
 ### change 5-digit MASTER_PORT as you wish, slurm will raise Error if duplicated with others
 ### change WORLD_SIZE as gpus per node * num_nodes
