@@ -161,7 +161,7 @@ def create_topological_order_list(graph):
 
     while zero_in_degree_queue:
         # Sort nodes in the queue based on in-degrees in ascending order
-        zero_in_degree_queue = deque(sorted(zero_in_degree_queue, key=lambda node: in_degrees[node]))
+        zero_in_degree_queue = deque(sorted(zero_in_degree_queue, key=lambda node: in_degrees[node], reverse=True))
 
         # Process the node with the lowest in-degree
         current = zero_in_degree_queue.popleft()
@@ -178,7 +178,7 @@ def create_topological_order_list(graph):
 # Create the graph
 graph = nx.DiGraph()
 graph.add_edges_from([("A", "B"), ("A", "C"), ("B", "D"), ("B", "E"), ("C", "F"),
-                      ("D", "G"), ("E", "G"), ("F", "H"), ("F", "I"), ("G", "J"), ("H", "J"), ("I", "J")])
+                      ("D", "G"), ("E", "G"), ("F", "G"), ("G", "H")])
 
 # Apply the function
 topo_order = create_topological_order_list(graph)
