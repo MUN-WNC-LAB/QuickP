@@ -1,3 +1,5 @@
+from collections import deque
+
 import networkx as nx
 
 from DNN_model_tf.vgg_tf import VGG16_tf
@@ -148,4 +150,37 @@ def test_topo_order_sequence():
     print(result)
 
 
-test_topo_order_sequence()
+def create_topological_order_list(graph):
+    # Compute the in-degree of each node
+    in_degrees = {node: graph.in_degree(node) for node in graph.nodes()}
+
+    # Queue of nodes with no incoming edges
+    zero_in_degree_queue = deque([node for node in graph.nodes() if in_degrees[node] == 0])
+
+    topo_order = []
+
+    while zero_in_degree_queue:
+        # Sort nodes in the queue based on in-degrees in ascending order
+        zero_in_degree_queue = deque(sorted(zero_in_degree_queue, key=lambda node: in_degrees[node]))
+
+        # Process the node with the lowest in-degree
+        current = zero_in_degree_queue.popleft()
+        topo_order.append(current)
+
+        # Decrease the in-degree of neighboring nodes
+        for neighbor in graph.successors(current):
+            in_degrees[neighbor] -= 1
+            if in_degrees[neighbor] == 0:
+                zero_in_degree_queue.append(neighbor)
+
+    return topo_order
+
+# Create the graph
+graph = nx.DiGraph()
+graph.add_edges_from([("A", "B"), ("A", "C"), ("B", "D"), ("B", "E"), ("C", "F"),
+                      ("D", "G"), ("E", "G"), ("F", "H"), ("F", "I"), ("G", "J"), ("H", "J"), ("I", "J")])
+
+# Apply the function
+topo_order = create_topological_order_list(graph)
+print(topo_order)
+print(list(nx.topological_sort(graph)))
