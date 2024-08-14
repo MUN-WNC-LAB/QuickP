@@ -175,12 +175,39 @@ def create_topological_order_list(graph):
 
     return topo_order
 
-# Create the graph
-graph = nx.DiGraph()
-graph.add_edges_from([("A", "B"), ("A", "C"), ("B", "D"), ("B", "E"), ("C", "F"),
-                      ("D", "G"), ("E", "G"), ("F", "G"), ("G", "H")])
+# Create a Directed Acyclic Graph (DAG)
+G = nx.DiGraph()
 
-# Apply the function
-topo_order = create_topological_order_list(graph)
-print(topo_order)
-print(list(nx.topological_sort(graph)))
+# Add nodes (optional, nodes will be added automatically when edges are added)
+G.add_nodes_from(['A', 'B', 'C', 'D', 'E', 'F'])
+
+# Add edges with weights
+G.add_weighted_edges_from([
+    ('A', 'B', 2),
+    ('A', 'C', 1),
+    ('B', 'D', 3),
+    ('C', 'D', 4),
+    ('D', 'E', 2),
+    ('B', 'E', 5),
+    ('E', 'F', 1)
+])
+
+# Display the edges with weights before modifying them
+print("Edges with weights before modification:")
+for u, v, weight in G.edges(data='weight'):
+    print(f"{u} -> {v}: {weight}")
+
+# Find the longest path in the DAG based on edge weights
+longest_path = nx.dag_longest_path(G, weight='weight')
+
+print(f"\nLongest path: {longest_path}")
+
+# Increase the weights of the edges in the longest path
+for u, v in zip(longest_path[:-1], longest_path[1:]):
+    print(u, v)
+    G[u][v]['weight'] *= 5  # Increase weight for the critical longest path
+
+# Display the edges with weights after modifying them
+print("\nEdges with weights after modification:")
+for u, v, weight in G.edges(data='weight'):
+    print(f"{u} -> {v}: {weight}")
