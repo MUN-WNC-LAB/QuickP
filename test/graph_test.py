@@ -4,12 +4,11 @@ import networkx as nx
 
 from DNN_model_tf.vgg_tf import VGG16_tf
 from optimizer.computing_graph.computing_graph import get_computation_graph
-from optimizer.graph_partitioner.metis_partition import metis_partition
-from optimizer.model.graph import DeviceGraph, visualize_graph, CompGraph, is_subgraph, keep_largest_component, \
-    topo_order_until_node
+from optimizer.operator_device_placement.metis.metis_partition import metis_partition
+from optimizer.model.graph import DeviceGraph, visualize_graph, CompGraph, is_subgraph, topo_order_until_node
 import tensorflow as tf
 
-from optimizer.graph_partitioner.subgraph_util import creates_cycle, construct_sub_graph
+from optimizer.operator_device_placement.metis.subgraph_util import creates_cycle, construct_sub_graph
 from py_util import convert_data_size, convert_time
 
 
