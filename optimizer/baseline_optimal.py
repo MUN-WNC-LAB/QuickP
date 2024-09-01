@@ -1,10 +1,12 @@
 import argparse
 
+import networkx as nx
 from gurobipy import *
 from networkx import topological_sort
 
 from optimizer.experiment_figure_generation.tf_model_enum import TFModelEnum
-from optimizer.operator_device_placement.metis.subgraph_util import WeightNormalizationFunction
+from optimizer.operator_device_placement.metis.subgraph_util import WeightNormalizationFunction, init_graph_weight
+from optimizer.operator_device_placement.metis.weight_functions import NodeWeightFunction, EdgeWeightFunction
 from optimizer.scheduling.scheduling import add_topo_order_constraints
 
 os.environ['GRB_LICENSE_FILE'] = '/home/hola/solverLicense/gurobi.lic'
@@ -86,19 +88,19 @@ def joint_optimize(comp_graph, deviceTopo) -> dict:
             source_op_ID, dest_op_ID],
                         f"data_dependency_{source_op_ID}_{dest_op_ID}")
 
-    # Global Data dependency
-    # for source_op_ID, dest_op_ID in comp_graph.getEdgeIDs():
-    #     model.addConstr(finish[source_op_ID] <= start[dest_op_ID])
     M = 1000000
     z = {}
     # Operator-scheduling
-    for i, j in itertools.combinations(comp_graph.getOperatorIDs(), 2):
+    for i, j in itertools.combinations(list(nx.topological_sort(comp_graph)), 2):
         # For each consecutive pair of operators, add a constraint for each device
         for d in deviceTopo.getDeviceIDs():
-            # Constraint to ensure non-overlapping periods
-            z[i, j] = model.addVar(vtype=GRB.BINARY, name=f"order_{i}_{j}")
-            model.addConstr(finish[i] <= start[j] + M * (1 - z[i, j] + 1 - x[i, d] + 1 - x[j, d]))
-            model.addConstr(finish[j] <= start[i] + M * (z[i, j] + 1 - x[i, d] + 1 - x[j, d]))
+            if nx.has_path(comp_graph, i, j):
+                model.addConstr(finish[i] <= start[j] + M * (2 - x[i, d] - x[j, d]))
+            else:
+                # Constraint to ensure non-overlapping periods
+                z[i, j] = model.addVar(vtype=GRB.BINARY, name=f"order_{i}_{j}")
+                model.addConstr(finish[i] <= start[j] + M * (1 - z[i, j] + 1 - x[i, d] + 1 - x[j, d]))
+                model.addConstr(finish[j] <= start[i] + M * (z[i, j] + 1 - x[i, d] + 1 - x[j, d]))
 
     # TotalLatency that we are minimizing
     TotalLatency = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0)
@@ -154,5 +156,4 @@ if __name__ == '__main__':
     # init fake data
     deviceTopo, comp_graph = init_computing_and_device_graph(args.number_of_device, "comp_graph.json",
                                                              args.hetero_rate, model_type=model_mapping_dict[args.model])
-
     joint_optimize(comp_graph, deviceTopo)
