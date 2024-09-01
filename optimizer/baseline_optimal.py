@@ -87,8 +87,8 @@ def joint_optimize(comp_graph, deviceTopo) -> dict:
                         f"data_dependency_{source_op_ID}_{dest_op_ID}")
 
     # Global Data dependency
-    for source_op_ID, dest_op_ID in comp_graph.getEdgeIDs():
-        model.addConstr(finish[source_op_ID] <= start[dest_op_ID])
+    # for source_op_ID, dest_op_ID in comp_graph.getEdgeIDs():
+    #     model.addConstr(finish[source_op_ID] <= start[dest_op_ID])
     M = 1000000
     z = {}
     # Operator-scheduling
