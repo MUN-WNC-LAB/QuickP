@@ -91,11 +91,13 @@ def joint_optimize(comp_graph, deviceTopo) -> dict:
     M = 1000000
     z = {}
     # Operator-scheduling
-    for i, j in itertools.combinations(list(nx.topological_sort(comp_graph)), 2):
+    for i, j in itertools.combinations(comp_graph.getOperatorIDs(), 2):
         # For each consecutive pair of operators, add a constraint for each device
         for d in deviceTopo.getDeviceIDs():
             if nx.has_path(comp_graph, i, j):
                 model.addConstr(finish[i] <= start[j] + M * (2 - x[i, d] - x[j, d]))
+            elif nx.has_path(comp_graph, j, i):
+                model.addConstr(finish[j] <= start[i] + M * (2 - x[i, d] - x[j, d]))
             else:
                 # Constraint to ensure non-overlapping periods
                 z[i, j] = model.addVar(vtype=GRB.BINARY, name=f"order_{i}_{j}")
