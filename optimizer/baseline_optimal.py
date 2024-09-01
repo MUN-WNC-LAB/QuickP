@@ -12,7 +12,8 @@ os.environ['GRB_LICENSE_FILE'] = '/home/hola/solverLicense/gurobi.lic'
 script_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(script_dir, '..', '..'))
 sys.path.append(project_root)
-from optimizer.optimization_problems.gurobi_util import gurobi_setup
+from optimizer.optimization_problems.gurobi_util import gurobi_setup, init_computing_and_device_graph, \
+    show_optimization_solution
 
 
 def joint_optimize(comp_graph, deviceTopo) -> dict:
@@ -42,11 +43,6 @@ def joint_optimize(comp_graph, deviceTopo) -> dict:
     # Add constraints that schedule every node on exactly one machine
     for op in comp_graph.getOperatorIDs():
         model.addConstr(quicksum(x[op, device] for device in deviceTopo.getDeviceIDs()) == 1, name=f"one_device_{op}")
-
-    # Add constraints that each device should have at least one operator assigned
-    for machine_id in deviceTopo.getDeviceIDs():
-        model.addConstr(quicksum(x[node_id, machine_id] for node_id in comp_graph.getOperatorIDs()) >= 1,
-                        name=f"at_least_one_op_{machine_id}")
 
     # Add constraints that each op's ending time = starting time + its computing time
     for node_id in comp_graph.getOperatorIDs():
@@ -100,6 +96,7 @@ def joint_optimize(comp_graph, deviceTopo) -> dict:
         # For each consecutive pair of operators, add a constraint for each device
         for d in deviceTopo.getDeviceIDs():
             # Constraint to ensure non-overlapping periods
+            z[i, j] = model.addVar(vtype=GRB.BINARY, name=f"order_{i}_{j}")
             model.addConstr(finish[i] <= start[j] + M * (1 - z[i, j] + 1 - x[i, d] + 1 - x[j, d]))
             model.addConstr(finish[j] <= start[i] + M * (z[i, j] + 1 - x[i, d] + 1 - x[j, d]))
 
@@ -130,9 +127,7 @@ def joint_optimize(comp_graph, deviceTopo) -> dict:
     elif model.status == GRB.UNBOUNDED:
         print("Model is unbounded.")
     elif model.status == GRB.OPTIMAL:
-        # show_optimization_solution(model, x, comp_graph, deviceTopo, start, finish)
-        print('Runtime = ', "%.2f" % model.Runtime, 's', sep='')
-
+        show_optimization_solution(model, x, comp_graph, deviceTopo, start, finish)
         operator_device_mapping = get_operator_device_mapping_through_x(x)
         del model
         disposeDefaultEnv()
@@ -143,21 +138,21 @@ def joint_optimize(comp_graph, deviceTopo) -> dict:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='arguments for optimization problem after graph partitioning')
-    parser.add_argument('--number_of_device', type=int, default=8)
-    parser.add_argument('--model', type=str, default='ALEXNET')
+    parser.add_argument('--number_of_device', type=int, default=2)
+    parser.add_argument('--model', type=str, default='SMALL')
     parser.add_argument('--normalization_function', default='MinMax', type=str, help='')
     # PRIORITY_HETEROG  PRIORITY_MIN_COMP OPTIMIZED FIFO NEAR_OPTIMAL NEAR_OPTIMAL_REVISED
     parser.add_argument('--scheduling', default='NEAR_OPTIMAL_REVISED', type=str, help='')
     parser.add_argument('--placement', default='METIS', type=str, help='')
-    parser.add_argument('--hetero_rate', default=100, type=int, help='')
+    parser.add_argument('--hetero_rate', default=None, type=int, help='')
 
     args = parser.parse_args()
 
     model_mapping_dict = {'VGG': TFModelEnum.VGG, 'SMALL': TFModelEnum.SMALL, "ALEXNET": TFModelEnum.ALEXNET}
     weight_normalization_dict = {'MinMax': WeightNormalizationFunction.MIN_MAX}
 
-    joint_optimize(number_of_devices=args.number_of_device, model_type=model_mapping_dict[args.model],
-             scheduling_function=args.scheduling,
-             placement=args.placement,
-             weight_norm_function=weight_normalization_dict[args.normalization_function],
-             hetero_adjust_rate=args.hetero_rate)
+    # init fake data
+    deviceTopo, comp_graph = init_computing_and_device_graph(args.number_of_device, "comp_graph.json",
+                                                             args.hetero_rate, model_type=model_mapping_dict[args.model])
+
+    joint_optimize(comp_graph, deviceTopo)
