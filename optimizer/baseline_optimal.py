@@ -15,7 +15,7 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(script_dir, '..', '..'))
 sys.path.append(project_root)
 from optimizer.optimization_problems.gurobi_util import gurobi_setup, init_computing_and_device_graph, \
-    show_optimization_solution
+    show_optimization_solution, show_optimization_solution_for_baseline
 
 
 def joint_optimize(comp_graph, deviceTopo) -> dict:
@@ -131,7 +131,7 @@ def joint_optimize(comp_graph, deviceTopo) -> dict:
     elif model.status == GRB.UNBOUNDED:
         print("Model is unbounded.")
     elif model.status == GRB.OPTIMAL:
-        show_optimization_solution(model, x, comp_graph, deviceTopo, start, finish)
+        show_optimization_solution_for_baseline(model, x, comp_graph, deviceTopo, start, finish)
         operator_device_mapping = get_operator_device_mapping_through_x(x)
         del model
         disposeDefaultEnv()
