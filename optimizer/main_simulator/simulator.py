@@ -2,9 +2,8 @@
 import argparse
 
 from gurobipy import *
-from sklearn.cluster import KMeans
-import numpy as np
 
+from optimizer.main_simulator.simulator_util import get_comp_cost_dict, get_comm_cost_dict
 from optimizer.model.graph import CompGraph, DeviceGraph
 from optimizer.scheduling.near_optimal_scheduling_with_sampling import SamplingFunction
 
@@ -14,8 +13,8 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(script_dir, '..', '..'))
 sys.path.append(project_root)
 from optimizer.operator_device_placement.metis.subgraph_util import construct_sub_graph, WeightNormalizationFunction, \
-    map_subgraph_to_device, init_graph_weight
-from optimizer.optimization_problems.gurobi_util import init_computing_and_device_graph, gurobi_setup, \
+    init_graph_weight
+from optimizer.main_simulator.gurobi_util import init_computing_and_device_graph, gurobi_setup, \
     show_optimization_solution, show_graph_partition_info
 from optimizer.operator_device_placement.metis.weight_functions import NodeWeightFunction, EdgeWeightFunction
 from optimizer.experiment_figure_generation.tf_model_enum import TFModelEnum
@@ -151,27 +150,6 @@ def simulate(computing_graph: CompGraph, device_topo: DeviceGraph,
         if model is not None:
             model.dispose()
         disposeDefaultEnv()
-
-
-def get_comp_cost_dict(computation_graph, operator_device_mapping):
-    comp_cost_dict = {}
-    for node_id in computation_graph.getOperatorIDs():
-        # Add constraints that each op's ending time = starting time + its computing time
-        assigned_device = operator_device_mapping[node_id]
-        comp_cost_dict[node_id] = computation_graph.getOperatorCompCostByDevice(node_id, assigned_device)
-    return comp_cost_dict
-
-
-def get_comm_cost_dict(computation_graph, device_topo, edge_cut_list, operator_device_mapping):
-    comm_cost_dict = {}
-    for edge_id_tuple in edge_cut_list:
-        # only the edge in the edge_cut_list will bring communication cost since the source_op and destination-op are
-        # placed on different devices
-        source_op_ID, dest_op_ID = edge_id_tuple
-        # Aggregate communication cost
-        comm_cost_dict[edge_id_tuple] = computation_graph.getEdgeTensorSize(source_op_ID, dest_op_ID) * device_topo.calUnitCommCostInUS(
-            operator_device_mapping[source_op_ID], operator_device_mapping[dest_op_ID])
-    return comm_cost_dict
 
 
 if __name__ == '__main__':

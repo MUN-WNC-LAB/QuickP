@@ -14,7 +14,7 @@ os.environ['GRB_LICENSE_FILE'] = '/home/hola/solverLicense/gurobi.lic'
 script_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(script_dir, '..', '..'))
 sys.path.append(project_root)
-from optimizer.optimization_problems.gurobi_util import gurobi_setup, init_computing_and_device_graph, \
+from optimizer.main_simulator.gurobi_util import gurobi_setup, init_computing_and_device_graph, \
     show_optimization_solution, show_optimization_solution_for_baseline
 
 
