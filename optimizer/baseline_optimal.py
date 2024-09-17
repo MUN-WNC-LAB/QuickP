@@ -2,12 +2,9 @@ import argparse
 
 import networkx as nx
 from gurobipy import *
-from networkx import topological_sort
 
-from optimizer.experiment_figure_generation.tf_model_enum import TFModelEnum
-from optimizer.operator_device_placement.metis.subgraph_util import WeightNormalizationFunction, init_graph_weight
-from optimizer.operator_device_placement.metis.weight_functions import NodeWeightFunction, EdgeWeightFunction
-from optimizer.scheduling.scheduling import add_topo_order_constraints
+from DNN_model_tf.tf_model_enum import TFModelEnum
+from optimizer.operator_device_placement.metis.subgraph_util import WeightNormalizationFunction
 
 os.environ['GRB_LICENSE_FILE'] = '/home/hola/solverLicense/gurobi.lic'
 
@@ -15,7 +12,7 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(script_dir, '..', '..'))
 sys.path.append(project_root)
 from optimizer.main_simulator.gurobi_util import gurobi_setup, init_computing_and_device_graph, \
-    show_optimization_solution, show_optimization_solution_for_baseline
+    show_optimization_solution_for_baseline
 
 
 def joint_optimize(comp_graph, deviceTopo) -> dict:
