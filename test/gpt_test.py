@@ -21,11 +21,11 @@ optimizer = get_proper_optimizer(model)
 
 
 def test_gpt_data_loader():
-    for index, (text, label) in enumerate(get_gpt_data_loader().take(10)):
+    for index, (text, label) in enumerate(get_gpt_data_loader().take(1)):
         # EagerTensor is the type of text or label
         # < dtype: 'string' > < dtype: 'int64' >
         # (200,)(200, )
-        print(text.dtype, label.dtype)
+        print(text, label)
         print(text.shape, label.shape)
 
 
@@ -68,4 +68,4 @@ def get_computation_graph(model: keras.Model, optimizer=keras.optimizers.Adam(3e
     #                                  if_LLM=if_llm, max_len=max_len)
 
 
-get_computation_graph(model=model, optimizer=optimizer)
+test_gpt_data_loader()
