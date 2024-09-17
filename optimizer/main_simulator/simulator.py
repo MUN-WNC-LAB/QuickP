@@ -99,7 +99,7 @@ def simulate(computing_graph: CompGraph, device_topo: DeviceGraph,
     execute_scheduling_function(scheduling_function, model, start=start, finish=finish, comm_start=comm_start,
                                 comm_end=comm_end, comp_graph=computing_graph, device_subgraph_mapping=device_subgraph_mapping,
                                 edge_cut_list=edge_cut_list, operator_device_mapping=operator_device_mapping, rho=rho,
-                                sampling_function=sampling_function, threshold=20)
+                                sampling_function=sampling_function, threshold=0)
 
     # TotalLatency that we are minimizing
     TotalLatency = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0)
@@ -160,7 +160,7 @@ if __name__ == '__main__':
     # NEAR_OPTIMAL OPTIMIZED METIS OPTIMIZED_HOMO
     parser.add_argument('--placement', default='METIS', type=str, help='')
     # PRIORITY_HETEROG  PRIORITY_MIN_COMP OPTIMIZED FIFO NEAR_OPTIMAL SAMPLING_NEAR_OPTIMAL
-    parser.add_argument('--scheduling', default='SAMPLING_NEAR_OPTIMAL', type=str, help='')
+    parser.add_argument('--scheduling', default='NEAR_OPTIMAL', type=str, help='')
     # parser.add_argument('--hetero_rate', default=None, type=int, help='')
     # rho == 0 is FIFO, rho == 1 is optimal; model.setParam("MIPGap", 0.01) will make it optimized
     parser.add_argument('--rho', default=1, type=float, help='')
