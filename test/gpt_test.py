@@ -21,11 +21,13 @@ optimizer = get_proper_optimizer(model)
 
 
 def test_gpt_data_loader():
-    for index, (text, label) in enumerate(get_gpt_data_loader().take(1)):
-        # EagerTensor is the type of text or label
+    for index, (text, label) in enumerate(get_gpt_data_loader(1).take(1)):
+        # EagerTensor (tf.Tensor) is the type of text or label
         # < dtype: 'string' > < dtype: 'int64' >
-        # (200,)(200, )
-        print(text, label)
+        # (batch_size,)(batch_size, )
+        print(text)
+        print(label)
+        print(text.dtype, label.dtype)
         print(text.shape, label.shape)
 
 
