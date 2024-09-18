@@ -25,7 +25,7 @@ def test_gpt_data_loader():
         # EagerTensor (tf.Tensor) is the type of text or label
         # < dtype: 'string' > < dtype: 'int64' >
         # (batch_size,)(batch_size, )
-        print(text)
+        print(text.numpy()[0].decode('utf-8'))
         print(label)
         print(text.dtype, label.dtype)
         print(text.shape, label.shape)
