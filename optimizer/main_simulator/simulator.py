@@ -53,8 +53,8 @@ def simulate(computing_graph: CompGraph, device_topo: DeviceGraph,
     finish = model.addVars(computing_graph.getOperatorIDs(), vtype=GRB.CONTINUOUS, lb=0.0,
                            name="finish")  # finish[node_id] represent the finish time of this node
     comm_start = model.addVars(edge_cut_list, vtype=GRB.CONTINUOUS, lb=0.0,
-                               name="comm_start")  # comm_start[source_op, dest_op] represent the communication
-    comm_end = model.addVars(edge_cut_list, vtype=GRB.CONTINUOUS, lb=0.0, name="comm_end")
+                               name="" if model_type == TFModelEnum.BERT else "comm_start")  # comm_start[source_op, dest_op] represent the communication
+    comm_end = model.addVars(edge_cut_list, vtype=GRB.CONTINUOUS, lb=0.0, name="" if model_type == TFModelEnum.BERT else "comm_end")
 
     '''
     Define Constraints
@@ -87,13 +87,13 @@ def simulate(computing_graph: CompGraph, device_topo: DeviceGraph,
         source_op_ID, dest_op_ID = edge_id_tuple
         # Ensures the communication starts only after the source operation finishes.
         model.addConstr(finish[source_op_ID] <= comm_start[source_op_ID, dest_op_ID],
-                        f"bind_finish_to_comm_start_{source_op_ID}_{dest_op_ID}")
+                        name = "" if model_type == TFModelEnum.BERT else f"bind_finish_to_comm_start_{source_op_ID}_{dest_op_ID}")
         # Ensures the communication duration covers the communication cost.
         model.addConstr(comm_start[source_op_ID, dest_op_ID] + edge_cut_communication_cost_mapping[edge_id_tuple] == comm_end[source_op_ID, dest_op_ID],
-                        f"data_dependency_{source_op_ID}_{dest_op_ID}")
+                        name = "" if model_type == TFModelEnum.BERT else f"data_dependency_{source_op_ID}_{dest_op_ID}")
         # Ensures the communication ends before the destination operation starts.
         model.addConstr(comm_end[source_op_ID, dest_op_ID] <= start[dest_op_ID],
-                        f"bind_comm_end_to_start_{source_op_ID}_{dest_op_ID}")
+                        name = "" if model_type == TFModelEnum.BERT else "bind_comm_end_to_start_{source_op_ID}_{dest_op_ID}")
 
     # It is an SCHEDULING problem within each device.
     execute_scheduling_function(scheduling_function, model, start=start, finish=finish, comm_start=comm_start,
