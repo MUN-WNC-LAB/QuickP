@@ -13,11 +13,9 @@ from optimizer.computing_graph.tool import Conf_TB, CONF
 from optimizer.model.graph import CompGraph, visualize_graph
 from optimizer.computing_graph.op_graph_util import compile_model, train_loss, train_accuracy, parse_to_comp_graph, \
     process_op_df, update_graph_with_prof, profile_train, get_cifar_data_loader, parse_tensorboard, \
-    find_specific_pb_file, process_mem_dict, get_llm_data_loader, get_proper_optimizer
+    find_specific_pb_file, process_mem_dict, get_llm_data_loader
 
 model = get_openai_gpt2_model()
-
-optimizer = get_proper_optimizer(model)
 
 
 def test_gpt_data_loader():
