@@ -155,7 +155,7 @@ def simulate(computing_graph: CompGraph, device_topo: DeviceGraph,
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='arguments for optimization problem after graph partitioning')
     parser.add_argument('--number_of_device', type=int, default=6)
-    parser.add_argument('--model', type=str, default='BERT')
+    parser.add_argument('--model', type=str, default='VGG')
     parser.add_argument('--normalization_function', default='MIN_MAX', type=str, help='')
     # NEAR_OPTIMAL OPTIMIZED METIS OPTIMIZED_HOMO
     parser.add_argument('--placement', default='METIS', type=str, help='')
