@@ -153,6 +153,6 @@ if __name__ == '__main__':
     weight_normalization_dict = {'MinMax': WeightNormalizationFunction.MIN_MAX}
 
     # init fake data
-    deviceTopo, comp_graph = init_computing_and_device_graph(args.number_of_device, "comp_graph.json",
-                                                             args.hetero_rate, model_type=model_mapping_dict[args.model])
+    deviceTopo, comp_graph = init_computing_and_device_graph(args.number_of_device, args.hetero_rate,
+                                                             model_type=model_mapping_dict[args.model])
     joint_optimize(comp_graph, deviceTopo)
