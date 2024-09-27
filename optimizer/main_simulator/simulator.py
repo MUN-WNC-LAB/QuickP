@@ -46,8 +46,6 @@ def simulate(computing_graph: CompGraph, device_topo: DeviceGraph,
     model = gurobi_setup("minimize_maxload")
 
     # Define variables
-    x = model.addVars(computing_graph.getOperatorIDs(), device_topo.getDeviceIDs(), vtype=GRB.BINARY,
-                      name="x")  # [operator_id, device_id] == 1 means this operator is assigned to this device
     start = model.addVars(computing_graph.getOperatorIDs(), vtype=GRB.CONTINUOUS, lb=0.0,
                           name="start")  # start[node_id] represent the starting time of this node
     finish = model.addVars(computing_graph.getOperatorIDs(), vtype=GRB.CONTINUOUS, lb=0.0,
@@ -59,16 +57,6 @@ def simulate(computing_graph: CompGraph, device_topo: DeviceGraph,
     '''
     Define Constraints
     '''
-
-    # If we assume a homogeneous environment where each operator has the same time consumption on each device and the
-    # bandwidth is also the same. Once we get the graph partition, the device-operation placement is already solved
-    # because it does not matter where each sub-graph is placed.
-    for op_id in computing_graph.getOperatorIDs():
-        for device_id in device_topo.getDeviceIDs():
-            if device_id == operator_device_mapping[op_id]:
-                model.addConstr(x[op_id, device_id] == 1)
-            else:
-                model.addConstr(x[op_id, device_id] == 0)
 
     for node_id in computing_graph.getOperatorIDs():
         # Add constraints that each op's ending time = starting time + its computing time
@@ -132,7 +120,7 @@ def simulate(computing_graph: CompGraph, device_topo: DeviceGraph,
         print("Model is unbounded.")
     # this is the main process part after a solution is reached
     elif model.status == GRB.OPTIMAL:
-        show_optimization_solution(model, x, computing_graph, device_topo, start, finish, edge_cut_communication_cost_mapping, True, two_dime_node_list)
+        show_optimization_solution(model, operator_device_mapping, computing_graph, device_topo, start, finish, edge_cut_communication_cost_mapping, True, two_dime_node_list)
         print(f"This is the optimal solution of such configuration: \n"
               f"model type: {model_type} \n"
               f"number of operators: {computing_graph.number_of_nodes()} \n"
