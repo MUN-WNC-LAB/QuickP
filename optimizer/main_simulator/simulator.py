@@ -166,7 +166,8 @@ if __name__ == '__main__':
     # init fake data
     deviceTopo, comp_graph = init_computing_and_device_graph(args.number_of_device, None, model_type=model_type)
     # init graph node/edge weight
-    init_graph_weight(comp_graph, NodeWeightFunction.AVE_COMP_COST, EdgeWeightFunction.SOURCE_OUTPUT_TENSOR, weight_norm_function)
+    if model_type is not TFModelEnum.Test:
+        init_graph_weight(comp_graph, NodeWeightFunction.AVE_COMP_COST, EdgeWeightFunction.SOURCE_OUTPUT_TENSOR, weight_norm_function)
 
     simulate(comp_graph, deviceTopo,
              scheduling_function=args.scheduling,
