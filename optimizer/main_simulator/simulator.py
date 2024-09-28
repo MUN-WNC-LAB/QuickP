@@ -37,7 +37,7 @@ def simulate(computing_graph: CompGraph, device_topo: DeviceGraph,
     device_subgraph_mapping = construct_sub_graph(computing_graph, operator_device_mapping)
     for g in device_subgraph_mapping.values():
         assert nx.is_directed_acyclic_graph(g)
-        print("num of wcc", nx.number_weakly_connected_components(g))
+        print("num of wcc in subgraph", nx.number_weakly_connected_components(g))
 
     # Get computation and communication cost
     op_computing_cost_mapping = get_comp_cost_dict(computing_graph, operator_device_mapping)
@@ -157,7 +157,7 @@ if __name__ == '__main__':
     parser.add_argument('--scheduling', default='SAMPLING_NEAR_OPTIMAL', type=str, help='')
     # parser.add_argument('--hetero_rate', default=None, type=int, help='')
     # rho == 0 is FIFO, rho == 1 is optimal; model.setParam("MIPGap", 0.01) will make it optimized
-    parser.add_argument('--rho', default=0.05, type=float, help='')
+    parser.add_argument('--rho', default=0.01, type=float, help='')
     # PROBABILISTIC_SAMPLING RANDOM HEAVY_HITTER
     parser.add_argument('--sampling', default="HEAVY_HITTER", type=str, help='')
 
