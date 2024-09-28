@@ -1,6 +1,7 @@
 # python3 after_graph_partition_hetero.py
 import argparse
 
+import networkx as nx
 from gurobipy import *
 
 from optimizer.main_simulator.simulator_util import get_comp_cost_dict, get_comm_cost_dict
@@ -34,6 +35,9 @@ def simulate(computing_graph: CompGraph, device_topo: DeviceGraph,
 
     # Update the op_id-subgraph_id mapping dict to op_id-device_id mapping dict
     device_subgraph_mapping = construct_sub_graph(computing_graph, operator_device_mapping)
+    for g in device_subgraph_mapping.values():
+        assert nx.is_directed_acyclic_graph(g)
+        print("num of wcc", nx.number_weakly_connected_components(g))
 
     # Get computation and communication cost
     op_computing_cost_mapping = get_comp_cost_dict(computing_graph, operator_device_mapping)
@@ -144,10 +148,11 @@ def simulate(computing_graph: CompGraph, device_topo: DeviceGraph,
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='arguments for optimization problem after graph partitioning')
     parser.add_argument('--number_of_device', type=int, default=6)
-    parser.add_argument('--model', type=str, default='TEST')
+    # TEST SMALL
+    parser.add_argument('--model', type=str, default='SMALL')
     parser.add_argument('--normalization_function', default='MIN_MAX', type=str, help='')
-    # NEAR_OPTIMAL OPTIMIZED METIS OPTIMIZED_HOMO
-    parser.add_argument('--placement', default='TEST', type=str, help='')
+    # NEAR_OPTIMAL OPTIMIZED METIS TEST
+    parser.add_argument('--placement', default='METIS', type=str, help='')
     # PRIORITY_HETEROG  PRIORITY_MIN_COMP OPTIMIZED FIFO NEAR_OPTIMAL SAMPLING_NEAR_OPTIMAL
     parser.add_argument('--scheduling', default='SAMPLING_NEAR_OPTIMAL', type=str, help='')
     # parser.add_argument('--hetero_rate', default=None, type=int, help='')
