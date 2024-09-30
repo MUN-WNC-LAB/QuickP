@@ -153,8 +153,8 @@ if __name__ == '__main__':
     parser.add_argument('--normalization_function', default='MIN_MAX', type=str, help='')
     # NEAR_OPTIMAL OPTIMIZED METIS TEST
     parser.add_argument('--placement', default='METIS', type=str, help='')
-    # PRIORITY_HETEROG  PRIORITY_MIN_COMP OPTIMIZED FIFO NEAR_OPTIMAL SAMPLING_NEAR_OPTIMAL
-    parser.add_argument('--scheduling', default='SAMPLING_NEAR_OPTIMAL', type=str, help='')
+    # PRIORITY_HETEROG  PRIORITY_MIN_COMP OPTIMIZED FIFO NEAR_OPTIMAL SAMPLING_NEAR_OPTIMAL THREE_STAGE FOUR_STAGE
+    parser.add_argument('--scheduling', default='FOUR_STAGE', type=str, help='')
     # parser.add_argument('--hetero_rate', default=None, type=int, help='')
     # rho == 0 is FIFO, rho == 1 is optimal; model.setParam("MIPGap", 0.01) will make it optimized
     parser.add_argument('--rho', default=0.06, type=float, help='')
