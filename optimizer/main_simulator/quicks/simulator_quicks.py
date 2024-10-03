@@ -1,6 +1,6 @@
 from gurobipy import *
 
-from optimizer.main_simulator.quicks.quicks import calculate_rank_map
+from optimizer.main_simulator.quicks.quicks_list_schedule import quicks_list_schedule
 from optimizer.main_simulator.simulator_util import get_comp_cost_dict, get_comm_cost_dict
 from optimizer.model.graph import CompGraph, DeviceGraph
 from optimizer.scheduling.mcmc_order import mcmc_schedule
@@ -16,7 +16,7 @@ from optimizer.main_simulator.gurobi_util import init_computing_and_device_graph
     show_optimization_solution, show_graph_partition_info
 
 
-def evaluate_quicks(computing_graph: CompGraph, device_topo: DeviceGraph, operator_device_mapping, edge_cut_list):
+def evaluate_quick(computing_graph: CompGraph, device_topo: DeviceGraph, operator_device_mapping, edge_cut_list, edge_cut_weight_sum, model_type, rank_map):
 
     # Update the op_id-subgraph_id mapping dict to op_id-device_id mapping dict
     device_subgraph_mapping = construct_sub_graph(computing_graph, operator_device_mapping)
@@ -71,9 +71,7 @@ def evaluate_quicks(computing_graph: CompGraph, device_topo: DeviceGraph, operat
                         name = "")
 
     # It is an SCHEDULING problem within each device.
-    calculate_rank_map(model, start, finish, comm_start, comm_end, computing_graph,
-                       device_subgraph_mapping, edge_cut_list, operator_device_mapping,
-                       rho, sampling_function)
+    quicks_list_schedule(model, start, finish, comm_start, comm_end, computing_graph, device_subgraph_mapping, edge_cut_list, operator_device_mapping, rank_map)
 
     # TotalLatency that we are minimizing
     TotalLatency = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0)
@@ -106,7 +104,14 @@ def evaluate_quicks(computing_graph: CompGraph, device_topo: DeviceGraph, operat
         print("Model is unbounded.")
     # this is the main process part after a solution is reached
     elif model.status == GRB.OPTIMAL:
-        # show_optimization_solution(model, operator_device_mapping, computing_graph, device_topo, start, finish, edge_cut_communication_cost_mapping, True, two_dime_node_list)
+        show_optimization_solution(model, operator_device_mapping, computing_graph, device_topo, start, finish,
+                                   edge_cut_communication_cost_mapping, True, two_dime_node_list)
+        print(f"This is the optimal solution of such configuration: \n"
+              f"model type: {model_type} \n"
+              f"number of operators: {computing_graph.number_of_nodes()} \n"
+              f"number of devices: {device_topo.number_of_nodes()} \n"
+              f"The environment is homogenous")
+        show_graph_partition_info(computing_graph, operator_device_mapping, edge_cut_list, edge_cut_weight_sum)
         optimal_value = model.ObjVal
         if model is not None:
             model.dispose()
