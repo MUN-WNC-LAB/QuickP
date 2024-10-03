@@ -13,7 +13,7 @@ from optimizer.operator_device_placement.metis.weight_functions import NodeWeigh
 from optimizer.operator_device_placement.placement import get_placement_info
 from optimizer.scheduling.near_optimal_scheduling_with_sampling import get_device_unreachable_pairs_mapping, split_nodes
 from optimizer.main_simulator.quicks.quicks_list_schedule import quicks_list_schedule
-from optimizer.scheduling.scheduling_util import split_three_stage_subgraph
+from optimizer.scheduling.scheduling_util import split_three_stage_subgraph, split_two_stage_subgraph
 
 
 def quickS(comp_graph: CompGraph, deviceTopo):
@@ -26,6 +26,7 @@ def quickS(comp_graph: CompGraph, deviceTopo):
     op_computing_cost_mapping = get_comp_cost_dict(comp_graph, operator_device_mapping)
     edge_cut_communication_cost_mapping = get_comm_cost_dict(comp_graph, deviceTopo, edge_cut_list,
                                                              operator_device_mapping)
+
     rank_map = calculate_rank_map(comp_graph,device_subgraph_mapping, edge_cut_list, operator_device_mapping, op_computing_cost_mapping)
     evaluate_quick(comp_graph, deviceTopo, operator_device_mapping, edge_cut_list, edge_cut_weight_sum, graph_init["model_type"], rank_map)
 
@@ -39,8 +40,7 @@ def calculate_rank_map(comp_graph: CompGraph,
     # split into isolated and non-isolated part
     for device, subgraph in device_subgraph_mapping.items():
         # Simply the search space by
-        # Simply the search space by
-        stage_one, stage_two, stage_three, reliance_comm_map, reliance_node_map = split_three_stage_subgraph(
+        stage_one, stage_two, reliance_comm_map, reliance_node_map = split_two_stage_subgraph(
             subgraph, operator_device_mapping, edge_cut_list)
         # turn the reliance_map into computing score
         node_score_map = {
@@ -53,10 +53,7 @@ def calculate_rank_map(comp_graph: CompGraph,
         for stage_one_node in stage_one:
             assert len(reliance_node_map[stage_one_node]) != 0
             rank_map[stage_one_node] = 10 + node_score_map[stage_one_node]
-        for stage_two_node in stage_two:
-            assert len(reliance_node_map[stage_two_node]) != 0
-            rank_map[stage_two_node] = 10 + node_score_map[stage_two_node]
-        for stage_three_node in stage_three:
+        for stage_three_node in stage_two:
             assert len(reliance_node_map[stage_three_node]) == 0
             rank_map[stage_three_node] = 0
 
