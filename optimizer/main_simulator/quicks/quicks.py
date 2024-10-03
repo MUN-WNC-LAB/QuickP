@@ -27,9 +27,9 @@ def quickS(comp_graph: CompGraph, deviceTopo):
                          device_subgraph_mapping, operator_device_mapping, rank_map)
 
 
-def optimize_dependent_relied_part(model: Model, start, finish, comm_start, comm_end, comp_graph: CompGraph,
-                                   device_subgraph_mapping: dict, edge_cut_list: list, operator_device_mapping: dict,
-                                   rho, sampling_function):
+def calculate_rank_map(model: Model, start, finish, comm_start, comm_end, comp_graph: CompGraph,
+                       device_subgraph_mapping: dict, edge_cut_list: list, operator_device_mapping: dict,
+                       rho, sampling_function):
     rank_map = {}
     M = 1000000
     topological_order = list(nx.topological_sort(comp_graph))

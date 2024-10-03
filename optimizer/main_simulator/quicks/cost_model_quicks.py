@@ -1,6 +1,6 @@
 from gurobipy import *
 
-from optimizer.main_simulator.quicks.quicks import optimize_dependent_relied_part
+from optimizer.main_simulator.quicks.quicks import calculate_rank_map
 from optimizer.main_simulator.simulator_util import get_comp_cost_dict, get_comm_cost_dict
 from optimizer.model.graph import CompGraph, DeviceGraph
 from optimizer.scheduling.mcmc_order import mcmc_schedule
@@ -71,9 +71,9 @@ def evaluate_quicks(computing_graph: CompGraph, device_topo: DeviceGraph, operat
                         name = "")
 
     # It is an SCHEDULING problem within each device.
-    optimize_dependent_relied_part(model, start, finish, comm_start, comm_end, computing_graph,
-                                   device_subgraph_mapping, edge_cut_list, operator_device_mapping,
-                                   rho, sampling_function)
+    calculate_rank_map(model, start, finish, comm_start, comm_end, computing_graph,
+                       device_subgraph_mapping, edge_cut_list, operator_device_mapping,
+                       rho, sampling_function)
 
     # TotalLatency that we are minimizing
     TotalLatency = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0)
