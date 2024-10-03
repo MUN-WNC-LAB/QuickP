@@ -4,6 +4,7 @@ from networkx import Graph
 
 from DNN_model_tf.tf_model_enum import TFModelEnum
 from optimizer.main_simulator.gurobi_util import init_computing_and_device_graph
+from optimizer.main_simulator.quicks.relied_component_optimization import get_relied_component_execution_order
 from optimizer.main_simulator.quicks.simulator_quicks import evaluate_quick
 from optimizer.main_simulator.simulator_util import get_comp_cost_dict, get_comm_cost_dict
 from optimizer.model.graph import CompGraph
@@ -26,9 +27,9 @@ def quickS(comp_graph: CompGraph, deviceTopo):
     op_computing_cost_mapping = get_comp_cost_dict(comp_graph, operator_device_mapping)
     edge_cut_communication_cost_mapping = get_comm_cost_dict(comp_graph, deviceTopo, edge_cut_list,
                                                              operator_device_mapping)
-    relied_graph, non_exporting_graph, reliance_comm_map, reliance_node_map = computation_graph_split(
+    relied_graph, non_exporting_graph, reliance_node_map, device_relied_component_map = computation_graph_split(
         comp_graph, operator_device_mapping, edge_cut_list, device_subgraph_mapping)
-    # order_map = get_relied_component_execution_order()
+    order_map = get_relied_component_execution_order(relied_graph, edge_cut_list, op_computing_cost_mapping, edge_cut_communication_cost_mapping)
     rank_map = calculate_rank_map(relied_graph,non_exporting_graph, reliance_node_map, op_computing_cost_mapping)
     evaluate_quick(comp_graph, deviceTopo, operator_device_mapping, edge_cut_list, edge_cut_weight_sum, graph_init["model_type"], rank_map)
 

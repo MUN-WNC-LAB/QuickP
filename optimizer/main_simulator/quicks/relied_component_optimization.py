@@ -1,9 +1,7 @@
 from gurobipy import *
+from networkx.classes import Graph
 
-from optimizer.main_simulator.quicks.quicks import calculate_rank_map
-from optimizer.main_simulator.simulator_util import get_comp_cost_dict, get_comm_cost_dict
 from optimizer.model.graph import CompGraph, DeviceGraph
-from optimizer.scheduling.mcmc_order import mcmc_schedule
 
 os.environ['GRB_LICENSE_FILE'] = '/home/hola/solverLicense/gurobi.lic'
 
@@ -16,16 +14,19 @@ from optimizer.main_simulator.gurobi_util import init_computing_and_device_graph
     show_optimization_solution, show_graph_partition_info
 
 
-def get_relied_component_execution_order(relied_graph: CompGraph, edge_cut_list, op_computing_cost_mapping, edge_cut_communication_cost_mapping):
+def get_relied_component_execution_order(relied_graph: Graph, edge_cut_list: list, op_computing_cost_mapping, edge_cut_communication_cost_mapping):
+    print("fuck", len(relied_graph.nodes))
+    # clean edge cut after the non-exporting node removal
+    edge_cut_list = [(u, v) for u, v in edge_cut_list if u in relied_graph.nodes and v in relied_graph.nodes]
 
     # Init solver
     model = gurobi_setup("minimize_maxload")
 
     # Define variables
 
-    start = model.addVars(relied_graph.getOperatorIDs(), vtype=GRB.CONTINUOUS, lb=0.0,
+    start = model.addVars(relied_graph.nodes, vtype=GRB.CONTINUOUS, lb=0.0,
                           name="start")  # start[node_id] represent the starting time of this node
-    finish = model.addVars(relied_graph.getOperatorIDs(), vtype=GRB.CONTINUOUS, lb=0.0,
+    finish = model.addVars(relied_graph.nodes, vtype=GRB.CONTINUOUS, lb=0.0,
                            name="finish")  # finish[node_id] represent the finish time of this node
     comm_start = model.addVars(edge_cut_list, vtype=GRB.CONTINUOUS, lb=0.0,
                                name="")  # comm_start[source_op, dest_op] represent the communication
@@ -35,12 +36,12 @@ def get_relied_component_execution_order(relied_graph: CompGraph, edge_cut_list,
     Define Constraints
     '''
 
-    for node_id in relied_graph.getOperatorIDs():
+    for node_id in relied_graph.nodes:
         # Add constraints that each op's ending time = starting time + its computing time
         model.addConstr(finish[node_id] == start[node_id] + op_computing_cost_mapping[node_id], name=f"finish_start_{node_id}")
 
     # Data dependency for same-device communication
-    non_edge_cut_list = [edge for edge in relied_graph.getEdgeIDs() if edge not in edge_cut_list]
+    non_edge_cut_list = [edge for edge in relied_graph.edges if edge not in edge_cut_list]
     for edge_id_tuple in non_edge_cut_list:
         source_op_ID, target_op_ID = edge_id_tuple
         model.addConstr(finish[source_op_ID] <= start[target_op_ID])
@@ -94,6 +95,7 @@ def get_relied_component_execution_order(relied_graph: CompGraph, edge_cut_list,
         print("Model is unbounded.")
     # this is the main process part after a solution is reached
     elif model.status == GRB.OPTIMAL:
+        print('latency', model.ObjVal)
         # show_optimization_solution(model, operator_device_mapping, computing_graph, device_topo, start, finish, edge_cut_communication_cost_mapping, True, two_dime_node_list)
         optimal_value = model.ObjVal
         if model is not None:
