@@ -13,7 +13,7 @@ from optimizer.operator_device_placement.metis.weight_functions import NodeWeigh
 from optimizer.operator_device_placement.placement import get_placement_info
 from optimizer.scheduling.near_optimal_scheduling_with_sampling import get_device_unreachable_pairs_mapping, split_nodes
 from optimizer.main_simulator.quicks.quicks_list_schedule import quicks_list_schedule
-from optimizer.scheduling.scheduling_util import split_three_stage_subgraph, split_two_stage_subgraph
+from optimizer.scheduling.scheduling_util import split_three_stage_subgraph, computation_graph_split
 
 
 def quickS(comp_graph: CompGraph, deviceTopo):
@@ -26,36 +26,32 @@ def quickS(comp_graph: CompGraph, deviceTopo):
     op_computing_cost_mapping = get_comp_cost_dict(comp_graph, operator_device_mapping)
     edge_cut_communication_cost_mapping = get_comm_cost_dict(comp_graph, deviceTopo, edge_cut_list,
                                                              operator_device_mapping)
-
-    rank_map = calculate_rank_map(comp_graph,device_subgraph_mapping, edge_cut_list, operator_device_mapping, op_computing_cost_mapping)
+    relied_graph, non_exporting_graph, reliance_comm_map, reliance_node_map = computation_graph_split(
+        comp_graph, operator_device_mapping, edge_cut_list, device_subgraph_mapping)
+    # order_map = get_relied_component_execution_order()
+    rank_map = calculate_rank_map(relied_graph,non_exporting_graph, reliance_node_map, op_computing_cost_mapping)
     evaluate_quick(comp_graph, deviceTopo, operator_device_mapping, edge_cut_list, edge_cut_weight_sum, graph_init["model_type"], rank_map)
 
 
-def calculate_rank_map(comp_graph: CompGraph,
-                       device_subgraph_mapping: dict, edge_cut_list: list, operator_device_mapping: dict, computing_cost_dict,
+def calculate_rank_map(relied_graph: Graph, non_exporting_graph: Graph, reliance_node_map, computing_cost_dict,
                        ):
     rank_map = {}
 
-    # form new device non-isolated part mapping
-    # split into isolated and non-isolated part
-    for device, subgraph in device_subgraph_mapping.items():
-        # Simply the search space by
-        stage_one, stage_two, reliance_comm_map, reliance_node_map = split_two_stage_subgraph(
-            subgraph, operator_device_mapping, edge_cut_list)
-        # turn the reliance_map into computing score
-        node_score_map = {
-            node: (
-                sum(computing_cost_dict[relied_node] for relied_node in
-                    reliance_node_map[node])
-            )
-            for node in reliance_node_map}
-        # give stage one the highest rank and the three the lowest rank
-        for stage_one_node in stage_one:
-            assert len(reliance_node_map[stage_one_node]) != 0
-            rank_map[stage_one_node] = 10 + node_score_map[stage_one_node]
-        for stage_three_node in stage_two:
-            assert len(reliance_node_map[stage_three_node]) == 0
-            rank_map[stage_three_node] = 0
+    # Simply the search space by
+    # turn the reliance_map into computing score
+    node_score_map = {
+        node: (
+            sum(computing_cost_dict[relied_node] for relied_node in
+                reliance_node_map[node])
+        )
+        for node in reliance_node_map}
+    # give stage one the highest rank and the three the lowest rank
+    for stage_one_node in relied_graph.nodes:
+        assert len(reliance_node_map[stage_one_node]) != 0
+        rank_map[stage_one_node] = 10 + node_score_map[stage_one_node]
+    for stage_three_node in non_exporting_graph.nodes:
+        assert len(reliance_node_map[stage_three_node]) == 0
+        rank_map[stage_three_node] = 0
 
     return rank_map
 

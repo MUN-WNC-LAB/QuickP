@@ -16,26 +16,16 @@ from optimizer.main_simulator.gurobi_util import init_computing_and_device_graph
     show_optimization_solution, show_graph_partition_info
 
 
-def get_relied_component_execution_order(computing_graph: CompGraph, device_topo: DeviceGraph, operator_device_mapping, edge_cut_list):
-
-    # Update the op_id-subgraph_id mapping dict to op_id-device_id mapping dict
-    device_subgraph_mapping = construct_sub_graph(computing_graph, operator_device_mapping)
-
-    # Get computation and communication cost
-    op_computing_cost_mapping = get_comp_cost_dict(computing_graph, operator_device_mapping)
-    edge_cut_communication_cost_mapping = get_comm_cost_dict(computing_graph, device_topo, edge_cut_list, operator_device_mapping)
-
-    # two_dime_node_list is to test whether the
-    two_dime_node_list: list[list] = [list(subgraph.nodes.keys()) for subgraph in device_subgraph_mapping.values()]
+def get_relied_component_execution_order(relied_graph: CompGraph, edge_cut_list, op_computing_cost_mapping, edge_cut_communication_cost_mapping):
 
     # Init solver
     model = gurobi_setup("minimize_maxload")
 
     # Define variables
 
-    start = model.addVars(computing_graph.getOperatorIDs(), vtype=GRB.CONTINUOUS, lb=0.0,
+    start = model.addVars(relied_graph.getOperatorIDs(), vtype=GRB.CONTINUOUS, lb=0.0,
                           name="start")  # start[node_id] represent the starting time of this node
-    finish = model.addVars(computing_graph.getOperatorIDs(), vtype=GRB.CONTINUOUS, lb=0.0,
+    finish = model.addVars(relied_graph.getOperatorIDs(), vtype=GRB.CONTINUOUS, lb=0.0,
                            name="finish")  # finish[node_id] represent the finish time of this node
     comm_start = model.addVars(edge_cut_list, vtype=GRB.CONTINUOUS, lb=0.0,
                                name="")  # comm_start[source_op, dest_op] represent the communication
@@ -45,12 +35,12 @@ def get_relied_component_execution_order(computing_graph: CompGraph, device_topo
     Define Constraints
     '''
 
-    for node_id in computing_graph.getOperatorIDs():
+    for node_id in relied_graph.getOperatorIDs():
         # Add constraints that each op's ending time = starting time + its computing time
         model.addConstr(finish[node_id] == start[node_id] + op_computing_cost_mapping[node_id], name=f"finish_start_{node_id}")
 
     # Data dependency for same-device communication
-    non_edge_cut_list = [edge for edge in computing_graph.getEdgeIDs() if edge not in edge_cut_list]
+    non_edge_cut_list = [edge for edge in relied_graph.getEdgeIDs() if edge not in edge_cut_list]
     for edge_id_tuple in non_edge_cut_list:
         source_op_ID, target_op_ID = edge_id_tuple
         model.addConstr(finish[source_op_ID] <= start[target_op_ID])
