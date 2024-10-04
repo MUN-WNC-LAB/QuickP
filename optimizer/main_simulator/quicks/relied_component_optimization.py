@@ -14,7 +14,7 @@ from optimizer.main_simulator.gurobi_util import init_computing_and_device_graph
     show_optimization_solution, show_graph_partition_info
 
 
-def get_relied_component_execution_order(relied_graph: Graph, edge_cut_list: list, op_computing_cost_mapping, edge_cut_communication_cost_mapping):
+def get_relied_component_execution_order(relied_graph: Graph, edge_cut_list: list, operator_device_mapping, op_computing_cost_mapping, edge_cut_communication_cost_mapping):
     print("fuck", len(relied_graph.nodes))
     # clean edge cut after the non-exporting node removal
     edge_cut_list = [(u, v) for u, v in edge_cut_list if u in relied_graph.nodes and v in relied_graph.nodes]
@@ -96,14 +96,29 @@ def get_relied_component_execution_order(relied_graph: Graph, edge_cut_list: lis
     # this is the main process part after a solution is reached
     elif model.status == GRB.OPTIMAL:
         print('latency', model.ObjVal)
-        # show_optimization_solution(model, operator_device_mapping, computing_graph, device_topo, start, finish, edge_cut_communication_cost_mapping, True, two_dime_node_list)
-        optimal_value = model.ObjVal
+        map = get_device_operator_execution_order(start, finish, operator_device_mapping)
         if model is not None:
             model.dispose()
         disposeDefaultEnv()
-        return optimal_value
+        return map
     else:
         print(f"Optimization ended with status {model.status}")
         if model is not None:
             model.dispose()
         disposeDefaultEnv()
+
+def get_device_operator_execution_order(start, finish, operator_device_placement):
+    device_op_order = {}
+
+    for op, device in operator_device_placement.items():
+        if device not in device_op_order:
+            device_op_order[device] = []
+        device_op_order[device].append(op)
+
+    # Sort operators by their start times for each device
+    for device, ops in device_op_order.items():
+        device_op_order[device] = sorted(ops, key=lambda node: start[node].X)
+
+
+def calculate_extra_rank_of_relied_node():
+    pass
