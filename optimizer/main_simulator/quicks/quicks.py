@@ -27,7 +27,8 @@ def quickS(comp_graph: CompGraph, deviceTopo):
                                                              operator_device_mapping)
     relied_graph, non_exporting_graph, reliance_node_map, device_relied_component_map = computation_graph_split(
         comp_graph, operator_device_mapping, edge_cut_list, device_subgraph_mapping)
-    order_map = get_relied_component_execution_order(relied_graph, edge_cut_list, operator_device_mapping, op_computing_cost_mapping, edge_cut_communication_cost_mapping)
+    order_map = get_relied_component_execution_order(relied_graph, edge_cut_list, operator_device_mapping,
+                                                     op_computing_cost_mapping, edge_cut_communication_cost_mapping, device_relied_component_map)
     rank_map = calculate_rank_map(relied_graph,non_exporting_graph, reliance_node_map, op_computing_cost_mapping)
     evaluate_quick(comp_graph, deviceTopo, operator_device_mapping, edge_cut_list, edge_cut_weight_sum, graph_init["model_type"], rank_map)
 
