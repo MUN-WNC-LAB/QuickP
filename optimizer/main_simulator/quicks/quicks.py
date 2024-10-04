@@ -93,4 +93,4 @@ if __name__ == '__main__':
     init_graph_weight(comp_graph, graph_init["node_weight_function"], graph_init["edge_weight_function"],
                       graph_init["weight_norm_function"])
 
-    quickS(comp_graph, deviceTopo, 0.1)
+    quickS(comp_graph, deviceTopo, 0.08)

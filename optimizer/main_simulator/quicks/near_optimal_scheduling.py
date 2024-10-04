@@ -8,7 +8,7 @@ from optimizer.scheduling.near_optimal_scheduling_with_sampling import split_nod
 
 def sampling_based_near_optimal_schedule(model: Model, start, finish, comm_start, comm_end, comp_graph: CompGraph,
                                          device_relied_component_mapping: dict, edge_cut_list: list, operator_device_mapping: dict, heuristic_rank_map,
-                                         rho, sampling_function):
+                                         computing_cost_dict, rho, sampling_function):
     # The global data dependency is already applied
     M = 1000000
     order = {}

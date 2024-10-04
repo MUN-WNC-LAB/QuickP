@@ -65,7 +65,7 @@ def get_relied_component_execution_order(relied_graph: Graph, edge_cut_list: lis
     # It is an SCHEDULING problem within each device.
     sampling_based_near_optimal_schedule(model, start, finish, comm_start, comm_end, relied_graph,
                                          device_relied_component_map, edge_cut_list, operator_device_mapping, heuristic_rank_map,
-                                         rho=rho, sampling_function=SamplingFunction.HEAVY_HITTER)
+                                         op_computing_cost_mapping, rho=rho, sampling_function=SamplingFunction.HEAVY_HITTER)
 
     # TotalLatency that we are minimizing
     TotalLatency = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0)
