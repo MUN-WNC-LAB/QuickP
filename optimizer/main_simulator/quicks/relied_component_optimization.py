@@ -1,6 +1,7 @@
 from gurobipy import *
 from networkx.classes import Graph
 
+from optimizer.main_simulator.quicks.near_optimal_scheduling import sampling_based_near_optimal_schedule
 from optimizer.model.graph import CompGraph, DeviceGraph
 
 os.environ['GRB_LICENSE_FILE'] = '/home/hola/solverLicense/gurobi.lic'
@@ -16,8 +17,9 @@ from optimizer.main_simulator.gurobi_util import init_computing_and_device_graph
 
 def get_relied_component_execution_order(relied_graph: Graph, edge_cut_list: list, operator_device_mapping, op_computing_cost_mapping, edge_cut_communication_cost_mapping):
     print("fuck", len(relied_graph.nodes))
-    # clean edge cut after the non-exporting node removal
+    # clean edge cut and operator_device_mapping after the non-exporting node removal
     edge_cut_list = [(u, v) for u, v in edge_cut_list if u in relied_graph.nodes and v in relied_graph.nodes]
+    operator_device_mapping = {op: device for op, device in operator_device_mapping.items() if op in relied_graph.nodes}
 
     # Init solver
     model = gurobi_setup("minimize_maxload")
@@ -62,7 +64,7 @@ def get_relied_component_execution_order(relied_graph: Graph, edge_cut_list: lis
                         name = "")
 
     # It is an SCHEDULING problem within each device.
-
+    #sampling_based_near_optimal_schedule(model, start, finish, comm_start, comm_end, com)
 
     # TotalLatency that we are minimizing
     TotalLatency = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0)

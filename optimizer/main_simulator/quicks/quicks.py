@@ -12,8 +12,6 @@ from optimizer.operator_device_placement.metis.subgraph_util import WeightNormal
     construct_sub_graph
 from optimizer.operator_device_placement.metis.weight_functions import NodeWeightFunction, EdgeWeightFunction
 from optimizer.operator_device_placement.placement import get_placement_info
-from optimizer.scheduling.near_optimal_scheduling_with_sampling import get_device_unreachable_pairs_mapping, split_nodes
-from optimizer.main_simulator.quicks.quicks_list_schedule import quicks_list_schedule
 from optimizer.scheduling.scheduling_util import split_three_stage_subgraph, computation_graph_split
 
 
@@ -29,7 +27,7 @@ def quickS(comp_graph: CompGraph, deviceTopo):
                                                              operator_device_mapping)
     relied_graph, non_exporting_graph, reliance_node_map, device_relied_component_map = computation_graph_split(
         comp_graph, operator_device_mapping, edge_cut_list, device_subgraph_mapping)
-    order_map = get_relied_component_execution_order(relied_graph, edge_cut_list, op_computing_cost_mapping, edge_cut_communication_cost_mapping)
+    order_map = get_relied_component_execution_order(relied_graph, edge_cut_list, operator_device_mapping, op_computing_cost_mapping, edge_cut_communication_cost_mapping)
     rank_map = calculate_rank_map(relied_graph,non_exporting_graph, reliance_node_map, op_computing_cost_mapping)
     evaluate_quick(comp_graph, deviceTopo, operator_device_mapping, edge_cut_list, edge_cut_weight_sum, graph_init["model_type"], rank_map)
 
