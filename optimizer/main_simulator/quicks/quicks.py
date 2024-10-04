@@ -1,6 +1,7 @@
 import networkx as nx
 from gurobipy import Model, GRB
 from networkx import Graph
+from triton import heuristics
 
 from DNN_model_tf.tf_model_enum import TFModelEnum
 from optimizer.main_simulator.gurobi_util import init_computing_and_device_graph
@@ -15,7 +16,7 @@ from optimizer.operator_device_placement.placement import get_placement_info
 from optimizer.scheduling.scheduling_util import split_three_stage_subgraph, computation_graph_split
 
 
-def quickS(comp_graph: CompGraph, deviceTopo):
+def quickS(comp_graph: CompGraph, deviceTopo, rho):
     # Partition the computation graph
     operator_device_mapping, edge_cut_list, edge_cut_weight_sum = (
         get_placement_info("METIS", comp_graph, deviceTopo))
@@ -27,10 +28,14 @@ def quickS(comp_graph: CompGraph, deviceTopo):
                                                              operator_device_mapping)
     relied_graph, non_exporting_graph, reliance_node_map, device_relied_component_map = computation_graph_split(
         comp_graph, operator_device_mapping, edge_cut_list, device_subgraph_mapping)
+    assert nx.is_directed_acyclic_graph(relied_graph)
+
+    heuristics_rank_map = calculate_heuristic_rank_map(relied_graph, non_exporting_graph, reliance_node_map, op_computing_cost_mapping)
+
     relied_node_rank_map = get_relied_component_execution_order(relied_graph, edge_cut_list, operator_device_mapping,
-                                                     op_computing_cost_mapping, edge_cut_communication_cost_mapping,
-                                                     device_relied_component_map, 1)
-    rank_map = calculate_rank_map(relied_graph,non_exporting_graph, reliance_node_map, op_computing_cost_mapping, relied_node_rank_map)
+                                                     op_computing_cost_mapping, edge_cut_communication_cost_mapping, heuristics_rank_map,
+                                                     device_relied_component_map, rho)
+    rank_map = calculate_rank_map(relied_graph, non_exporting_graph, reliance_node_map, op_computing_cost_mapping, relied_node_rank_map)
     evaluate_quick(comp_graph, deviceTopo, operator_device_mapping, edge_cut_list, edge_cut_weight_sum, graph_init["model_type"], rank_map)
 
 
@@ -51,6 +56,26 @@ def calculate_rank_map(relied_graph: Graph, non_exporting_graph: Graph, reliance
 
     return rank_map
 
+def calculate_heuristic_rank_map(relied_graph: Graph, non_exporting_graph: Graph, reliance_node_map, computing_cost_dict):
+    rank_map = {}
+
+    node_score_map = {
+        node: (
+            sum(computing_cost_dict[relied_node] for relied_node in
+                reliance_node_map[node])
+        )
+        for node in reliance_node_map}
+
+    # give stage one the highest rank and the three the lowest rank
+    for stage_one_node in relied_graph.nodes:
+        assert len(reliance_node_map[stage_one_node]) != 0
+        rank_map[stage_one_node] = 10 + node_score_map[stage_one_node]
+    for stage_two_node in non_exporting_graph.nodes:
+        assert len(reliance_node_map[stage_two_node]) == 0
+        rank_map[stage_two_node] = 0
+
+    return rank_map
+
 
 if __name__ == '__main__':
     graph_init = {
@@ -68,4 +93,4 @@ if __name__ == '__main__':
     init_graph_weight(comp_graph, graph_init["node_weight_function"], graph_init["edge_weight_function"],
                       graph_init["weight_norm_function"])
 
-    quickS(comp_graph, deviceTopo)
+    quickS(comp_graph, deviceTopo, 0.1)

@@ -15,7 +15,7 @@ from optimizer.main_simulator.gurobi_util import init_computing_and_device_graph
 
 
 def get_relied_component_execution_order(relied_graph: Graph, edge_cut_list: list, operator_device_mapping,
-                                         op_computing_cost_mapping, edge_cut_communication_cost_mapping, device_relied_component_map, rho):
+                                         op_computing_cost_mapping, edge_cut_communication_cost_mapping, heuristic_rank_map, device_relied_component_map, rho):
     # clean edge cut and operator_device_mapping after the non-exporting node removal
     edge_cut_list = [(u, v) for u, v in edge_cut_list if u in relied_graph.nodes and v in relied_graph.nodes]
     operator_device_mapping = {op: device for op, device in operator_device_mapping.items() if op in relied_graph.nodes}
@@ -64,7 +64,7 @@ def get_relied_component_execution_order(relied_graph: Graph, edge_cut_list: lis
 
     # It is an SCHEDULING problem within each device.
     sampling_based_near_optimal_schedule(model, start, finish, comm_start, comm_end, relied_graph,
-                                         device_relied_component_map, edge_cut_list, operator_device_mapping,
+                                         device_relied_component_map, edge_cut_list, operator_device_mapping, heuristic_rank_map,
                                          rho=rho, sampling_function=SamplingFunction.HEAVY_HITTER)
 
     # TotalLatency that we are minimizing
