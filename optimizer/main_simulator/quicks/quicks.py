@@ -80,7 +80,7 @@ def calculate_heuristic_rank_map(relied_graph: Graph, non_exporting_graph: Graph
 if __name__ == '__main__':
     graph_init = {
         "number_of_devices": 6,
-        "model_type": TFModelEnum.ALEXNET,
+        "model_type": TFModelEnum.VGG,
         "node_weight_function": NodeWeightFunction.AVE_COMP_COST,
         "edge_weight_function": EdgeWeightFunction.SOURCE_OUTPUT_TENSOR,
         "weight_norm_function": WeightNormalizationFunction.MIN_MAX,
@@ -93,4 +93,4 @@ if __name__ == '__main__':
     init_graph_weight(comp_graph, graph_init["node_weight_function"], graph_init["edge_weight_function"],
                       graph_init["weight_norm_function"])
 
-    quickS(comp_graph, deviceTopo, 0.1)
+    quickS(comp_graph, deviceTopo, 0.02)
