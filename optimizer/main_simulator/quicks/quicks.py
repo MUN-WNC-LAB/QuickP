@@ -1,6 +1,7 @@
 import networkx as nx
 from gurobipy import Model, GRB
 from networkx import Graph
+from networkx.classes import DiGraph
 from triton import heuristics
 
 from DNN_model_tf.tf_model_enum import TFModelEnum
@@ -56,13 +57,31 @@ def calculate_rank_map(relied_graph: Graph, non_exporting_graph: Graph, reliance
 
     return rank_map
 
-def calculate_heuristic_rank_map(relied_graph: Graph, non_exporting_graph: Graph, reliance_node_map, computing_cost_dict):
+def calculate_heuristic_rank_map(relied_graph: DiGraph, non_exporting_graph: Graph, reliance_node_map, computing_cost_dict):
+    global_score = {}
+    topo_sorted = list(nx.topological_sort(relied_graph))
+
+    for current_node in reversed(topo_sorted):
+        # Check if the current node has any predecessors
+        successors = list(relied_graph.successors(current_node))
+
+        if successors:  # If there are predecessors, compute the max computing cost
+            max_suc_computing_cost = max(
+                global_score[succ_node] for succ_node in successors
+            )
+        else:  # If there are no predecessors, set the max computing cost to 0
+            max_suc_computing_cost = 0
+
+        # Calculate the global rank for the current node
+        global_score[current_node] = (
+                max_suc_computing_cost + computing_cost_dict[current_node]
+        )
+
     rank_map = {}
 
     node_score_map = {
         node: (
-            sum(computing_cost_dict[relied_node] for relied_node in
-                reliance_node_map[node])
+            sum(global_score[relied_node] for relied_node in reliance_node_map[node] if relied_node in relied_graph.nodes)
         )
         for node in reliance_node_map}
 
@@ -93,4 +112,4 @@ if __name__ == '__main__':
     init_graph_weight(comp_graph, graph_init["node_weight_function"], graph_init["edge_weight_function"],
                       graph_init["weight_norm_function"])
 
-    quickS(comp_graph, deviceTopo, 0.08)
+    quickS(comp_graph, deviceTopo, 0.00)
