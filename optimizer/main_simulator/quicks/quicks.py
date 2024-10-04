@@ -31,7 +31,7 @@ def quickS(comp_graph: CompGraph, deviceTopo, rho):
         comp_graph, operator_device_mapping, edge_cut_list, device_subgraph_mapping)
     assert nx.is_directed_acyclic_graph(relied_graph)
 
-    heuristics_rank_map = calculate_heuristic_rank_map(relied_graph, non_exporting_graph, reliance_node_map, op_computing_cost_mapping)
+    heuristics_rank_map = calculate_heuristic_rank_map(relied_graph, non_exporting_graph, reliance_node_map, op_computing_cost_mapping, comp_graph)
 
     relied_node_rank_map = get_relied_component_execution_order(relied_graph, edge_cut_list, operator_device_mapping,
                                                      op_computing_cost_mapping, edge_cut_communication_cost_mapping, heuristics_rank_map,
@@ -57,13 +57,13 @@ def calculate_rank_map(relied_graph: Graph, non_exporting_graph: Graph, reliance
 
     return rank_map
 
-def calculate_heuristic_rank_map(relied_graph: DiGraph, non_exporting_graph: Graph, reliance_node_map, computing_cost_dict):
+def calculate_heuristic_rank_map(relied_graph: DiGraph, non_exporting_graph: Graph, reliance_node_map, computing_cost_dict, computing_graph):
     global_score = {}
-    topo_sorted = list(nx.topological_sort(relied_graph))
+    topo_sorted = list(nx.topological_sort(computing_graph))
 
     for current_node in reversed(topo_sorted):
         # Check if the current node has any predecessors
-        successors = list(relied_graph.successors(current_node))
+        successors = list(computing_graph.successors(current_node))
 
         if successors:  # If there are predecessors, compute the max computing cost
             max_suc_computing_cost = max(
@@ -81,7 +81,7 @@ def calculate_heuristic_rank_map(relied_graph: DiGraph, non_exporting_graph: Gra
 
     node_score_map = {
         node: (
-            sum(global_score[relied_node] for relied_node in reliance_node_map[node] if relied_node in relied_graph.nodes)
+            sum(global_score[relied_node] for relied_node in reliance_node_map[node])
         )
         for node in reliance_node_map}
 
@@ -99,7 +99,7 @@ def calculate_heuristic_rank_map(relied_graph: DiGraph, non_exporting_graph: Gra
 if __name__ == '__main__':
     graph_init = {
         "number_of_devices": 6,
-        "model_type": TFModelEnum.ALEXNET,
+        "model_type": TFModelEnum.VGG,
         "node_weight_function": NodeWeightFunction.AVE_COMP_COST,
         "edge_weight_function": EdgeWeightFunction.SOURCE_OUTPUT_TENSOR,
         "weight_norm_function": WeightNormalizationFunction.MIN_MAX,
