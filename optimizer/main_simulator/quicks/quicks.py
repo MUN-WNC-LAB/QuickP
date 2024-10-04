@@ -27,28 +27,24 @@ def quickS(comp_graph: CompGraph, deviceTopo):
                                                              operator_device_mapping)
     relied_graph, non_exporting_graph, reliance_node_map, device_relied_component_map = computation_graph_split(
         comp_graph, operator_device_mapping, edge_cut_list, device_subgraph_mapping)
-    order_map = get_relied_component_execution_order(relied_graph, edge_cut_list, operator_device_mapping,
-                                                     op_computing_cost_mapping, edge_cut_communication_cost_mapping, device_relied_component_map)
-    rank_map = calculate_rank_map(relied_graph,non_exporting_graph, reliance_node_map, op_computing_cost_mapping)
+    relied_node_rank_map = get_relied_component_execution_order(relied_graph, edge_cut_list, operator_device_mapping,
+                                                     op_computing_cost_mapping, edge_cut_communication_cost_mapping,
+                                                     device_relied_component_map, 1)
+    rank_map = calculate_rank_map(relied_graph,non_exporting_graph, reliance_node_map, op_computing_cost_mapping, relied_node_rank_map)
     evaluate_quick(comp_graph, deviceTopo, operator_device_mapping, edge_cut_list, edge_cut_weight_sum, graph_init["model_type"], rank_map)
 
 
 def calculate_rank_map(relied_graph: Graph, non_exporting_graph: Graph, reliance_node_map, computing_cost_dict,
-                       ):
+                       relied_node_rank_map):
     rank_map = {}
 
     # Simply the search space by
     # turn the reliance_map into computing score
-    node_score_map = {
-        node: (
-            sum(computing_cost_dict[relied_node] for relied_node in
-                reliance_node_map[node])
-        )
-        for node in reliance_node_map}
+
     # give stage one the highest rank and the three the lowest rank
     for stage_one_node in relied_graph.nodes:
         assert len(reliance_node_map[stage_one_node]) != 0
-        rank_map[stage_one_node] = 10 + node_score_map[stage_one_node]
+        rank_map[stage_one_node] = 10 + relied_node_rank_map[stage_one_node]
     for stage_three_node in non_exporting_graph.nodes:
         assert len(reliance_node_map[stage_three_node]) == 0
         rank_map[stage_three_node] = 0

@@ -15,7 +15,7 @@ from optimizer.main_simulator.gurobi_util import init_computing_and_device_graph
 
 
 def get_relied_component_execution_order(relied_graph: Graph, edge_cut_list: list, operator_device_mapping,
-                                         op_computing_cost_mapping, edge_cut_communication_cost_mapping, device_relied_component_map):
+                                         op_computing_cost_mapping, edge_cut_communication_cost_mapping, device_relied_component_map, rho):
     # clean edge cut and operator_device_mapping after the non-exporting node removal
     edge_cut_list = [(u, v) for u, v in edge_cut_list if u in relied_graph.nodes and v in relied_graph.nodes]
     operator_device_mapping = {op: device for op, device in operator_device_mapping.items() if op in relied_graph.nodes}
@@ -65,7 +65,7 @@ def get_relied_component_execution_order(relied_graph: Graph, edge_cut_list: lis
     # It is an SCHEDULING problem within each device.
     sampling_based_near_optimal_schedule(model, start, finish, comm_start, comm_end, relied_graph,
                                          device_relied_component_map, edge_cut_list, operator_device_mapping,
-                                         rho=0.1, sampling_function=SamplingFunction.HEAVY_HITTER)
+                                         rho=rho, sampling_function=SamplingFunction.HEAVY_HITTER)
 
     # TotalLatency that we are minimizing
     TotalLatency = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0)
@@ -99,11 +99,12 @@ def get_relied_component_execution_order(relied_graph: Graph, edge_cut_list: lis
     # this is the main process part after a solution is reached
     elif model.status == GRB.OPTIMAL:
         print('latency', model.ObjVal)
-        map = get_device_operator_execution_order(start, finish, operator_device_mapping)
+        device_operator_execution_order = get_device_operator_execution_order(start, finish, operator_device_mapping)
+        rank_map = calculate_extra_rank_of_relied_node(device_operator_execution_order)
         if model is not None:
             model.dispose()
         disposeDefaultEnv()
-        return map
+        return rank_map
     else:
         print(f"Optimization ended with status {model.status}")
         if model is not None:
@@ -122,6 +123,13 @@ def get_device_operator_execution_order(start, finish, operator_device_placement
     for device, ops in device_op_order.items():
         device_op_order[device] = sorted(ops, key=lambda node: start[node].X)
 
+    return device_op_order
 
-def calculate_extra_rank_of_relied_node():
-    pass
+
+def calculate_extra_rank_of_relied_node(device_operator_execution_order):
+    node_rank = {}
+    for device, execution_order in device_operator_execution_order.items():
+        for i, op in enumerate(reversed(execution_order)):
+            node_rank[op] = i * 5  # 0 for the last, 5 for the second last, 10 for the third last, etc.
+
+    return node_rank
