@@ -31,16 +31,17 @@ def quickS(comp_graph: CompGraph, deviceTopo, rho):
         comp_graph, operator_device_mapping, edge_cut_list, device_subgraph_mapping)
     assert nx.is_directed_acyclic_graph(relied_graph)
 
-    heuristics_rank_map = calculate_heuristic_rank_map(relied_graph, non_exporting_graph, reliance_node_map, op_computing_cost_mapping, comp_graph)
+    heuristics_rank_map = calculate_heuristic_rank_map(relied_graph, non_exporting_graph, reliance_node_map, op_computing_cost_mapping,
+                                                       edge_cut_communication_cost_mapping, edge_cut_list, comp_graph)
 
     relied_node_rank_map = get_relied_component_execution_order(relied_graph, edge_cut_list, operator_device_mapping,
                                                      op_computing_cost_mapping, edge_cut_communication_cost_mapping, heuristics_rank_map,
                                                      device_relied_component_map, rho)
-    rank_map = calculate_rank_map(relied_graph, non_exporting_graph, reliance_node_map, op_computing_cost_mapping, relied_node_rank_map)
+    rank_map = calculate_rank_map(relied_graph, non_exporting_graph, reliance_node_map, relied_node_rank_map)
     evaluate_quick(comp_graph, deviceTopo, operator_device_mapping, edge_cut_list, edge_cut_weight_sum, graph_init["model_type"], rank_map)
 
 
-def calculate_rank_map(relied_graph: Graph, non_exporting_graph: Graph, reliance_node_map, computing_cost_dict,
+def calculate_rank_map(relied_graph: Graph, non_exporting_graph: Graph, reliance_node_map,
                        relied_node_rank_map):
     rank_map = {}
 
@@ -57,7 +58,8 @@ def calculate_rank_map(relied_graph: Graph, non_exporting_graph: Graph, reliance
 
     return rank_map
 
-def calculate_heuristic_rank_map(relied_graph: DiGraph, non_exporting_graph: Graph, reliance_node_map, computing_cost_dict, computing_graph):
+def calculate_heuristic_rank_map(relied_graph: DiGraph, non_exporting_graph: Graph, reliance_node_map, computing_cost_dict,
+                                 edge_cut_communication_cost_mapping, edge_cut, computing_graph):
     global_score = {}
     topo_sorted = list(nx.topological_sort(computing_graph))
 
@@ -73,9 +75,13 @@ def calculate_heuristic_rank_map(relied_graph: DiGraph, non_exporting_graph: Gra
             max_suc_computing_cost = 0
 
         # Calculate the global rank for the current node
-        global_score[current_node] = (
-                max_suc_computing_cost + computing_cost_dict[current_node]
-        )
+        global_score[current_node] = (max_suc_computing_cost + computing_cost_dict[current_node] +
+                                      max(
+                                          (edge_cut_communication_cost_mapping[current_node, succ] for succ in
+                                           successors if (current_node, succ) in edge_cut),
+                                          default=0
+                                      ))
+
 
     rank_map = {}
 
