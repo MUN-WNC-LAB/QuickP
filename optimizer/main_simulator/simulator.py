@@ -79,13 +79,13 @@ def simulate(computing_graph: CompGraph, device_topo: DeviceGraph,
         source_op_ID, dest_op_ID = edge_id_tuple
         # Ensures the communication starts only after the source operation finishes.
         model.addConstr(finish[source_op_ID] <= comm_start[source_op_ID, dest_op_ID],
-                        name = "" if model_type == TFModelEnum.BERT else f"bind_finish_to_comm_start_{source_op_ID}_{dest_op_ID}")
+                        name = "" if model_type in [TFModelEnum.BERT, TFModelEnum.FNET] else f"bind_finish_to_comm_start_{source_op_ID}_{dest_op_ID}")
         # Ensures the communication duration covers the communication cost.
         model.addConstr(comm_start[source_op_ID, dest_op_ID] + edge_cut_communication_cost_mapping[edge_id_tuple] == comm_end[source_op_ID, dest_op_ID],
-                        name = "" if model_type == TFModelEnum.BERT else f"data_dependency_{source_op_ID}_{dest_op_ID}")
+                        name = "" if model_type in [TFModelEnum.BERT, TFModelEnum.FNET] else f"data_dependency_{source_op_ID}_{dest_op_ID}")
         # Ensures the communication ends before the destination operation starts.
         model.addConstr(comm_end[source_op_ID, dest_op_ID] <= start[dest_op_ID],
-                        name = "" if model_type == TFModelEnum.BERT else "bind_comm_end_to_start_{source_op_ID}_{dest_op_ID}")
+                        name = "" if model_type in [TFModelEnum.BERT, TFModelEnum.FNET] else "bind_comm_end_to_start_{source_op_ID}_{dest_op_ID}")
 
     # It is an SCHEDULING problem within each device.
     execute_scheduling_function(scheduling_function, model, start=start, finish=finish, comm_start=comm_start,
@@ -154,7 +154,7 @@ if __name__ == '__main__':
     # NEAR_OPTIMAL OPTIMIZED METIS TEST
     parser.add_argument('--placement', default='METIS', type=str, help='')
     # PRIORITY_HETEROG  PRIORITY_MIN_COMP OPTIMIZED FIFO NEAR_OPTIMAL SAMPLING_NEAR_OPTIMAL THREE_STAGE FOUR_STAGE
-    parser.add_argument('--scheduling', default='PRIORITY_HETEROG', type=str, help='')
+    parser.add_argument('--scheduling', default='THREE_STAGE', type=str, help='')
     # parser.add_argument('--hetero_rate', default=None, type=int, help='')
     # rho == 0 is FIFO, rho == 1 is optimal; model.setParam("MIPGap", 0.01) will make it optimized
     parser.add_argument('--rho', default=0.06, type=float, help='')
