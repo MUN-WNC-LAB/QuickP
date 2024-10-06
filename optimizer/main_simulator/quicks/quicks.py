@@ -68,7 +68,7 @@ def calculate_heuristic_rank_map(relied_graph: DiGraph, non_exporting_graph: Gra
         successors = list(computing_graph.successors(current_node))
 
         if successors:  # If there are predecessors, compute the max computing cost
-            max_suc_computing_cost = max(
+            max_suc_computing_cost = sum(
                 global_score[succ_node] for succ_node in successors
             )
         else:  # If there are no predecessors, set the max computing cost to 0
@@ -76,10 +76,9 @@ def calculate_heuristic_rank_map(relied_graph: DiGraph, non_exporting_graph: Gra
 
         # Calculate the global rank for the current node
         global_score[current_node] = (max_suc_computing_cost + computing_cost_dict[current_node] +
-                                      max(
+                                      sum(
                                           (edge_cut_communication_cost_mapping[current_node, succ] for succ in
-                                           successors if (current_node, succ) in edge_cut),
-                                          default=0
+                                           successors if (current_node, succ) in edge_cut)
                                       ))
 
 
@@ -104,7 +103,7 @@ def calculate_heuristic_rank_map(relied_graph: DiGraph, non_exporting_graph: Gra
 
 if __name__ == '__main__':
     graph_init = {
-        "number_of_devices": 12,
+        "number_of_devices": 32,
         "model_type": TFModelEnum.FNET,
         "node_weight_function": NodeWeightFunction.AVE_COMP_COST,
         "edge_weight_function": EdgeWeightFunction.SOURCE_OUTPUT_TENSOR,
