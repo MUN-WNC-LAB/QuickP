@@ -3,7 +3,6 @@ from gurobipy import *
 from optimizer.main_simulator.quicks.quicks_list_schedule import quicks_list_schedule
 from optimizer.main_simulator.simulator_util import get_comp_cost_dict, get_comm_cost_dict
 from optimizer.model.graph import CompGraph, DeviceGraph
-from optimizer.scheduling.mcmc_order import mcmc_schedule
 
 os.environ['GRB_LICENSE_FILE'] = '/home/hola/solverLicense/gurobi.lic'
 
