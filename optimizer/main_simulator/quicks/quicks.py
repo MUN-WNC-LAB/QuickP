@@ -103,7 +103,7 @@ def calculate_heuristic_rank_map(relied_graph: DiGraph, non_exporting_graph: Gra
 
 if __name__ == '__main__':
     graph_init = {
-        "number_of_devices": 32,
+        "number_of_devices": 12,
         "model_type": TFModelEnum.FNET,
         "node_weight_function": NodeWeightFunction.AVE_COMP_COST,
         "edge_weight_function": EdgeWeightFunction.SOURCE_OUTPUT_TENSOR,

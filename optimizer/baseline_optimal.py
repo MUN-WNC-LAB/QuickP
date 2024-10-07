@@ -12,7 +12,7 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(script_dir, '..', '..'))
 sys.path.append(project_root)
 from optimizer.main_simulator.gurobi_util import gurobi_setup, init_computing_and_device_graph, \
-    show_optimization_solution_for_baseline
+    show_optimization_solution_for_baseline, get_proper_M
 
 
 def joint_optimize(comp_graph, deviceTopo) -> dict:
@@ -85,7 +85,7 @@ def joint_optimize(comp_graph, deviceTopo) -> dict:
             source_op_ID, dest_op_ID],
                         f"data_dependency_{source_op_ID}_{dest_op_ID}")
 
-    M = 1000000
+    M = get_proper_M(model_type)
     z = {}
     # Operator-scheduling
     for i, j in itertools.combinations(comp_graph.getOperatorIDs(), 2):
@@ -141,13 +141,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='arguments for optimization problem after graph partitioning')
     parser.add_argument('--number_of_device', type=int, default=2)
     parser.add_argument('--model', type=str, default='SMALL')
-    parser.add_argument('--normalization_function', default='MinMax', type=str, help='')
-    # PRIORITY_HETEROG  PRIORITY_MIN_COMP OPTIMIZED FIFO NEAR_OPTIMAL SAMPLING_NEAR_OPTIMAL
-    parser.add_argument('--scheduling', default='SAMPLING_NEAR_OPTIMAL', type=str, help='')
-    parser.add_argument('--placement', default='METIS', type=str, help='')
     parser.add_argument('--hetero_rate', default=None, type=int, help='')
 
     args = parser.parse_args()
+    model_type = getattr(TFModelEnum, args.model, None)
 
     model_mapping_dict = {'VGG': TFModelEnum.VGG, 'SMALL': TFModelEnum.SMALL, "ALEXNET": TFModelEnum.ALEXNET}
     weight_normalization_dict = {'MinMax': WeightNormalizationFunction.MIN_MAX}
