@@ -90,6 +90,7 @@ def quicks_list_schedule(model: Model, start, finish, comm_start, comm_end, comp
     all_nodes = set(comp_graph.nodes())
     remaining_nodes = all_nodes - completed_tasks
     assert len(remaining_nodes) == 0, f"the remaining nodes {remaining_nodes} but all nodes should be scheduled"
+    '''
     for device, op_exe_order in device_node_order.items():
         subgraph = device_subgraph_mapping[device]
         device_outgoing_comm = [(u,v) for (u,v) in edge_cut_list if u in subgraph.nodes]
@@ -97,6 +98,7 @@ def quicks_list_schedule(model: Model, start, finish, comm_start, comm_end, comp
         device_outgoing_comm.sort(key=lambda comm: op_exe_order.index(comm[0]))
         for comm1, comm2 in zip(device_outgoing_comm, device_outgoing_comm[1:]):
             model.addConstr(comm_end[comm1] <= comm_start[comm2])
+    '''
 
 
 def quicks_list_order_only(comp_graph: CompGraph, device_subgraph_mapping: dict, edge_cut_list: list, operator_device_mapping: dict, global_rank):
