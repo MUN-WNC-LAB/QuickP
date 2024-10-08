@@ -16,3 +16,5 @@ graph = model.train_function.get_concrete_function(iter([(xs, ys)])).graph  # Th
 isinstance(graph, tf.Graph)  # True
 
 print(len(graph.get_operations()))
+for op in graph.get_operations():
+    print(op.colocation_groups())
