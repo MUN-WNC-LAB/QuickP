@@ -16,7 +16,7 @@ sys.path.append(project_root)
 from optimizer.operator_device_placement.metis.subgraph_util import construct_sub_graph, WeightNormalizationFunction, \
     init_graph_weight
 from optimizer.main_simulator.gurobi_util import init_computing_and_device_graph, gurobi_setup, \
-    show_optimization_solution, show_graph_partition_info
+    show_optimization_solution, show_graph_partition_info, get_proper_M
 from optimizer.operator_device_placement.metis.weight_functions import NodeWeightFunction, EdgeWeightFunction
 from DNN_model_tf.tf_model_enum import TFModelEnum
 from optimizer.operator_device_placement.placement import get_placement_info
@@ -90,8 +90,9 @@ def simulate(computing_graph: CompGraph, device_topo: DeviceGraph,
     # It is an SCHEDULING problem within each device.
     execute_scheduling_function(scheduling_function, model, start=start, finish=finish, comm_start=comm_start,
                                 comm_end=comm_end, comp_graph=computing_graph, device_subgraph_mapping=device_subgraph_mapping,
-                                edge_cut_list=edge_cut_list, operator_device_mapping=operator_device_mapping, rho=rho,
-                                sampling_function=sampling_function, threshold=0, computing_cost_dict=op_computing_cost_mapping, communication_cost_dict=edge_cut_communication_cost_mapping)
+                                edge_cut_list=edge_cut_list, operator_device_mapping=operator_device_mapping,
+                                computing_cost_dict=op_computing_cost_mapping,
+                                communication_cost_dict=edge_cut_communication_cost_mapping, M=get_proper_M(model_type))
 
     # TotalLatency that we are minimizing
     TotalLatency = model.addVar(vtype=GRB.CONTINUOUS, lb=0.0)
@@ -147,12 +148,12 @@ def simulate(computing_graph: CompGraph, device_topo: DeviceGraph,
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='arguments for optimization problem after graph partitioning')
-    parser.add_argument('--number_of_device', type=int, default=20)
+    parser.add_argument('--number_of_device', type=int, default=6)
     # TEST SMALL
-    parser.add_argument('--model', type=str, default='ALEXNET')
+    parser.add_argument('--model', type=str, default='SMALL')
     parser.add_argument('--normalization_function', default='MIN_MAX', type=str, help='')
     # NEAR_OPTIMAL OPTIMIZED METIS TEST OPTIMIZED_HOMO INCONTIGUOUS_METIS
-    parser.add_argument('--placement', default='METIS', type=str, help='')
+    parser.add_argument('--placement', default='OPTIMIZED_HOMO', type=str, help='')
     # PRIORITY_HETEROG  PRIORITY_MIN_COMP OPTIMIZED FIFO NEAR_OPTIMAL SAMPLING_NEAR_OPTIMAL THREE_STAGE
     parser.add_argument('--scheduling', default='OPTIMIZED', type=str, help='')
     # parser.add_argument('--hetero_rate', default=None, type=int, help='')
