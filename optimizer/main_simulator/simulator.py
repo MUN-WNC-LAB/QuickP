@@ -153,7 +153,8 @@ if __name__ == '__main__':
     parser.add_argument('--model', type=str, default='SMALL')
     parser.add_argument('--normalization_function', default='MIN_MAX', type=str, help='')
     # NEAR_OPTIMAL OPTIMIZED METIS TEST OPTIMIZED_HOMO INCONTIGUOUS_METIS
-    parser.add_argument('--placement', default='OPTIMIZED_HOMO', type=str, help='')
+    # IN homo env and the scheduling is set to optimized, OPTIMIZED should behave the same as OPTIMIZED_HOMO
+    parser.add_argument('--placement', default='METIS', type=str, help='')
     # PRIORITY_HETEROG  PRIORITY_MIN_COMP OPTIMIZED FIFO NEAR_OPTIMAL SAMPLING_NEAR_OPTIMAL THREE_STAGE
     parser.add_argument('--scheduling', default='OPTIMIZED', type=str, help='')
     # parser.add_argument('--hetero_rate', default=None, type=int, help='')
