@@ -154,7 +154,7 @@ if __name__ == '__main__':
     # IN homo env and the scheduling is set to optimized, OPTIMIZED should behave the same as OPTIMIZED_HOMO
     parser.add_argument('--placement', default='OPTIMIZED', type=str, help='')
     # PRIORITY_HETEROG  PRIORITY_MIN_COMP OPTIMIZED FIFO NEAR_OPTIMAL SAMPLING_NEAR_OPTIMAL THREE_STAGE
-    parser.add_argument('--scheduling', default='OPTIMIZED', type=str, help='')
+    parser.add_argument('--scheduling', default='PRIORITY_HETEROG', type=str, help='')
     # parser.add_argument('--hetero_rate', default=None, type=int, help='')
     # rho == 0 is FIFO, rho == 1 is optimal; model.setParam("MIPGap", 0.01) will make it optimized
     # parser.add_argument('--rho', default=0.06, type=float, help='')
@@ -166,7 +166,7 @@ if __name__ == '__main__':
     # Dynamically access attributes using getattr
     model_type = getattr(TFModelEnum, args.model, None)
     weight_norm_function = getattr(WeightNormalizationFunction, args.normalization_function.upper(), None)
-    sample_function = getattr(SamplingFunction, args.sampling.upper(), None)
+    # sample_function = getattr(SamplingFunction, args.sampling.upper(), None)
 
     # init fake data
     deviceTopo, comp_graph = init_computing_and_device_graph(args.number_of_device, None, model_type=model_type)
