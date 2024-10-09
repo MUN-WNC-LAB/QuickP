@@ -25,9 +25,7 @@ from optimizer.scheduling.near_optimal_scheduling_with_sampling import SamplingF
 
 def simulate(computing_graph: CompGraph, device_topo: DeviceGraph,
              scheduling_function: str = "FIFO",
-             placement: str = 'METIS',
-             rho=0.05,
-             sampling_function=SamplingFunction.HEAVY_HITTER):
+             placement: str = 'METIS'):
 
     # Partition the computation graph
     operator_device_mapping, edge_cut_list, edge_cut_weight_sum = (
@@ -159,9 +157,9 @@ if __name__ == '__main__':
     parser.add_argument('--scheduling', default='OPTIMIZED', type=str, help='')
     # parser.add_argument('--hetero_rate', default=None, type=int, help='')
     # rho == 0 is FIFO, rho == 1 is optimal; model.setParam("MIPGap", 0.01) will make it optimized
-    parser.add_argument('--rho', default=0.06, type=float, help='')
+    # parser.add_argument('--rho', default=0.06, type=float, help='')
     # PROBABILISTIC_SAMPLING RANDOM HEAVY_HITTER
-    parser.add_argument('--sampling', default="HEAVY_HITTER", type=str, help='')
+    # parser.add_argument('--sampling', default="HEAVY_HITTER", type=str, help='')
 
     args = parser.parse_args()
 
@@ -180,6 +178,4 @@ if __name__ == '__main__':
 
     simulate(comp_graph, deviceTopo,
              scheduling_function=args.scheduling,
-             placement = args.placement,
-             rho=args.rho,
-             sampling_function=sample_function)
+             placement = args.placement)
