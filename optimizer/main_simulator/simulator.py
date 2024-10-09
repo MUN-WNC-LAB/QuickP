@@ -29,7 +29,7 @@ def simulate(computing_graph: CompGraph, device_topo: DeviceGraph,
 
     # Partition the computation graph
     operator_device_mapping, edge_cut_list, edge_cut_weight_sum = (
-        get_placement_info(placement, computing_graph, device_topo))
+        get_placement_info(placement, computing_graph, device_topo, M=get_proper_M(model_type)))
 
     # Update the op_id-subgraph_id mapping dict to op_id-device_id mapping dict
     device_subgraph_mapping = construct_sub_graph(computing_graph, operator_device_mapping)
