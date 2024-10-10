@@ -4,6 +4,8 @@ import argparse
 import networkx as nx
 from gurobipy import *
 
+from optimizer.co_location.grouper_util import create_colocation_group_to_ops_map
+
 os.environ['GRB_LICENSE_FILE'] = '/home/hola/solverLicense/gurobi.lic'
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -176,6 +178,10 @@ if __name__ == '__main__':
     # apply co-location grouper
     quickcut_group(comp_graph, deviceTopo)
 
+    map = create_colocation_group_to_ops_map(comp_graph)
+    print(map)
+    '''
     simulate(comp_graph, deviceTopo,
              scheduling_function=args.scheduling,
              placement = args.placement)
+    '''
