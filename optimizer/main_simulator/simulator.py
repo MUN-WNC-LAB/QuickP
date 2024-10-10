@@ -174,7 +174,7 @@ if __name__ == '__main__':
     if model_type is not TFModelEnum.TEST:
         init_graph_weight(comp_graph, NodeWeightFunction.AVE_COMP_COST, EdgeWeightFunction.SOURCE_OUTPUT_TENSOR, weight_norm_function)
     # apply co-location grouper
-    quickcut_group(comp_graph)
+    quickcut_group(comp_graph, deviceTopo)
 
     simulate(comp_graph, deviceTopo,
              scheduling_function=args.scheduling,
