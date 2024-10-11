@@ -4,7 +4,7 @@ import argparse
 import networkx as nx
 from gurobipy import *
 
-from optimizer.co_location.grouper_util import create_colocation_group_to_ops_map
+from optimizer.co_location.grouper_util import create_colocation_group_to_ops_map, analyze_group
 
 os.environ['GRB_LICENSE_FILE'] = '/home/hola/solverLicense/gurobi.lic'
 
@@ -150,7 +150,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='arguments for optimization problem after graph partitioning')
     parser.add_argument('--number_of_device', type=int, default=6)
     # TEST SMALL
-    parser.add_argument('--model', type=str, default='ALEXNET')
+    parser.add_argument('--model', type=str, default='VGG')
     parser.add_argument('--normalization_function', default='MIN_MAX', type=str, help='')
     # NEAR_OPTIMAL OPTIMIZED METIS TEST OPTIMIZED_HOMO INCONTIGUOUS_METIS
     # IN homo env and the scheduling is set to optimized, OPTIMIZED should behave the same as OPTIMIZED_HOMO
@@ -179,10 +179,8 @@ if __name__ == '__main__':
     quickcut_group(comp_graph, deviceTopo)
 
     map = create_colocation_group_to_ops_map(comp_graph)
-    print(map)
-    print({gid: len(group) for gid, group in map.items()})
-    # sequential_1/batch_normalization_1/moments/mean/reduction_indices
-    print('fuck', len(map.keys()))
+    comp_cost = comp_graph.getOpCompCostMapByDevice(deviceTopo.getDeviceIDs()[0])
+    analyze_group(map, comp_cost)
     '''
     simulate(comp_graph, deviceTopo,
              scheduling_function=args.scheduling,
