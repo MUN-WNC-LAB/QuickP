@@ -182,6 +182,7 @@ if __name__ == '__main__':
     map = create_colocation_group_to_ops_map(comp_graph)
     comp_cost = comp_graph.getOpCompCostMapByDevice(deviceTopo.getDeviceIDs()[0])
     analyze_group(map, comp_cost)
+    comp_graph.save_to_file('grouped_computing_graph.json')
     '''
     simulate(comp_graph, deviceTopo,
              scheduling_function=args.scheduling,
