@@ -19,7 +19,7 @@ from optimizer.operator_device_placement.metis.weight_functions import NodeWeigh
 from DNN_model_tf.tf_model_enum import TFModelEnum
 from optimizer.operator_device_placement.placement import get_placement_info
 from optimizer.scheduling.scheduling import execute_scheduling_function
-from optimizer.co_location.group_algorithm import quickcut_group
+from optimizer.co_location.group_algorithm import quickcut_group, group_and_merge_group
 from optimizer.main_simulator.simulator_util import get_comp_cost_dict, get_comm_cost_dict
 from optimizer.model.graph import CompGraph, DeviceGraph
 from optimizer.scheduling.near_optimal_scheduling_with_sampling import SamplingFunction
@@ -176,7 +176,8 @@ if __name__ == '__main__':
     if model_type is not TFModelEnum.TEST:
         init_graph_weight(comp_graph, NodeWeightFunction.AVE_COMP_COST, EdgeWeightFunction.SOURCE_OUTPUT_TENSOR, weight_norm_function)
     # apply co-location grouper
-    quickcut_group(comp_graph, deviceTopo)
+    # quickcut_group(comp_graph, deviceTopo)
+    group_and_merge_group(comp_graph, deviceTopo)
 
     map = create_colocation_group_to_ops_map(comp_graph)
     comp_cost = comp_graph.getOpCompCostMapByDevice(deviceTopo.getDeviceIDs()[0])
