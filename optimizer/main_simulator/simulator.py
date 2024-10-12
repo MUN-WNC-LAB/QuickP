@@ -4,7 +4,7 @@ import argparse
 import networkx as nx
 from gurobipy import *
 
-from optimizer.co_location.grouper_util import create_colocation_group_to_ops_map, analyze_group
+from optimizer.co_location_and_merge.grouper_util import create_colocation_group_to_ops_map, analyze_group
 
 os.environ['GRB_LICENSE_FILE'] = '/home/hola/solverLicense/gurobi.lic'
 
@@ -19,7 +19,7 @@ from optimizer.operator_device_placement.metis.weight_functions import NodeWeigh
 from DNN_model_tf.tf_model_enum import TFModelEnum
 from optimizer.operator_device_placement.placement import get_placement_info
 from optimizer.scheduling.scheduling import execute_scheduling_function
-from optimizer.co_location.group_algorithm import quickcut_group, group_and_merge_group
+from optimizer.co_location_and_merge.group_algorithm import group_and_merge_group
 from optimizer.main_simulator.simulator_util import get_comp_cost_dict, get_comm_cost_dict
 from optimizer.model.graph import CompGraph, DeviceGraph
 from optimizer.scheduling.near_optimal_scheduling_with_sampling import SamplingFunction
