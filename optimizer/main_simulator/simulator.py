@@ -19,8 +19,7 @@ from optimizer.operator_device_placement.metis.weight_functions import NodeWeigh
 from DNN_model_tf.tf_model_enum import TFModelEnum
 from optimizer.operator_device_placement.placement import get_placement_info
 from optimizer.scheduling.scheduling import execute_scheduling_function
-from optimizer.co_location_and_merge.group_algorithm import label_and_merge_group, merge_operators, \
-    group_and_fuse_op_incrementally
+from optimizer.co_location_and_merge.group_algorithm import group_and_fuse_op_incrementally
 from optimizer.main_simulator.simulator_util import get_comp_cost_dict, get_comm_cost_dict
 from optimizer.model.graph import CompGraph, DeviceGraph
 from optimizer.scheduling.near_optimal_scheduling_with_sampling import SamplingFunction
@@ -151,7 +150,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='arguments for optimization problem after graph partitioning')
     parser.add_argument('--number_of_device', type=int, default=6)
     # TEST SMALL
-    parser.add_argument('--model', type=str, default='VGG')
+    parser.add_argument('--model', type=str, default='ALEXNET')
     parser.add_argument('--normalization_function', default='MIN_MAX', type=str, help='')
     # NEAR_OPTIMAL OPTIMIZED METIS TEST OPTIMIZED_HOMO INCONTIGUOUS_METIS
     # IN homo env and the scheduling is set to optimized, OPTIMIZED should behave the same as OPTIMIZED_HOMO
