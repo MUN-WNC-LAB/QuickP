@@ -150,18 +150,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='arguments for optimization problem after graph partitioning')
     parser.add_argument('--number_of_device', type=int, default=6)
     # TEST SMALL
-    parser.add_argument('--model', type=str, default='ALEXNET')
+    parser.add_argument('--model', type=str, default='SMALL')
     parser.add_argument('--normalization_function', default='MIN_MAX', type=str, help='')
     # NEAR_OPTIMAL OPTIMIZED METIS TEST OPTIMIZED_HOMO INCONTIGUOUS_METIS
     # IN homo env and the scheduling is set to optimized, OPTIMIZED should behave the same as OPTIMIZED_HOMO
-    parser.add_argument('--placement', default='', type=str, help='')
+    parser.add_argument('--placement', default='OPTIMIZED', type=str, help='')
     # PRIORITY_HETEROG  PRIORITY_MIN_COMP OPTIMIZED FIFO NEAR_OPTIMAL SAMPLING_NEAR_OPTIMAL THREE_STAGE
     parser.add_argument('--scheduling', default='PRIORITY_HETEROG', type=str, help='')
-    # parser.add_argument('--hetero_rate', default=None, type=int, help='')
-    # rho == 0 is FIFO, rho == 1 is optimal; model.setParam("MIPGap", 0.01) will make it optimized
-    # parser.add_argument('--rho', default=0.06, type=float, help='')
-    # PROBABILISTIC_SAMPLING RANDOM HEAVY_HITTER
-    # parser.add_argument('--sampling', default="HEAVY_HITTER", type=str, help='')
 
     args = parser.parse_args()
 
@@ -178,8 +173,7 @@ if __name__ == '__main__':
     # apply co-location grouper
     # the merge will should incremental
     group_and_fuse_op_incrementally(comp_graph, deviceTopo)
-    '''
+
     simulate(comp_graph, deviceTopo,
              scheduling_function=args.scheduling,
              placement = args.placement)
-    '''
