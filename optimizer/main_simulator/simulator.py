@@ -178,10 +178,6 @@ if __name__ == '__main__':
     # apply co-location grouper
     # the merge will should incremental
     group_and_fuse_op_incrementally(comp_graph, deviceTopo)
-
-    comp_cost = comp_graph.getOpCompCostMapByDevice(deviceTopo.getDeviceIDs()[0])
-    analyze_group(comp_graph, comp_cost)
-    comp_graph.save_to_file('grouped_computing_graph.json')
     '''
     simulate(comp_graph, deviceTopo,
              scheduling_function=args.scheduling,
