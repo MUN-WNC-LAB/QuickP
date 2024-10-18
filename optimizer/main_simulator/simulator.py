@@ -154,7 +154,7 @@ if __name__ == '__main__':
     parser.add_argument('--normalization_function', default='MIN_MAX', type=str, help='')
     # NEAR_OPTIMAL OPTIMIZED METIS TEST OPTIMIZED_HOMO INCONTIGUOUS_METIS
     # IN homo env and the scheduling is set to optimized, OPTIMIZED should behave the same as OPTIMIZED_HOMO
-    parser.add_argument('--placement', default='OPTIMIZED', type=str, help='')
+    parser.add_argument('--placement', default='OPTIMIZED_GROUPER', type=str, help='')
     # PRIORITY_HETEROG  PRIORITY_MIN_COMP OPTIMIZED FIFO NEAR_OPTIMAL SAMPLING_NEAR_OPTIMAL THREE_STAGE
     parser.add_argument('--scheduling', default='OPTIMIZED', type=str, help='')
 
@@ -172,12 +172,6 @@ if __name__ == '__main__':
         init_graph_weight(comp_graph, NodeWeightFunction.AVE_COMP_COST, EdgeWeightFunction.SOURCE_OUTPUT_TENSOR, weight_norm_function)
     # apply co-location grouper
     # the merge will should incremental
-    '''
-    if args.placement in ["OPTIMIZED", 'OPTIMIZED_HOMO']:
-        group_and_fuse_op_incrementally(comp_graph, deviceTopo)
-    '''
-    if args.placement in ["OPTIMIZED", 'OPTIMIZED_HOMO']:
-        comp_graph.convert_to_mergable_graph()
 
     simulate(comp_graph, deviceTopo,
              scheduling_function=args.scheduling,
