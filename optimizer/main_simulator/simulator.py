@@ -175,6 +175,7 @@ if __name__ == '__main__':
     if args.placement == 'OPTIMIZED':
         comp_graph.fuse_straight_lines()
         comp_graph.traverse_and_merge_empty()
+        comp_graph.fuse_straight_lines()
     simulate(comp_graph, deviceTopo,
              scheduling_function=args.scheduling,
              placement = args.placement)
