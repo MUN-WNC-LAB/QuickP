@@ -174,6 +174,7 @@ if __name__ == '__main__':
     # the merge will should incremental
     if args.placement == 'OPTIMIZED':
         comp_graph.fuse_straight_lines()
+        comp_graph.traverse_and_merge_empty()
     simulate(comp_graph, deviceTopo,
              scheduling_function=args.scheduling,
              placement = args.placement)
