@@ -173,9 +173,7 @@ if __name__ == '__main__':
     # apply co-location grouper
     # the merge will should incremental
     if args.placement == 'OPTIMIZED':
-        comp_graph.fuse_straight_lines()
         traverse_and_merge(comp_graph, deviceTopo)
-        comp_graph.fuse_straight_lines()
         traverse_and_merge(comp_graph, deviceTopo)
     simulate(comp_graph, deviceTopo,
              scheduling_function=args.scheduling,
