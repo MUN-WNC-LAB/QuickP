@@ -156,7 +156,7 @@ if __name__ == '__main__':
     # IN homo env and the scheduling is set to optimized, OPTIMIZED should behave the same as OPTIMIZED_HOMO
     parser.add_argument('--placement', default='OPTIMIZED', type=str, help='')
     # PRIORITY_HETEROG  PRIORITY_MIN_COMP OPTIMIZED FIFO NEAR_OPTIMAL SAMPLING_NEAR_OPTIMAL THREE_STAGE
-    parser.add_argument('--scheduling', default='PRIORITY_HETEROG', type=str, help='')
+    parser.add_argument('--scheduling', default='OPTIMIZED', type=str, help='')
 
     args = parser.parse_args()
 
