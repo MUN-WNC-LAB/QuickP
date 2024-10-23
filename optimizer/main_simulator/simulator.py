@@ -19,7 +19,8 @@ from optimizer.operator_device_placement.metis.weight_functions import NodeWeigh
 from DNN_model_tf.tf_model_enum import TFModelEnum
 from optimizer.operator_device_placement.placement import get_placement_info
 from optimizer.scheduling.scheduling import execute_scheduling_function
-from optimizer.co_location_and_merge.group_algorithm import group_and_fuse_op_incrementally, traverse_and_merge
+from optimizer.co_location_and_merge.group_algorithm import group_and_fuse_op_incrementally, traverse_and_merge, \
+    traverse_merge_loop
 from optimizer.main_simulator.simulator_util import get_comp_cost_dict, get_comm_cost_dict
 from optimizer.model.graph import CompGraph, DeviceGraph
 from optimizer.scheduling.near_optimal_scheduling_with_sampling import SamplingFunction
@@ -173,8 +174,7 @@ if __name__ == '__main__':
     # apply co-location grouper
     # the merge will should incremental
     if args.placement == 'OPTIMIZED':
-        traverse_and_merge(comp_graph, deviceTopo)
-        traverse_and_merge(comp_graph, deviceTopo)
+        traverse_merge_loop(comp_graph, deviceTopo)
     simulate(comp_graph, deviceTopo,
              scheduling_function=args.scheduling,
              placement = args.placement)
