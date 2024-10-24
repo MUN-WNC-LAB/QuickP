@@ -176,6 +176,7 @@ if __name__ == '__main__':
     if args.placement == 'OPTIMIZED':
         traverse_merge_loop(comp_graph, deviceTopo)
     if args.placement == 'OPTIMIZED_GROUPER':
+        # traverse_merge_loop(comp_graph, deviceTopo)
         apply_co_location(comp_graph, deviceTopo)
     simulate(comp_graph, deviceTopo,
              scheduling_function=args.scheduling,
