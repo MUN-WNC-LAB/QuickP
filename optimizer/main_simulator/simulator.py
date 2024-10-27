@@ -32,7 +32,7 @@ def simulate(computing_graph: CompGraph, device_topo: DeviceGraph,
 
     # Partition the computation graph
     operator_device_mapping, edge_cut_list, edge_cut_weight_sum = (
-        get_placement_info(placement, computing_graph, device_topo, M=get_proper_M(model_type)))
+        get_placement_info(placement, computing_graph, device_topo, M=get_proper_M(model_type), model_type=model_type))
 
     # Update the op_id-subgraph_id mapping dict to op_id-device_id mapping dict
     device_subgraph_mapping = construct_sub_graph(computing_graph, operator_device_mapping)
@@ -151,13 +151,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='arguments for optimization problem after graph partitioning')
     parser.add_argument('--number_of_device', type=int, default=6)
     # TEST SMALL
-    parser.add_argument('--model', type=str, default='VGG')
+    parser.add_argument('--model', type=str, default='FNET')
     parser.add_argument('--normalization_function', default='MIN_MAX', type=str, help='')
     # NEAR_OPTIMAL OPTIMIZED METIS TEST OPTIMIZED_HOMO OPTIMIZED_GROUPER
     # IN homo env and the scheduling is set to optimized, OPTIMIZED should behave the same as OPTIMIZED_HOMO
     parser.add_argument('--placement', default='OPTIMIZED_GROUPER', type=str, help='')
     # PRIORITY_HETEROG  PRIORITY_MIN_COMP OPTIMIZED FIFO NEAR_OPTIMAL SAMPLING_NEAR_OPTIMAL THREE_STAGE
-    parser.add_argument('--scheduling', default='PRIORITY_HETEROG', type=str, help='')
+    parser.add_argument('--scheduling', default='OPTIMIZED', type=str, help='')
 
     args = parser.parse_args()
 
