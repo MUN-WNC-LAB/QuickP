@@ -20,7 +20,7 @@ from DNN_model_tf.tf_model_enum import TFModelEnum
 from optimizer.operator_device_placement.placement import get_placement_info
 from optimizer.scheduling.scheduling import execute_scheduling_function
 from optimizer.co_location_and_merge.group_algorithm import traverse_merge_loop, apply_critical_path_based_co_location, \
-    min_rank_calculation
+    min_rank_calculation, traverse_merge_loop_no_performance_degradation
 from optimizer.main_simulator.simulator_util import get_comp_cost_dict, get_comm_cost_dict
 from optimizer.model.graph import CompGraph, DeviceGraph
 from optimizer.scheduling.near_optimal_scheduling_with_sampling import SamplingFunction
@@ -149,15 +149,15 @@ def simulate(computing_graph: CompGraph, device_topo: DeviceGraph,
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='arguments for optimization problem after graph partitioning')
-    parser.add_argument('--number_of_device', type=int, default=6)
+    parser.add_argument('--number_of_device', type=int, default=2)
     # TEST SMALL
-    parser.add_argument('--model', type=str, default='FNET')
+    parser.add_argument('--model', type=str, default='ALEXNET')
     parser.add_argument('--normalization_function', default='MIN_MAX', type=str, help='')
     # NEAR_OPTIMAL OPTIMIZED METIS TEST OPTIMIZED_HOMO OPTIMIZED_GROUPER
     # IN homo env and the scheduling is set to optimized, OPTIMIZED should behave the same as OPTIMIZED_HOMO
-    parser.add_argument('--placement', default='OPTIMIZED_GROUPER', type=str, help='')
+    parser.add_argument('--placement', default='OPTIMIZED', type=str, help='')
     # PRIORITY_HETEROG  PRIORITY_MIN_COMP OPTIMIZED FIFO NEAR_OPTIMAL SAMPLING_NEAR_OPTIMAL THREE_STAGE
-    parser.add_argument('--scheduling', default='OPTIMIZED', type=str, help='')
+    parser.add_argument('--scheduling', default='PRIORITY_HETEROG', type=str, help='')
 
     args = parser.parse_args()
 
@@ -174,7 +174,7 @@ if __name__ == '__main__':
     # apply co-location grouper
     # the merge will should incremental
     if args.placement == 'OPTIMIZED':
-        traverse_merge_loop(comp_graph, deviceTopo)
+        traverse_merge_loop_no_performance_degradation(comp_graph, deviceTopo)
     if args.placement == 'OPTIMIZED_GROUPER':
         min_rank_calculation(comp_graph, deviceTopo)
         traverse_merge_loop(comp_graph, deviceTopo)
