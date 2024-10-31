@@ -19,7 +19,7 @@ from optimizer.operator_device_placement.metis.weight_functions import NodeWeigh
 from DNN_model_tf.tf_model_enum import TFModelEnum
 from optimizer.operator_device_placement.placement import get_placement_info
 from optimizer.scheduling.scheduling import execute_scheduling_function
-from optimizer.co_location_and_merge.group_algorithm import traverse_merge_loop, apply_critical_path_based_co_location, \
+from optimizer.co_location_and_merge.group_algorithm import traverse_merge_loop, apply_all_co_location_constraint, \
     min_rank_calculation, traverse_merge_loop_no_performance_degradation
 from optimizer.main_simulator.simulator_util import get_comp_cost_dict, get_comm_cost_dict
 from optimizer.model.graph import CompGraph, DeviceGraph, visualize_graph
@@ -149,7 +149,7 @@ def simulate(computing_graph: CompGraph, device_topo: DeviceGraph,
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='arguments for optimization problem after graph partitioning')
-    parser.add_argument('--number_of_device', type=int, default=2)
+    parser.add_argument('--number_of_device', type=int, default=6)
     # TEST SMALL
     parser.add_argument('--model', type=str, default='ALEXNET')
     parser.add_argument('--normalization_function', default='MIN_MAX', type=str, help='')
@@ -176,9 +176,8 @@ if __name__ == '__main__':
     if args.placement == 'OPTIMIZED':
         traverse_merge_loop_no_performance_degradation(comp_graph, deviceTopo)
     if args.placement in ['OPTIMIZED_GROUPER', 'OPTIMIZED_GROUPER_HOMO']:
-        min_rank_calculation(comp_graph, deviceTopo)
         traverse_merge_loop(comp_graph, deviceTopo)
-        apply_critical_path_based_co_location(comp_graph, deviceTopo)
+        apply_all_co_location_constraint(comp_graph, deviceTopo)
         visualize_graph(comp_graph, False, False)
     simulate(comp_graph, deviceTopo,
              scheduling_function=args.scheduling,
