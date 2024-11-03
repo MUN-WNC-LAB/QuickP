@@ -36,9 +36,6 @@ def simulate(computing_graph: CompGraph, device_topo: DeviceGraph,
 
     # Update the op_id-subgraph_id mapping dict to op_id-device_id mapping dict
     device_subgraph_mapping = construct_sub_graph(computing_graph, operator_device_mapping)
-    for g in device_subgraph_mapping.values():
-        assert nx.is_directed_acyclic_graph(g)
-        print("num of wcc in subgraph", nx.number_weakly_connected_components(g))
 
     # Get computation and communication cost
     op_computing_cost_mapping = get_comp_cost_dict(computing_graph, operator_device_mapping)
