@@ -174,7 +174,7 @@ if __name__ == '__main__':
         traverse_merge_loop_no_performance_degradation(comp_graph, deviceTopo)
     if args.placement in ['OPTIMIZED_GROUPER', 'OPTIMIZED_GROUPER_HOMO']:
         traverse_merge_loop(comp_graph, deviceTopo)
-        apply_all_co_location_constraint(comp_graph, deviceTopo)
+        apply_all_co_location_constraint(comp_graph, deviceTopo, args.number_of_device)
         visualize_graph(comp_graph, False, False)
     simulate(comp_graph, deviceTopo,
              scheduling_function=args.scheduling,
