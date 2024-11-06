@@ -153,6 +153,7 @@ if __name__ == '__main__':
     # IN homo env and the scheduling is set to optimized, OPTIMIZED should behave the same as OPTIMIZED_HOMO
     parser.add_argument('--placement', default='OPTIMIZED_GROUPER', type=str, help='')
     # PRIORITY_HETEROG  PRIORITY_MIN_COMP OPTIMIZED FIFO NEAR_OPTIMAL SAMPLING_NEAR_OPTIMAL THREE_STAGE
+    # DOOOOOOOOO NOT USE ANY SCHEDULING EXCEPT FOR "OPTIMIZED" WITHIN OPTIMIZED/OPTIMIZED_GROUPER PLACEMENT SINCE IT WILL ONLY MAKE THE PERFORMANCE WORSE
     parser.add_argument('--scheduling', default='PRIORITY_HETEROG', type=str, help='')
 
     args = parser.parse_args()
@@ -170,7 +171,7 @@ if __name__ == '__main__':
     # apply co-location grouper
     # the merge will should incremental
     if args.placement == 'OPTIMIZED':
-        traverse_merge_loop_no_performance_degradation(comp_graph, deviceTopo)
+        traverse_merge_loop(comp_graph, deviceTopo)
     if args.placement in ['OPTIMIZED_GROUPER', 'OPTIMIZED_GROUPER_HOMO']:
         traverse_merge_loop(comp_graph, deviceTopo)
         apply_all_co_location_constraint(comp_graph, deviceTopo, args.number_of_device)
