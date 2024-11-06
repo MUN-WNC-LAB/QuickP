@@ -145,8 +145,8 @@ def simulate(computing_graph: CompGraph, device_topo: DeviceGraph,
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='arguments for optimization problem after graph partitioning')
-    parser.add_argument('--number_of_device', type=int, default=6)
-    # TEST SMALL
+    parser.add_argument('--number_of_device', type=int, default=2)
+    # ALEXNET VGG BERT FNET
     parser.add_argument('--model', type=str, default='ALEXNET')
     parser.add_argument('--normalization_function', default='MIN_MAX', type=str, help='')
     # NEAR_OPTIMAL OPTIMIZED METIS TEST OPTIMIZED_HOMO OPTIMIZED_GROUPER
@@ -166,8 +166,7 @@ if __name__ == '__main__':
     # init fake data
     deviceTopo, comp_graph = init_computing_and_device_graph(args.number_of_device, None, model_type=model_type)
     # init graph node/edge weight
-    if model_type is not TFModelEnum.TEST:
-        init_graph_weight(comp_graph, NodeWeightFunction.AVE_COMP_COST, EdgeWeightFunction.SOURCE_OUTPUT_TENSOR, weight_norm_function)
+    init_graph_weight(comp_graph, NodeWeightFunction.AVE_COMP_COST, EdgeWeightFunction.SOURCE_OUTPUT_TENSOR, weight_norm_function)
     # apply co-location grouper
     # the merge will should incremental
     if args.placement == 'OPTIMIZED':
